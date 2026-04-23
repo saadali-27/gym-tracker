@@ -75,20 +75,58 @@ export default function LogWorkoutScreen() {
     setSaving(true);
 
     try {
-      // Create workout entry
-      const { data: workoutData, error: workoutError } = await supabase
+      // Get today's start and end timestamps
+      const now = new Date();
+      const startOfDay = new Date(now);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(now);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      // Use date-only format to avoid timezone issues
+      const startOfDayString = startOfDay.toISOString().split('T')[0] + ' 00:00:00';
+      const endOfDayString = endOfDay.toISOString().split('T')[0] + ' 23:59:59';
+      
+      console.log('Searching for workouts between:', startOfDayString, 'and', endOfDayString);
+      
+      // Check if workout already exists for today using date range
+      const { data: existingWorkout, error: fetchError } = await supabase
         .from('workouts')
-        .insert([{ date: new Date().toISOString() }])
-        .select()
+        .select('*')
+        .gte('created_at', startOfDayString)
+        .lte('created_at', endOfDayString)
         .single();
 
-      if (workoutError) throw workoutError;
+      let workoutId;
+      
+      if (fetchError && fetchError.code === 'PGRST116') {
+        // No workout exists for today, create new one
+        console.log('No workout found for today, creating new workout');
+        // Create date without time to avoid timezone issues completely
+        const today = new Date().toISOString().split('T')[0];
+        const dateTimeString = `${today} 00:00:00`;
+        console.log('Creating workout with date only:', dateTimeString);
+        
+        const { data: newWorkout, error: createError } = await supabase
+          .from('workouts')
+          .insert([{ created_at: dateTimeString }])
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        workoutId = newWorkout.id;
+      } else if (fetchError) {
+        throw fetchError;
+      } else {
+        // Use existing workout
+        console.log('Using existing workout for today:', existingWorkout);
+        workoutId = existingWorkout.id;
+      }
 
       // Create workout entry
       const { error: entryError } = await supabase
         .from('workout_entries')
         .insert([{
-          workout_id: workoutData.id,
+          workout_id: workoutId,
           exercise_id: selectedExercise.id,
           sets: parseInt(sets),
           reps: parseInt(reps),
@@ -163,7 +201,7 @@ export default function LogWorkoutScreen() {
                 {ex.name}
               </Text>
               <Text style={{ fontSize: 14, color: '#666' }}>
-                {ex.category || 'No category'}
+                {ex.muscle_group || 'No muscle group'}
               </Text>
             </TouchableOpacity>
           ))
