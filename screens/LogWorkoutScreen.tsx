@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScrollView, Text, TextInput, TouchableOpacity, View, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../services/supabase';
 
 interface Routine {
@@ -19,6 +20,14 @@ interface SessionExercise {
   sets: ExerciseSet[];
 }
 
+interface WorkoutEntry {
+  workout_id: string;
+  exercise_id: string;
+  sets: number;
+  reps: number;
+  weight: number;
+}
+
 export default function LogWorkoutScreen() {
   const [exercises, setExercises] = useState<any[]>([]);
   const [filteredExercises, setFilteredExercises] = useState<any[]>([]);
@@ -34,10 +43,12 @@ export default function LogWorkoutScreen() {
   const [showRoutineDropdown, setShowRoutineDropdown] = useState(false);
   const [routineLoaded, setRoutineLoaded] = useState(false);
 
-  useEffect(() => {
-    fetchExercises();
-    fetchRoutines();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchExercises();
+      fetchRoutines();
+    }, [])
+  );
 
   const fetchExercises = async () => {
     const { data, error } = await supabase
@@ -62,6 +73,7 @@ export default function LogWorkoutScreen() {
         console.error('❌ ERROR fetching routines:', error);
       } else {
         console.log('✅ ROUTINES FETCHED:', data);
+        console.log('✅ ROUTINES COUNT:', data?.length || 0);
         setRoutines(data || []);
       }
     } catch (error) {
@@ -267,104 +279,80 @@ export default function LogWorkoutScreen() {
   };
 
   const saveWorkoutSession = async () => {
-    if (!validateSession()) return;
+  if (!validateSession()) return;
 
-    setSaving(true);
+  setSaving(true);
 
-    try {
-      // Get today's start and end timestamps
-      const now = new Date();
-      const startOfDay = new Date(now);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(now);
-      endOfDay.setHours(23, 59, 59, 999);
-      
-      // Use date-only format to avoid timezone issues
-      const startOfDayString = startOfDay.toISOString().split('T')[0] + ' 00:00:00';
-      const endOfDayString = endOfDay.toISOString().split('T')[0] + ' 23:59:59';
-      
-      console.log('Searching for workouts between:', startOfDayString, 'and', endOfDayString);
-      
-      // Check if workout already exists for today using date range
-      const { data: existingWorkout, error: fetchError } = await supabase
-        .from('workouts')
-        .select('*')
-        .gte('created_at', startOfDayString)
-        .lte('created_at', endOfDayString)
-        .single();
+  try {
+    const now = new Date();
 
-      let workoutId;
-      
-      if (fetchError && fetchError.code === 'PGRST116') {
-        // No workout exists for today, create new one
-        console.log('No workout found for today, creating new workout');
-        // Create date without time to avoid timezone issues completely
-        const today = new Date().toISOString().split('T')[0];
-        const dateTimeString = `${today} 00:00:00`;
-        console.log('Creating workout with date only:', dateTimeString);
-        
-        const { data: newWorkout, error: createError } = await supabase
-          .from('workouts')
-          .insert([{ created_at: dateTimeString }])
-          .select()
-          .single();
+    const localDateString =
+      now.getFullYear() + '-' +
+      String(now.getMonth() + 1).padStart(2, '0') + '-' +
+      String(now.getDate()).padStart(2, '0') + ' ' +
+      String(now.getHours()).padStart(2, '0') + ':' +
+      String(now.getMinutes()).padStart(2, '0') + ':' +
+      String(now.getSeconds()).padStart(2, '0');
 
-        if (createError) throw createError;
-        workoutId = newWorkout.id;
-      } else if (fetchError) {
-        throw fetchError;
-      } else {
-        // Use existing workout
-        console.log('Using existing workout for today:', existingWorkout);
-        workoutId = existingWorkout.id;
-      }
+    console.log("Creating new workout with routine_id:", selectedRoutine);
+    const { data: newWorkout, error: createError } = await supabase
+      .from('workouts')
+      .insert({
+        date: localDateString,
+        routine_id: selectedRoutine || null,
+      })
+      .select()
+      .single();
 
-      // Create all workout entries for the session
-      const workoutEntries: any[] = [];
-      sessionExercises.forEach(exercise => {
-        exercise.sets.forEach(set => {
-          // Convert string values to numbers, only save sets with valid data
-          const reps = parseInt(set.reps) || 0;
-          const weight = parseFloat(set.weight) || 0;
-          
-          // Only save sets that have valid reps and weight values
-          if (reps > 0 && weight >= 0) {
-            workoutEntries.push({
-              workout_id: workoutId,
-              exercise_id: exercise.exercise_id,
-              sets: 1, // Each entry represents one set
-              reps: reps,
-              weight: weight
-            });
-          }
-        });
-      });
+    if (createError) throw createError;
 
-      const { error: entryError } = await supabase
-        .from('workout_entries')
-        .insert(workoutEntries);
+    const workoutId = newWorkout.id;
 
-      if (entryError) throw entryError;
+    // Save sets
+    const workoutEntries: WorkoutEntry[] = [];
 
-      Alert.alert('Success', 'Workout session saved successfully!', [
-        {
-          text: 'OK',
-          onPress: () => {
-            // Reset session
-            setSessionExercises([]);
-            setExpandedExercises(new Set());
-            setNewSetReps({});
-            setNewSetWeight({});
-          }
+    sessionExercises.forEach(exercise => {
+      exercise.sets.forEach(set => {
+        const reps = parseInt(set.reps) || 0;
+        const weight = parseFloat(set.weight) || 0;
+
+        if (reps > 0 && weight >= 0) {
+          workoutEntries.push({
+            workout_id: workoutId,
+            exercise_id: exercise.exercise_id,
+            sets: 1,
+            reps,
+            weight,
+          });
         }
-      ]);
-    } catch (error) {
-      console.error('Error saving workout session:', error);
-      Alert.alert('Error', 'Failed to save workout session');
-    } finally {
-      setSaving(false);
-    }
-  };
+      });
+    });
+
+    const { error: entryError } = await supabase
+      .from('workout_entries')
+      .insert(workoutEntries);
+
+    if (entryError) throw entryError;
+
+    Alert.alert('Success', 'Workout saved!', [
+      {
+        text: 'OK',
+        onPress: () => {
+          setSessionExercises([]);
+          setExpandedExercises(new Set());
+          setNewSetReps({});
+          setNewSetWeight({});
+        },
+      },
+    ]);
+
+  } catch (error) {
+    console.error('Error saving workout:', error);
+    Alert.alert('Error', 'Failed to save workout');
+  } finally {
+    setSaving(false);
+  }
+};
 
   return (
     <KeyboardAvoidingView 
@@ -465,6 +453,11 @@ export default function LogWorkoutScreen() {
                   </TouchableOpacity>
                 ) : (
                   <>
+                    <TouchableOpacity style={{ padding: 8, backgroundColor: '#f0f0f0' }}>
+                      <Text style={{ fontSize: 12, color: '#666' }}>
+                        Debug: {routines.length} routines loaded
+                      </Text>
+                    </TouchableOpacity>
                     <TouchableOpacity
                       style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee' }}
                       onPress={() => handleRoutineSelect('')}

@@ -360,7 +360,7 @@ export default function RoutinesScreen() {
                   <View style={styles.routineInfo}>
                     <Text style={styles.routineName}>{routine.name}</Text>
                     <Text style={styles.routineDate}>
-                      {new Date(routine.created_at).toLocaleDateString()}
+                      {new Date(routine.created_at + 'Z').toLocaleDateString()}
                     </Text>
                   </View>
                   <TouchableOpacity 
