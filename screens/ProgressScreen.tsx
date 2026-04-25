@@ -2,13 +2,14 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../services/supabase';
+import { theme } from '../theme';
 import { LineChart, BarChart } from 'react-native-chart-kit';
 import RNPickerSelect from 'react-native-picker-select';
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: theme.colors.background,
   },
   scrollView: {
     flex: 1,
@@ -21,12 +22,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#1a1a1a',
+    color: theme.colors.text,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#6b7280',
+    color: theme.colors.subtext,
     marginBottom: 8,
   },
   section: {
@@ -36,13 +37,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: theme.colors.text,
     marginBottom: 12,
   },
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.colors.card,
     padding: 20,
-    borderRadius: 12,
+    borderRadius: theme.radius.md,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -53,13 +54,13 @@ const styles = StyleSheet.create({
   },
   cardText: {
     fontSize: 16,
-    color: '#6b7280',
+    color: theme.colors.subtext,
     textAlign: 'center',
     marginBottom: 4,
   },
   cardSubtitle: {
     fontSize: 14,
-    color: '#9ca3af',
+    color: theme.colors.subtext,
     textAlign: 'center',
   },
   measurementsGrid: {
@@ -71,9 +72,9 @@ const styles = StyleSheet.create({
   measurementCard: {
     flex: 1,
     minWidth: '45%',
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.colors.card,
     padding: 20,
-    borderRadius: 12,
+    borderRadius: theme.radius.md,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -84,23 +85,23 @@ const styles = StyleSheet.create({
   },
   measurementLabel: {
     fontSize: 14,
-    color: '#6b7280',
+    color: theme.colors.subtext,
     marginBottom: 8,
   },
   measurementValue: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#3b82f6',
+    color: theme.colors.primary,
   },
   volumeNumber: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#3b82f6',
+    color: theme.colors.primary,
     marginBottom: 4,
   },
   volumeLabel: {
     fontSize: 14,
-    color: '#6b7280',
+    color: theme.colors.subtext,
   },
   muscleGroupItem: {
     flexDirection: 'row',
@@ -109,22 +110,22 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 4,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: theme.colors.border,
   },
   muscleGroupName: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#1a1a1a',
+    color: theme.colors.text,
     flex: 1,
   },
   muscleGroupCount: {
     fontSize: 14,
-    color: '#6b7280',
+    color: theme.colors.subtext,
     marginLeft: 8,
   },
   trendText: {
     fontSize: 16,
-    color: '#1a1a1a',
+    color: theme.colors.text,
     textAlign: 'center',
   },
   statsGrid: {
@@ -134,9 +135,9 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.colors.card,
     padding: 20,
-    borderRadius: 12,
+    borderRadius: theme.radius.md,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -148,23 +149,23 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#3b82f6',
+    color: theme.colors.primary,
     marginBottom: 8,
   },
   statLabel: {
     fontSize: 12,
-    color: '#6b7280',
+    color: theme.colors.subtext,
     textAlign: 'center',
   },
   prLabel: {
     fontSize: 14,
-    color: '#6b7280',
+    color: theme.colors.subtext,
     marginBottom: 8,
   },
   prNumber: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#10b981',
+    color: theme.colors.accent,
     textAlign: 'center',
   },
   mostTrainedContainer: {
@@ -174,18 +175,18 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 4,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: theme.colors.border,
     marginBottom: 4,
   },
   mostTrainedLabel: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#6b7280',
+    color: theme.colors.subtext,
   },
   mostTrainedValue: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#3b82f6',
+    color: theme.colors.primary,
   },
   // Chart styles
   exerciseSelector: {
@@ -194,25 +195,25 @@ const styles = StyleSheet.create({
   selectorLabel: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#1a1a1a',
+    color: theme.colors.text,
     marginBottom: 12,
   },
   exerciseChip: {
-    backgroundColor: '#e5e7eb',
+    backgroundColor: theme.colors.border,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     marginRight: 8,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: theme.colors.border,
   },
   selectedExerciseChip: {
-    backgroundColor: '#3b82f6',
-    borderColor: '#3b82f6',
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
   },
   exerciseChipText: {
     fontSize: 14,
-    color: '#374151',
+    color: theme.colors.text,
     fontWeight: '500',
   },
   selectedExerciseChipText: {
@@ -225,7 +226,7 @@ const styles = StyleSheet.create({
   chartTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: theme.colors.text,
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -239,22 +240,22 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: theme.colors.border,
   },
   legendText: {
     fontSize: 14,
-    color: '#6b7280',
+    color: theme.colors.subtext,
     fontWeight: '500',
   },
   chartSubtitle: {
     fontSize: 12,
-    color: '#6b7280',
+    color: theme.colors.subtext,
     textAlign: 'center',
     marginTop: 5,
   },
   noDataText: {
     fontSize: 16,
-    color: '#6b7280',
+    color: theme.colors.subtext,
     textAlign: 'center',
     fontStyle: 'italic',
     paddingVertical: 20,
@@ -272,7 +273,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: theme.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -283,12 +284,12 @@ const styles = StyleSheet.create({
   insufficientDataTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: theme.colors.text,
     marginBottom: 8,
   },
   insufficientDataMessage: {
     fontSize: 16,
-    color: '#6b7280',
+    color: theme.colors.subtext,
     textAlign: 'center',
     marginBottom: 16,
   },
@@ -298,13 +299,13 @@ const styles = StyleSheet.create({
   },
   insufficientDataTip: {
     fontSize: 14,
-    color: '#6b7280',
+    color: theme.colors.subtext,
     marginBottom: 4,
   },
   // Workout Overview styles
   overviewCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.radius.md,
     padding: 20,
     marginBottom: 16,
     shadowColor: '#000',
@@ -325,30 +326,30 @@ const styles = StyleSheet.create({
   overviewStatNumber: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#3b82f6',
+    color: theme.colors.primary,
     marginBottom: 4,
   },
   overviewStatLabel: {
     fontSize: 14,
-    color: '#6b7280',
+    color: theme.colors.subtext,
     textAlign: 'center',
   },
   mostUsedContainer: {
     alignItems: 'center',
     paddingVertical: 20,
     borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    borderTopColor: theme.colors.border,
   },
   overviewSubTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: theme.colors.text,
     marginBottom: 12,
   },
   mostUsedExercise: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#10b981',
+    color: theme.colors.accent,
     textAlign: 'center',
   },
   recentExercisesContainer: {
@@ -361,12 +362,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.colors.card,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 8,
+    borderRadius: theme.radius.sm,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
     marginBottom: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -377,17 +378,17 @@ const styles = StyleSheet.create({
   recentExerciseName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: theme.colors.text,
     flex: 1,
   },
   recentExerciseMuscle: {
     fontSize: 13,
-    color: '#9ca3af',
+    color: theme.colors.subtext,
     fontWeight: '500',
-    backgroundColor: '#f3f4f6',
+    backgroundColor: theme.colors.border,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: theme.radius.md,
     textTransform: 'capitalize',
   },
   // Custom Dropdown styles
@@ -399,21 +400,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.colors.card,
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.sm,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
   dropdownText: {
     fontSize: 16,
-    color: '#374151',
+    color: theme.colors.text,
     flex: 1,
   },
   dropdownArrow: {
     fontSize: 16,
-    color: '#6b7280',
+    color: theme.colors.subtext,
     marginLeft: 8,
   },
   dropdownList: {
@@ -421,11 +422,11 @@ const styles = StyleSheet.create({
     top: '100%',
     left: 0,
     right: 0,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.colors.card,
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderTopColor: '#d1d5db',
-    borderRadius: 8,
+    borderColor: theme.colors.border,
+    borderTopColor: theme.colors.border,
+    borderRadius: theme.radius.sm,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -444,25 +445,25 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: theme.colors.border,
   },
   dropdownItemText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#1a1a1a',
+    color: theme.colors.text,
     flex: 1,
   },
   dropdownItemSubtext: {
     fontSize: 14,
-    color: '#6b7280',
+    color: theme.colors.subtext,
     marginLeft: 8,
   },
   // Progress Summary styles
   progressSummaryContainer: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: theme.colors.border,
     paddingVertical: 16,
     paddingHorizontal: 20,
-    borderRadius: 8,
+    borderRadius: theme.radius.sm,
     marginTop: 20,
   },
   progressSummaryRow: {
@@ -473,13 +474,13 @@ const styles = StyleSheet.create({
   },
   progressSummaryLabel: {
     fontSize: 16,
-    color: '#6b7280',
+    color: theme.colors.subtext,
     fontWeight: '500',
   },
   progressSummaryValue: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#3b82f6',
+    color: theme.colors.primary,
   },
   // Exercise Picker styles
   exerciseSelectorBlock: {
@@ -493,8 +494,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sectionCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.radius.md,
     padding: 20,
     shadowColor: '#000',
     shadowOffset: {
@@ -506,8 +507,8 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   chartCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.radius.md,
     padding: 24,
     marginBottom: 24,
     shadowColor: '#000',
@@ -522,7 +523,7 @@ const styles = StyleSheet.create({
   chartSectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: theme.colors.text,
     marginBottom: 16,
   },
 });
@@ -1081,19 +1082,19 @@ export default function ProgressScreen() {
                   width={screenWidth - 60}
                   height={180}
                   chartConfig={{
-                    backgroundColor: '#ffffff',
-                    backgroundGradientFrom: '#ffffff',
-                    backgroundGradientTo: '#ffffff',
+                    backgroundColor: theme.colors.card,
+                    backgroundGradientFrom: theme.colors.card,
+                    backgroundGradientTo: theme.colors.card,
                     decimalPlaces: 0,
                     color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`,
-                    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                    labelColor: (opacity = 1) => `rgba(156, 163, 175, ${opacity})`,
                     style: {
                       borderRadius: 16
                     },
                     propsForDots: {
                       r: '4',
                       strokeWidth: '2',
-                      stroke: '#3b82f6'
+                      stroke: theme.colors.primary
                     }
                   }}
                   bezier
@@ -1142,12 +1143,12 @@ export default function ProgressScreen() {
                 yAxisLabel=""
                 yAxisSuffix="t"
                 chartConfig={{
-                  backgroundColor: '#ffffff',
-                  backgroundGradientFrom: '#ffffff',
-                  backgroundGradientTo: '#ffffff',
+                  backgroundColor: theme.colors.card,
+                  backgroundGradientFrom: theme.colors.card,
+                  backgroundGradientTo: theme.colors.card,
                   decimalPlaces: 1,
-                  color: (opacity = 1) => `rgba(16, 185, 129, ${opacity})`,
-                  labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                  color: (opacity = 1) => `rgba(34, 197, 94, ${opacity})`,
+                  labelColor: (opacity = 1) => `rgba(156, 163, 175, ${opacity})`,
                   style: {
                     borderRadius: 16
                   }

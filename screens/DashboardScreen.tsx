@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../services/supabase';
+import { theme } from '../theme';
+import Card from '../components/Card';
+import Button from '../components/Button';
 
 export default function DashboardScreen() {
   const [totalWorkouts, setTotalWorkouts] = useState(0);
@@ -144,222 +147,260 @@ export default function DashboardScreen() {
   );
 
   return (
-    <View style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Dashboard</Text>
-          <Text style={styles.subtitle}>Welcome back!</Text>
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+        <View style={{ 
+          paddingHorizontal: theme.spacing.lg, 
+          paddingTop: 60, 
+          paddingBottom: 16 
+        }}>
+          <Text style={{ 
+            fontSize: 32, 
+            fontWeight: 'bold', 
+            color: theme.colors.text, 
+            marginBottom: 4 
+          }}>
+            Dashboard
+          </Text>
+          <Text style={{ 
+            fontSize: 16, 
+            color: theme.colors.subtext 
+          }}>
+            Welcome back!
+          </Text>
         </View>
 
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{totalWorkouts}</Text>
-            <Text style={styles.statLabel}>Workouts</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{weeklyWorkouts}</Text>
-            <Text style={styles.statLabel}>This Week</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>0</Text>
-            <Text style={styles.statLabel}>Streak</Text>
-          </View>
+        {/* Top Stats - 3 Cards in a Row */}
+        <View style={{
+          flexDirection: 'row',
+          gap: theme.spacing.sm,
+          marginBottom: theme.spacing.lg,
+        }}>
+          <Card style={{ flex: 1, padding: theme.spacing.md }}>
+            <Text style={{
+              fontSize: 24,
+              fontWeight: 'bold',
+              color: '#ffffff',
+              textAlign: 'center',
+            }}>
+              {totalWorkouts}
+            </Text>
+            <Text style={{
+              fontSize: 12,
+              color: theme.colors.subtext,
+              textAlign: 'center',
+            }}>
+              Workouts
+            </Text>
+          </Card>
+          
+          <Card style={{ flex: 1, padding: theme.spacing.md }}>
+            <Text style={{
+              fontSize: 24,
+              fontWeight: 'bold',
+              color: '#ffffff',
+              textAlign: 'center',
+            }}>
+              {weeklyWorkouts}
+            </Text>
+            <Text style={{
+              fontSize: 12,
+              color: theme.colors.subtext,
+              textAlign: 'center',
+            }}>
+              This Week
+            </Text>
+          </Card>
+          
+          <Card style={{ flex: 1, padding: theme.spacing.md }}>
+            <Text style={{
+              fontSize: 24,
+              fontWeight: 'bold',
+              color: '#ffffff',
+              textAlign: 'center',
+            }}>
+              0
+            </Text>
+            <Text style={{
+              fontSize: 12,
+              color: theme.colors.subtext,
+              textAlign: 'center',
+            }}>
+              Streak
+            </Text>
+          </Card>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
+        {/* Recent Activity */}
+        <View style={{ marginBottom: theme.spacing.lg }}>
+          <Text style={{
+            fontSize: 20,
+            fontWeight: 'bold',
+            color: theme.colors.text,
+            marginBottom: theme.spacing.md,
+          }}>
+            Recent Activity
+          </Text>
           {loading ? (
-            <View style={styles.card}>
-              <Text style={styles.cardText}>Loading...</Text>
-            </View>
+            <Card>
+              <Text style={{ 
+                fontSize: 16, 
+                color: theme.colors.text, 
+                textAlign: 'center' 
+              }}>
+                Loading...
+              </Text>
+            </Card>
           ) : recentWorkouts.length === 0 ? (
-            <View style={styles.card}>
-              <Text style={styles.cardText}>No recent workouts</Text>
-            </View>
+            <Card>
+              <Text style={{ 
+                fontSize: 16, 
+                color: theme.colors.text, 
+                textAlign: 'center' 
+              }}>
+                No recent workouts
+              </Text>
+            </Card>
           ) : (
             recentWorkouts.map((workout) => (
-              <View key={workout.id} style={styles.recentWorkoutCard}>
-                <Text style={styles.recentWorkoutTitle}>
+              <Card key={workout.id} style={{ marginBottom: theme.spacing.md }}>
+                <Text style={{
+                  fontSize: 16,
+                  fontWeight: 'bold',
+                  color: theme.colors.text,
+                  marginBottom: 4,
+                }}>
                   {workout.routines?.name || 'Custom Workout'}
                 </Text>
-                <Text style={styles.recentWorkoutDate}>
+                <Text style={{
+                  fontSize: 12,
+                  color: theme.colors.subtext,
+                  marginBottom: 4,
+                }}>
                   {new Date(workout.date).toLocaleDateString()}
                 </Text>
-                <Text style={styles.recentWorkoutExercises}>
+                <Text style={{
+                  fontSize: 14,
+                  color: theme.colors.primary,
+                  fontWeight: '500',
+                }}>
                   {workout.workout_entries?.length || 0} exercises
                 </Text>
-              </View>
+              </Card>
             ))
           )}
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Fitness Stats</Text>
-          <View style={styles.fitnessStatsGrid}>
+        {/* Fitness Stats - 2x2 Grid */}
+        <View style={{ marginBottom: theme.spacing.lg }}>
+          <Text style={{
+            fontSize: 20,
+            fontWeight: 'bold',
+            color: theme.colors.text,
+            marginBottom: theme.spacing.md,
+          }}>
+            Fitness Stats
+          </Text>
+          <View style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: theme.spacing.sm,
+          }}>
             {/* Row 1 */}
-            <View style={styles.fitnessStatCard}>
-              <Text style={styles.fitnessStatNumber}>{(totalVolume / 1000).toFixed(1)}k</Text>
-              <Text style={styles.fitnessStatLabel} numberOfLines={1}>Volume</Text>
-            </View>
-            <View style={styles.fitnessStatCard}>
-              <Text style={styles.fitnessStatNumber}>{totalReps.toLocaleString()}</Text>
-              <Text style={styles.fitnessStatLabel} numberOfLines={1}>Reps</Text>
-            </View>
+            <Card style={{ 
+              width: '48%', 
+              padding: theme.spacing.md,
+              marginBottom: theme.spacing.sm,
+            }}>
+              <Text style={{
+                fontSize: 24,
+                fontWeight: 'bold',
+                color: '#ffffff',
+                textAlign: 'center',
+                marginBottom: 4,
+              }}>
+                {(totalVolume / 1000).toFixed(1)}k
+              </Text>
+              <Text style={{
+                fontSize: 12,
+                color: theme.colors.subtext,
+                textAlign: 'center',
+              }} numberOfLines={1}>
+                Volume
+              </Text>
+            </Card>
+            
+            <Card style={{ 
+              width: '48%', 
+              padding: theme.spacing.md,
+              marginBottom: theme.spacing.sm,
+            }}>
+              <Text style={{
+                fontSize: 24,
+                fontWeight: 'bold',
+                color: '#ffffff',
+                textAlign: 'center',
+                marginBottom: 4,
+              }}>
+                {totalReps.toLocaleString()}
+              </Text>
+              <Text style={{
+                fontSize: 12,
+                color: theme.colors.subtext,
+                textAlign: 'center',
+              }} numberOfLines={1}>
+                Reps
+              </Text>
+            </Card>
+            
             {/* Row 2 */}
-            <View style={styles.fitnessStatCard}>
-              <Text style={styles.fitnessStatNumber}>{totalSets}</Text>
-              <Text style={styles.fitnessStatLabel} numberOfLines={1}>Sets</Text>
-            </View>
-            <View style={styles.fitnessStatCard}>
-              <Text style={styles.fitnessStatNumber}>{mostTrainedMuscle}</Text>
-              <Text style={styles.fitnessStatLabel} numberOfLines={1}>Top Muscle</Text>
-            </View>
+            <Card style={{ 
+              width: '48%', 
+              padding: theme.spacing.md,
+            }}>
+              <Text style={{
+                fontSize: 24,
+                fontWeight: 'bold',
+                color: '#ffffff',
+                textAlign: 'center',
+                marginBottom: 4,
+              }}>
+                {totalSets}
+              </Text>
+              <Text style={{
+                fontSize: 12,
+                color: theme.colors.subtext,
+                textAlign: 'center',
+              }} numberOfLines={1}>
+                Sets
+              </Text>
+            </Card>
+            
+            <Card style={{ 
+              width: '48%', 
+              padding: theme.spacing.md,
+            }}>
+              <Text style={{
+                fontSize: 24,
+                fontWeight: 'bold',
+                color: '#ffffff',
+                textAlign: 'center',
+                marginBottom: 4,
+              }}>
+                {mostTrainedMuscle}
+              </Text>
+              <Text style={{
+                fontSize: 12,
+                color: theme.colors.subtext,
+                textAlign: 'center',
+              }} numberOfLines={1}>
+                Top Muscle
+              </Text>
+            </Card>
           </View>
         </View>
+
       </ScrollView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 16,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 24,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  fitnessStatsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 16,
-    marginBottom: 8,
-  },
-  fitnessStatCard: {
-    width: '48%',
-    backgroundColor: '#ffffff',
-    padding: 20,
-    borderRadius: 16,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    marginBottom: 8,
-  },
-  fitnessStatNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#3b82f6',
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  fitnessStatLabel: {
-    fontSize: 14,
-    color: '#6b7280',
-    textAlign: 'center',
-    fontWeight: '500',
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    padding: 20,
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#3b82f6',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 14,
-    color: '#6b7280',
-    textAlign: 'center',
-  },
-  section: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1a1a1a',
-    marginBottom: 12,
-  },
-  card: {
-    backgroundColor: '#ffffff',
-    padding: 20,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  cardText: {
-    fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
-  },
-  recentWorkoutCard: {
-    backgroundColor: '#ffffff',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  recentWorkoutTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1a1a1a',
-    marginBottom: 4,
-  },
-  recentWorkoutDate: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginBottom: 2,
-  },
-  recentWorkoutExercises: {
-    fontSize: 12,
-    color: '#3b82f6',
-  },
-});

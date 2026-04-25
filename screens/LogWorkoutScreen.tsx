@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, Text, TextInput, TouchableOpacity, View, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { ScrollView, Text, TextInput, TouchableOpacity, View, Alert, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../services/supabase';
+import { theme } from '../theme';
+import Input from '../components/Input';
+import Button from '../components/Button';
+import Card from '../components/Card';
 
 interface Routine {
   id: string;
@@ -355,356 +359,346 @@ export default function LogWorkoutScreen() {
 };
 
   return (
-    <KeyboardAvoidingView 
-      style={{ flex: 1 }} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-    >
-      <ScrollView style={{ flex: 1, padding: 20 }}>
-        <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>
-          Workout Builder
-        </Text>
-        
-        {/* Routine Selection */}
-        <View style={{ marginBottom: 20 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <Text style={{ fontSize: 16, fontWeight: '600' }}>
-              Select Routine (Optional)
-            </Text>
-            {routineLoaded && (
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+      <ScrollView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <View style={{ padding: 20 }}>
+          <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.colors.text, marginBottom: 20 }}>
+            Log Workout
+          </Text>
+          
+          {/* Routine Selection */}
+          <View style={{ marginBottom: 20 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <Text style={{ color: theme.colors.text, fontSize: 16, fontWeight: '600', marginBottom: 8 }}>
+                Select Routine (Optional)
+              </Text>
+              {routineLoaded && (
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: theme.colors.danger,
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderRadius: 6,
+                  }}
+                  onPress={clearRoutine}
+                >
+                  <Text style={{ color: '#ffffff', fontSize: 14, fontWeight: '600' }}>
+                    Clear Routine
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            
+            <View style={{
+                backgroundColor: theme.colors.card,
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+                marginBottom: 16,
+              }}>
               <TouchableOpacity
                 style={{
-                  backgroundColor: '#ef4444',
+                  height: 40,
                   paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  borderRadius: 6,
+                  justifyContent: 'center',
                 }}
-                onPress={clearRoutine}
+                onPress={() => setShowRoutineDropdown(!showRoutineDropdown)}
               >
-                <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>
-                  Clear Routine
+                <Text style={{ fontSize: 16, color: theme.colors.text }}>
+                  {selectedRoutine 
+                    ? routines.find(r => r.id === selectedRoutine)?.name || 'Select Routine'
+                    : 'Select Routine'
+                  }
                 </Text>
               </TouchableOpacity>
+            </View>
+            
+            {showRoutineDropdown && (
+              <View style={{
+                position: 'absolute',
+                top: 70,
+                left: 20,
+                right: 20,
+                backgroundColor: theme.colors.card,
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+                borderRadius: 8,
+                maxHeight: 200,
+                zIndex: 1000,
+                elevation: 5,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+              }}>
+                <ScrollView>
+                  {routines.length === 0 ? (
+                    <TouchableOpacity
+                      style={{ padding: 12 }}
+                      onPress={() => setShowRoutineDropdown(false)}
+                    >
+                      <Text style={{ color: theme.colors.subtext, textAlign: 'center' }}>
+                        No routines found
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <>
+                      <TouchableOpacity
+                        style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: theme.colors.border }}
+                        onPress={() => handleRoutineSelect('')}
+                      >
+                        <Text style={{ color: theme.colors.subtext }}>Clear Selection</Text>
+                      </TouchableOpacity>
+                      {routines.map((routine) => (
+                        <TouchableOpacity
+                          key={routine.id}
+                          style={{ 
+                            padding: 12, 
+                            borderBottomWidth: 1, 
+                            borderBottomColor: theme.colors.border,
+                            backgroundColor: selectedRoutine === routine.id ? theme.colors.primary + '20' : theme.colors.card
+                          }}
+                          onPress={() => handleRoutineSelect(routine.id)}
+                        >
+                          <Text style={{ fontSize: 16, color: theme.colors.text }}>{routine.name}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </>
+                  )}
+                </ScrollView>
+              </View>
             )}
           </View>
           
           {routineLoaded && (
             <View style={{
-              backgroundColor: '#f0f9ff',
-              borderColor: '#3b82f6',
+              backgroundColor: theme.colors.primary + '10',
+              borderColor: theme.colors.primary,
               borderWidth: 1,
               borderRadius: 8,
               padding: 12,
               marginBottom: 12,
             }}>
-              <Text style={{ color: '#1e40af', fontSize: 14, fontWeight: '500', textAlign: 'center' }}>
+              <Text style={{ color: theme.colors.primary, fontSize: 14, fontWeight: '500', textAlign: 'center' }}>
                 💪 Routine loaded — log your sets below
               </Text>
             </View>
           )}
           
-          <TouchableOpacity
+          <Input
             style={{
-              height: 40,
-              borderColor: routineLoaded ? '#3b82f6' : '#ddd',
+              marginBottom: 20,
+              backgroundColor: theme.colors.card,
+              borderRadius: 12,
+              padding: 12,
               borderWidth: 1,
-              borderRadius: 8,
-              paddingHorizontal: 12,
-              justifyContent: 'center',
-              backgroundColor: routineLoaded ? '#eff6ff' : '#fff',
+              borderColor: theme.colors.border,
             }}
-            onPress={() => setShowRoutineDropdown(!showRoutineDropdown)}
-          >
-            <Text style={{ fontSize: 16, color: selectedRoutine ? '#1e40af' : '#999' }}>
-              {selectedRoutine 
-                ? routines.find(r => r.id === selectedRoutine)?.name || 'Select Routine'
-                : 'Select Routine'
-              }
-            </Text>
-          </TouchableOpacity>
-          
-          {showRoutineDropdown && (
-            <View style={{
-              position: 'absolute',
-              top: 70,
-              left: 20,
-              right: 20,
-              backgroundColor: '#fff',
-              borderWidth: 1,
-              borderColor: '#ddd',
-              borderRadius: 8,
-              maxHeight: 200,
-              zIndex: 1000,
-              elevation: 5,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.1,
-              shadowRadius: 4,
-            }}>
-              <ScrollView>
-                {routines.length === 0 ? (
-                  <TouchableOpacity
-                    style={{ padding: 12 }}
-                    onPress={() => setShowRoutineDropdown(false)}
-                  >
-                    <Text style={{ color: '#999', textAlign: 'center' }}>
-                      No routines found
-                    </Text>
-                  </TouchableOpacity>
-                ) : (
-                  <>
-                    <TouchableOpacity style={{ padding: 8, backgroundColor: '#f0f0f0' }}>
-                      <Text style={{ fontSize: 12, color: '#666' }}>
-                        Debug: {routines.length} routines loaded
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee' }}
-                      onPress={() => handleRoutineSelect('')}
-                    >
-                      <Text style={{ color: '#999' }}>Clear Selection</Text>
-                    </TouchableOpacity>
-                    {routines.map((routine) => (
-                      <TouchableOpacity
-                        key={routine.id}
-                        style={{ 
-                          padding: 12, 
-                          borderBottomWidth: 1, 
-                          borderBottomColor: '#eee',
-                          backgroundColor: selectedRoutine === routine.id ? '#e3f2fd' : '#fff'
-                        }}
-                        onPress={() => handleRoutineSelect(routine.id)}
-                      >
-                        <Text style={{ fontSize: 16 }}>{routine.name}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </>
+            placeholder="Search exercises..."
+            placeholderTextColor={theme.colors.subtext}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+
+          {loading ? (
+            <Text style={{ color: theme.colors.text }}>Loading...</Text>
+          ) : filteredExercises.length === 0 ? (
+            <Text style={{ color: theme.colors.text }}>No exercises found</Text>
+          ) : (
+            filteredExercises.map((ex) => (
+              <TouchableOpacity
+                key={ex.id}
+                onPress={() => addExerciseToSession(ex)}
+                style={{
+                  backgroundColor: theme.colors.card,
+                  padding: 14,
+                  borderBottomWidth: 1,
+                  borderBottomColor: theme.colors.border,
+                  marginBottom: 8,
+                  borderRadius: 8,
+                }}
+              >
+                <Text style={{ 
+                  fontSize: 16, 
+                  fontWeight: '600',
+                  color: theme.colors.text,
+                  marginBottom: 4 
+                }}>
+                  {ex.name}
+                </Text>
+                <Text style={{ 
+                  fontSize: 14, 
+                  color: theme.colors.subtext 
+                }}>
+                  {ex.muscle_group || 'No muscle group'}
+                </Text>
+                {sessionExercises.some(se => se.exercise_id === ex.id) && (
+                  <Text style={{ 
+                    fontSize: 12, 
+                    color: theme.colors.primary, 
+                    marginTop: 5,
+                    fontWeight: '500'
+                  }}>
+                    ✓ Added to session
+                  </Text>
                 )}
-              </ScrollView>
-            </View>
+              </TouchableOpacity>
+            ))
           )}
         </View>
-        
-        <TextInput
-          style={{
-            height: 40,
-            borderColor: '#ddd',
-            borderWidth: 1,
-            borderRadius: 8,
-            paddingHorizontal: 12,
-            marginBottom: 20,
-            fontSize: 16,
-          }}
-          placeholder="Search exercises..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-
-        {loading ? (
-          <Text>Loading...</Text>
-        ) : filteredExercises.length === 0 ? (
-          <Text>No exercises found</Text>
-        ) : (
-          filteredExercises.map((ex) => (
-            <TouchableOpacity
-              key={ex.id}
-              onPress={() => addExerciseToSession(ex)}
-              style={{
-                padding: 15,
-                borderBottomWidth: 1,
-                borderBottomColor: '#eee',
-                backgroundColor: sessionExercises.some(se => se.exercise_id === ex.id) ? '#e3f2fd' : 'white',
-              }}
-            >
-              <Text style={{ fontSize: 18, marginBottom: 5 }}>
-                {ex.name}
-              </Text>
-              <Text style={{ fontSize: 14, color: '#666' }}>
-                {ex.muscle_group || 'No muscle group'}
-              </Text>
-              {sessionExercises.some(se => se.exercise_id === ex.id) && (
-                <Text style={{ fontSize: 12, color: '#007AFF', marginTop: 5 }}>
-                  ✓ Added to session
-                </Text>
-              )}
-            </TouchableOpacity>
-          ))
-        )}
 
         {/* Session Exercises Section */}
         {sessionExercises.length > 0 && (
-          <View style={{ 
-            marginTop: 30,
-            backgroundColor: routineLoaded ? '#f0f9ff' : 'transparent',
-            borderRadius: 12,
-            padding: routineLoaded ? 16 : 0,
-            borderWidth: routineLoaded ? 2 : 0,
-            borderColor: routineLoaded ? '#3b82f6' : 'transparent',
-          }}>
-            <Text style={{ 
-              fontSize: 20, 
-              fontWeight: 'bold', 
-              marginBottom: 15,
-              color: routineLoaded ? '#1e40af' : '#000',
-            }}>
-              {routineLoaded ? '🎯 Routine Workout Session' : 'Your Workout Session'}
-            </Text>
+          <View style={{ marginTop: theme.spacing.lg, paddingHorizontal: 20 }}>
             {routineLoaded && (
-              <Text style={{ 
-                fontSize: 14, 
-                color: '#1e40af', 
-                marginBottom: 15,
-                textAlign: 'center',
-                fontWeight: '500',
-              }}>
-                Template loaded — add your actual sets below
-              </Text>
+              <Card style={{ marginBottom: theme.spacing.lg }}>
+                <Text style={{ 
+                  fontSize: 16, 
+                  color: theme.colors.text, 
+                  textAlign: 'center',
+                  fontWeight: '600',
+                }}>
+                  💪 Routine loaded — log your sets below
+                </Text>
+              </Card>
             )}
             
             {sessionExercises.map((exercise) => (
-              <View key={exercise.exercise_id} style={{
-                backgroundColor: '#f8f9fa',
-                borderRadius: 8,
-                marginBottom: 15,
-                overflow: 'hidden',
-              }}>
-                <TouchableOpacity
-                  onPress={() => toggleExerciseExpanded(exercise.exercise_id)}
-                  style={{
-                    padding: 15,
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    backgroundColor: '#e9ecef',
-                  }}
-                >
-                  <View>
-                    <Text style={{ fontSize: 16, fontWeight: 'bold' }}>
+              <Card key={exercise.exercise_id} style={{ marginBottom: theme.spacing.lg }}>
+                {/* Exercise Header */}
+                <View style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: theme.spacing.md,
+                }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{
+                      fontSize: 18,
+                      fontWeight: 'bold',
+                      color: theme.colors.text,
+                      marginBottom: 4,
+                    }}>
                       {exercise.name}
                     </Text>
-                    <Text style={{ fontSize: 12, color: '#666' }}>
+                    <Text style={{
+                      fontSize: 14,
+                      color: theme.colors.subtext,
+                    }}>
                       {exercise.muscle_group} • {exercise.sets.length} sets
                     </Text>
                   </View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Text style={{ fontSize: 12, color: '#007AFF', marginRight: 10 }}>
-                      {expandedExercises.has(exercise.exercise_id) ? '▼' : '▶'}
+                  <TouchableOpacity
+                    onPress={() => removeExerciseFromSession(exercise.exercise_id)}
+                    style={{
+                      backgroundColor: theme.colors.danger,
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      borderRadius: theme.radius.sm,
+                    }}
+                  >
+                    <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '600' }}>
+                      Remove
                     </Text>
-                    <TouchableOpacity
-                      onPress={() => removeExerciseFromSession(exercise.exercise_id)}
-                      style={{ backgroundColor: '#dc3545', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}
-                    >
-                      <Text style={{ color: 'white', fontSize: 12 }}>Remove</Text>
-                    </TouchableOpacity>
-                  </View>
-                </TouchableOpacity>
+                  </TouchableOpacity>
+                </View>
 
-                {expandedExercises.has(exercise.exercise_id) && (
-                  <View style={{ padding: 15 }}>
-                    {/* Existing Sets */}
-                    {exercise.sets.map((set, index) => (
-                      <View key={index} style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
+                {/* Sets Section */}
+                <View style={{ gap: theme.spacing.sm }}>
+                  {exercise.sets.map((set, index) => (
+                    <View key={index} style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: theme.spacing.sm,
+                    }}>
+                      {/* Set Number */}
+                      <View style={{
+                        backgroundColor: theme.colors.border,
+                        paddingHorizontal: 12,
                         paddingVertical: 8,
-                        borderBottomWidth: 1,
-                        borderBottomColor: '#dee2e6',
+                        borderRadius: theme.radius.sm,
+                        minWidth: 60,
+                        alignItems: 'center',
                       }}>
-                        <Text style={{ fontSize: 14, fontWeight: '500', minWidth: 50 }}>
+                        <Text style={{
+                          fontSize: 14,
+                          fontWeight: '600',
+                          color: theme.colors.text,
+                        }}>
                           Set {index + 1}
                         </Text>
-                        <View style={{ flexDirection: 'row', flex: 1, marginHorizontal: 10 }}>
-                          <TextInput
-                            style={{
-                              flex: 1,
-                              height: 36,
-                              borderColor: '#ddd',
-                              borderWidth: 1,
-                              borderRadius: 6,
-                              paddingHorizontal: 8,
-                              textAlign: 'center',
-                              marginRight: 8,
-                              fontSize: 14,
-                            }}
-                            placeholder="Reps"
-                            keyboardType="numeric"
-                            value={set.reps}
-                            onChangeText={(value) => updateSetValues(exercise.exercise_id, index, 'reps', value)}
-                          />
-                          <TextInput
-                            style={{
-                              flex: 1,
-                              height: 36,
-                              borderColor: '#ddd',
-                              borderWidth: 1,
-                              borderRadius: 6,
-                              paddingHorizontal: 8,
-                              textAlign: 'center',
-                              fontSize: 14,
-                            }}
-                            placeholder="Weight"
-                            keyboardType="numeric"
-                            value={set.weight}
-                            onChangeText={(value) => updateSetValues(exercise.exercise_id, index, 'weight', value)}
-                          />
-                        </View>
-                        <TouchableOpacity
-                          onPress={() => removeSetFromExercise(exercise.exercise_id, index)}
-                          style={{ backgroundColor: '#dc3545', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}
-                        >
-                          <Text style={{ color: 'white', fontSize: 12 }}>×</Text>
-                        </TouchableOpacity>
                       </View>
-                    ))}
 
-                    {/* Add New Set */}
-                    <View style={{ marginTop: 15 }}>
-                      <TouchableOpacity
+                      {/* Reps Input */}
+                      <Input
                         style={{
-                          backgroundColor: '#007AFF',
-                          paddingVertical: 10,
-                          borderRadius: 6,
-                          alignItems: 'center',
-                          borderWidth: 1,
-                          borderColor: '#0056b3',
+                          flex: 1,
                         }}
-                        onPress={() => addSetToExercise(exercise.exercise_id)}
+                        placeholder="Reps"
+                        keyboardType="numeric"
+                        value={set.reps}
+                        onChangeText={(value) => updateSetValues(exercise.exercise_id, index, 'reps', value)}
+                        textAlign="center"
+                      />
+
+                      {/* Weight Input */}
+                      <Input
+                        style={{
+                          flex: 1,
+                        }}
+                        placeholder="Weight"
+                        keyboardType="numeric"
+                        value={set.weight}
+                        onChangeText={(value) => updateSetValues(exercise.exercise_id, index, 'weight', value)}
+                        textAlign="center"
+                      />
+
+                      {/* Remove Set Button */}
+                      <TouchableOpacity
+                        onPress={() => removeSetFromExercise(exercise.exercise_id, index)}
+                        style={{
+                          backgroundColor: theme.colors.danger,
+                          paddingHorizontal: 12,
+                          paddingVertical: 8,
+                          borderRadius: theme.radius.sm,
+                        }}
                       >
-                        <Text style={{ color: 'white', fontSize: 14, fontWeight: 'bold' }}>
-                          + Add Set
+                        <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: 'bold' }}>
+                          ×
                         </Text>
                       </TouchableOpacity>
                     </View>
-                  </View>
-                )}
-              </View>
+                  ))}
+
+                  {/* Add Set Button */}
+                  <Button
+                    title="+ Add Set"
+                    variant="primary"
+                    onPress={() => addSetToExercise(exercise.exercise_id)}
+                    style={{
+                      marginTop: theme.spacing.md,
+                    }}
+                  />
+                </View>
+              </Card>
             ))}
 
             {/* Save Session Button */}
-            <TouchableOpacity
-              style={{
-                backgroundColor: routineLoaded ? '#3b82f6' : '#28a745',
-                paddingVertical: 15,
-                borderRadius: 8,
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginTop: 20,
-                borderWidth: routineLoaded ? 2 : 0,
-                borderColor: routineLoaded ? '#1e40af' : 'transparent',
-              }}
+            <Button
+              title={saving 
+                ? 'Saving Session...' 
+                : routineLoaded 
+                  ? '💪 Save Routine Workout' 
+                  : 'Save Workout Session'
+              }
+              variant="primary"
               onPress={saveWorkoutSession}
               disabled={saving}
-            >
-              <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>
-                {saving 
-                  ? 'Saving Session...' 
-                  : routineLoaded 
-                    ? '💪 Save Routine Workout' 
-                    : 'Save Workout Session'
-                }
-              </Text>
-            </TouchableOpacity>
+              size="large"
+              style={{
+                marginTop: theme.spacing.lg,
+              }}
+            />
           </View>
         )}
       </ScrollView>

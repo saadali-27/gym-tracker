@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Modal, FlatList } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, FlatList } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../services/supabase';
+import { theme } from '../theme';
+import Input from '../components/Input';
 
 interface Routine {
   id: string;
@@ -464,8 +466,7 @@ export default function RoutinesScreen() {
           <ScrollView style={styles.modalContent}>
             <View style={styles.inputSection}>
               <Text style={styles.inputLabel}>Routine Name</Text>
-              <TextInput
-                style={styles.textInput}
+              <Input
                 value={newRoutineName}
                 onChangeText={setNewRoutineName}
                 placeholder="Enter routine name"
@@ -545,7 +546,7 @@ export default function RoutinesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: theme.colors.background,
   },
   header: {
     paddingHorizontal: 24,
@@ -555,11 +556,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#1a1a1a',
+    color: theme.colors.text,
   },
   subtitle: {
     fontSize: 16,
-    color: '#6b7280',
+    color: theme.colors.subtext,
     marginTop: 4,
   },
   section: {
@@ -577,13 +578,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: theme.colors.text,
   },
   createButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: theme.colors.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: theme.radius.sm,
   },
   createButtonText: {
     color: '#ffffff',
@@ -591,32 +592,32 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.colors.card,
     padding: 20,
-    borderRadius: 12,
+    borderRadius: theme.radius.md,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
     alignItems: 'center',
   },
   cardText: {
     fontSize: 16,
-    color: '#1a1a1a',
+    color: theme.colors.text,
     fontWeight: '500',
   },
   cardSubtitle: {
     fontSize: 14,
-    color: '#6b7280',
+    color: theme.colors.subtext,
     marginTop: 4,
   },
   routinesList: {
     gap: 12,
   },
   routineCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.colors.card,
     padding: 20,
-    borderRadius: 16,
+    borderRadius: theme.radius.lg,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -630,27 +631,27 @@ const styles = StyleSheet.create({
   routineName: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: theme.colors.text,
     marginBottom: 4,
   },
   routineDate: {
     fontSize: 13,
-    color: '#6b7280',
+    color: theme.colors.subtext,
   },
   deleteButton: {
-    backgroundColor: '#dc3545',
+    backgroundColor: theme.colors.danger,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 6,
+    borderRadius: theme.radius.sm,
   },
   deleteButtonText: {
     color: '#ffffff',
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.colors.background,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -659,24 +660,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: theme.colors.border,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: theme.colors.text,
   },
   cancelButton: {
     fontSize: 16,
-    color: '#6b7280',
+    color: theme.colors.subtext,
   },
   saveButton: {
     fontSize: 16,
-    color: '#3b82f6',
+    color: theme.colors.primary,
     fontWeight: '600',
   },
   saveButtonDisabled: {
-    color: '#d1d5db',
+    color: theme.colors.border,
   },
   modalContent: {
     flex: 1,
@@ -687,36 +688,36 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#1a1a1a',
+    fontWeight: '600',
+    color: theme.colors.text,
     marginBottom: 8,
   },
   textInput: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    paddingHorizontal: 16,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.sm,
+    paddingHorizontal: 12,
     paddingVertical: 12,
     fontSize: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.colors.card,
   },
   emptyStateText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: theme.colors.text,
     marginBottom: 8,
   },
   emptyStateSubtext: {
     fontSize: 14,
-    color: '#6b7280',
+    color: theme.colors.subtext,
     marginBottom: 20,
     textAlign: 'center',
   },
   retryButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: theme.colors.primary,
     paddingHorizontal: 20,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: theme.radius.sm,
   },
   retryButtonText: {
     color: '#ffffff',
@@ -729,10 +730,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   testButton: {
-    backgroundColor: '#10b981',
+    backgroundColor: theme.colors.accent,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 6,
+    borderRadius: theme.radius.sm,
   },
   testButtonText: {
     color: '#ffffff',
@@ -741,10 +742,10 @@ const styles = StyleSheet.create({
   },
   // Exercises list styles
   refreshButton: {
-    backgroundColor: '#6b7280',
+    backgroundColor: theme.colors.subtext,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 6,
+    borderRadius: theme.radius.sm,
   },
   refreshButtonText: {
     color: '#ffffff',
@@ -755,25 +756,26 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   exerciseListItemSimple: {
-    backgroundColor: '#ffffff',
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: theme.colors.card,
+    padding: 16,
+    borderRadius: theme.radius.md,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    borderColor: theme.colors.border,
+    marginBottom: 8,
   },
-  exerciseListItemNameSimple: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#1a1a1a',
+  exerciseItemInfo: {
     flex: 1,
   },
-  exerciseListItemMuscleSimple: {
+  exerciseItemName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.text,
+    marginBottom: 4,
+  },
+  exerciseItemMuscle: {
     fontSize: 14,
-    color: '#6b7280',
-    backgroundColor: '#f3f4f6',
+    color: theme.colors.subtext,
+    backgroundColor: theme.colors.background,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -782,62 +784,39 @@ const styles = StyleSheet.create({
   // Exercise selection list styles
   exerciseSelectionList: {
     marginTop: 16,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.radius.sm,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    padding: 12,
-    maxHeight: 200,
-  },
-  exerciseSelectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1a1a1a',
-    marginBottom: 12,
-  },
-  loadingText: {
-    fontSize: 14,
-    color: '#6b7280',
-    textAlign: 'center',
-    padding: 20,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: '#6b7280',
-    textAlign: 'center',
-    padding: 20,
+    borderColor: theme.colors.border,
   },
   exerciseSelectionItem: {
-    backgroundColor: '#ffffff',
-    padding: 12,
-    borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
     marginBottom: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   exerciseSelectionItemSelected: {
-    backgroundColor: '#eff6ff',
-    borderColor: '#3b82f6',
+    backgroundColor: theme.colors.primary + '20',
+    borderColor: theme.colors.primary,
   },
   exerciseSelectionItemName: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#1a1a1a',
+    color: theme.colors.text,
     flex: 1,
   },
   exerciseSelectionItemNameSelected: {
-    color: '#3b82f6',
+    color: theme.colors.primary,
   },
   exerciseSelectionItemMuscle: {
     fontSize: 12,
-    color: '#6b7280',
-    backgroundColor: '#f3f4f6',
+    color: theme.colors.subtext,
+    backgroundColor: theme.colors.border,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 8,
+    borderRadius: theme.radius.sm,
     textTransform: 'capitalize',
   },
   // Exercise selection styles
@@ -873,25 +852,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: theme.colors.border,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 8,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
   },
   exerciseName: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#1a1a1a',
+    color: theme.colors.text,
     flex: 1,
   },
   removeExerciseButton: {
-    backgroundColor: '#dc3545',
+    backgroundColor: theme.colors.danger,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 6,
+    borderRadius: theme.radius.sm,
   },
   removeExerciseButtonText: {
     color: '#ffffff',
@@ -900,7 +879,7 @@ const styles = StyleSheet.create({
   },
   doneButton: {
     fontSize: 16,
-    color: '#3b82f6',
+    color: theme.colors.primary,
     fontWeight: '600',
   },
   exerciseSelectionItemInfo: {
@@ -908,7 +887,7 @@ const styles = StyleSheet.create({
   },
   exerciseSelectionItemCheck: {
     fontSize: 18,
-    color: '#3b82f6',
+    color: theme.colors.primary,
     fontWeight: 'bold',
   },
   exerciseListContainer: {
@@ -921,7 +900,7 @@ const styles = StyleSheet.create({
   savedExercisesTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: theme.colors.text,
     marginBottom: 12,
   },
   exercisesHeader: {
@@ -931,10 +910,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   saveExercisesButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: theme.colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 6,
+    borderRadius: theme.radius.sm,
   },
   saveExercisesButtonText: {
     color: '#ffffff',
@@ -943,21 +922,21 @@ const styles = StyleSheet.create({
   },
   // Improved UI styles
   loadingCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.colors.card,
     padding: 24,
-    borderRadius: 16,
+    borderRadius: theme.radius.lg,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
     alignItems: 'center',
     marginHorizontal: 16,
     marginVertical: 8,
   },
   emptyCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.colors.card,
     padding: 24,
-    borderRadius: 16,
+    borderRadius: theme.radius.lg,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: theme.colors.border,
     alignItems: 'center',
     marginHorizontal: 16,
     marginVertical: 8,

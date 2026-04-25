@@ -2,6 +2,7 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { theme } from '../theme';
 
 import DashboardScreen from '../screens/DashboardScreen';
 import LogWorkoutScreen from '../screens/LogWorkoutScreen';
@@ -16,28 +17,17 @@ export default function AppNavigator() {
     <NavigationContainer>
       <Tab.Navigator
         screenOptions={{
-          tabBarActiveTintColor: '#3b82f6',
-          tabBarInactiveTintColor: '#6b7280',
+          headerShown: false,
+          tabBarActiveTintColor: theme.colors.primary,
+          tabBarInactiveTintColor: theme.colors.subtext,
           tabBarStyle: {
-            backgroundColor: '#ffffff',
-            borderTopWidth: 1,
-            borderTopColor: '#e5e7eb',
-            paddingBottom: 8,
-            paddingTop: 8,
-            height: 80,
+            backgroundColor: theme.colors.background,
+            borderTopColor: theme.colors.border,
+            height: 65,
+            paddingBottom: 6,
           },
-          headerStyle: {
-            backgroundColor: '#ffffff',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-            elevation: 3,
-          },
-          headerTintColor: '#1a1a1a',
-          headerTitleStyle: {
-            fontWeight: '600',
-            fontSize: 18,
+          tabBarLabelStyle: {
+            fontSize: 12,
           },
         }}
       >

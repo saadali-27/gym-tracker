@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../services/supabase';
+import { theme } from '../theme';
+import Card from '../components/Card';
 
 // STEP 2: SAFE DATE HANDLING
 const safeDate = (value: any) => {
@@ -150,16 +152,38 @@ export default function HistoryScreen() {
         </View>
 
         {loading ? (
-          <View style={styles.section}>
-            <View style={styles.card}>
-              <Text style={styles.cardText}>Loading workouts...</Text>
-            </View>
+          <View style={{ marginTop: theme.spacing.lg }}>
+            <Card>
+              <Text style={{ 
+                fontSize: 16, 
+                color: theme.colors.text, 
+                textAlign: 'center',
+                fontWeight: '500',
+              }}>
+                Loading workouts...
+              </Text>
+            </Card>
           </View>
         ) : Object.keys(groupedWorkouts).length === 0 ? (
-          <View style={styles.section}>
-            <View style={styles.card}>
-              <Text style={styles.cardText}>No workouts logged yet</Text>
-            </View>
+          <View style={{ marginTop: theme.spacing.lg }}>
+            <Card>
+              <Text style={{ 
+                fontSize: 18, 
+                color: theme.colors.text, 
+                textAlign: 'center',
+                fontWeight: 'bold',
+                marginBottom: theme.spacing.sm,
+              }}>
+                No workouts yet
+              </Text>
+              <Text style={{ 
+                fontSize: 14, 
+                color: theme.colors.subtext, 
+                textAlign: 'center',
+              }}>
+                Start logging to see your history
+              </Text>
+            </Card>
           </View>
         ) : (
           Object.entries(groupedWorkouts).map(([dateKey, routineGroups]: [string, any]) => (
@@ -175,53 +199,125 @@ export default function HistoryScreen() {
                 </Text>
               </View>
 
-              {/* Each routine/custom workout as separate block */}
+              {/* Each routine/custom workout as premium session card */}
               {Object.entries(routineGroups).map(([routineKey, routineGroup]: [string, any], index: number) => (
-                <View key={routineKey}>
-                  <View style={styles.workoutCard}>
-                    <View style={styles.workoutHeader}>
-                      <Text style={styles.routineName}>
+                <Card 
+                  key={routineKey} 
+                  style={{ 
+                    marginBottom: theme.spacing.md,
+                    borderRadius: theme.radius.lg,
+                    padding: theme.spacing.md,
+                  }}
+                >
+                  {/* Header - Left: Routine Name, Right: Date */}
+                  <View style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    marginBottom: theme.spacing.md,
+                  }}>
+                    {/* Left: Routine Name */}
+                    <View style={{ flex: 1 }}>
+                      <Text style={{
+                        fontSize: 20,
+                        fontWeight: 'bold',
+                        color: theme.colors.primary,
+                        marginBottom: 4,
+                      }}>
                         {routineGroup.routine_name || 'Custom Workout'}
                       </Text>
+                    </View>
+                    
+                    {/* Right: Date + Delete Button */}
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Text style={{
+                        fontSize: 12,
+                        color: theme.colors.subtext,
+                        marginBottom: 8,
+                      }}>
+                        {safeDate(routineGroup.workouts?.[0]?.date)?.toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        }) || 'Unknown Date'}
+                      </Text>
+                      
                       <TouchableOpacity
-                        style={styles.deleteButton}
+                        style={{
+                          backgroundColor: theme.colors.danger,
+                          paddingHorizontal: 12,
+                          paddingVertical: 6,
+                          borderRadius: theme.radius.sm,
+                        }}
                         onPress={() => deleteWorkout(routineGroup.workouts[0]?.id)}
                       >
-                        <Text style={styles.deleteButtonText}>Delete</Text>
+                        <Text style={{ 
+                          color: '#ffffff', 
+                          fontSize: 12, 
+                          fontWeight: '600' 
+                        }}>
+                          Delete
+                        </Text>
                       </TouchableOpacity>
                     </View>
-                    <View style={styles.exercisesContainer}>
-                      {(() => {
-                        // Group exercises by name within this routine group
-                        const exerciseGroups: any = {};
-                        routineGroup.workouts.forEach((workout: any) => {
-                          workout.workout_entries?.forEach((entry: any) => {
-                            const exerciseName = entry.exercises?.name || 'Unknown Exercise';
-                            if (!exerciseGroups[exerciseName]) {
-                              exerciseGroups[exerciseName] = [];
-                            }
-                            exerciseGroups[exerciseName].push(entry);
-                          });
+                  </View>
+
+                  {/* Exercise List */}
+                  <View style={{ gap: theme.spacing.md }}>
+                    {(() => {
+                      // Group exercises by name within this routine group
+                      const exerciseGroups: any = {};
+                      routineGroup.workouts.forEach((workout: any) => {
+                        workout.workout_entries?.forEach((entry: any) => {
+                          const exerciseName = entry.exercises?.name || 'Unknown Exercise';
+                          if (!exerciseGroups[exerciseName]) {
+                            exerciseGroups[exerciseName] = [];
+                          }
+                          exerciseGroups[exerciseName].push(entry);
                         });
-                        
-                        return Object.entries(exerciseGroups).map(([exerciseName, entries]: [string, any]) => (
-                          <View key={exerciseName} style={styles.exerciseGroup}>
-                            <Text style={styles.exerciseName}>{exerciseName}</Text>
-                            {entries.map((entry: any) => (
-                              <Text key={entry.id} style={styles.exerciseDetails}>
+                      });
+                      
+                      return Object.entries(exerciseGroups).map(([exerciseName, entries]: [string, any], exerciseIndex: number) => (
+                        <View key={exerciseName}>
+                          {/* Exercise Name (Bold, White) */}
+                          <Text style={{
+                            fontSize: 16,
+                            fontWeight: 'bold',
+                            color: '#ffffff',
+                            marginBottom: theme.spacing.sm,
+                          }}>
+                            {exerciseName}
+                          </Text>
+                          
+                          {/* Sets List */}
+                          <View style={{ 
+                            marginLeft: theme.spacing.sm,
+                            marginBottom: theme.spacing.sm,
+                          }}>
+                            {entries.map((entry: any, setIndex: number) => (
+                              <Text key={entry.id} style={{
+                                fontSize: 14,
+                                color: theme.colors.subtext,
+                                marginBottom: 2,
+                              }}>
                                 • {entry.reps} reps × {entry.weight}kg
                               </Text>
                             ))}
                           </View>
-                        ));
-                      })()}
-                    </View>
+                          
+                          {/* Divider Line Between Exercises */}
+                          {exerciseIndex < Object.entries(exerciseGroups).length - 1 && (
+                            <View style={{
+                              borderBottomWidth: 1,
+                              borderColor: theme.colors.border,
+                              marginVertical: theme.spacing.sm,
+                            }} />
+                          )}
+                        </View>
+                      ));
+                    })()}
                   </View>
-                  {/* Add divider between routine/custom blocks */}
-                  {index < Object.keys(routineGroups).length - 1 && (
-                    <View style={styles.sectionDivider} />
-                  )}
-                </View>
+                </Card>
               ))}
             </View>
           ))
@@ -235,7 +331,7 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: theme.colors.background,
   },
   scrollView: {
     flex: 1,
@@ -248,12 +344,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#1a1a1a',
+    color: theme.colors.text,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 16,
-    color: '#6b7280',
+    color: theme.colors.subtext,
   },
   section: {
     paddingHorizontal: 20,
@@ -265,12 +361,12 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: theme.colors.text,
   },
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.colors.card,
     padding: 20,
-    borderRadius: 12,
+    borderRadius: theme.radius.md,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -279,12 +375,12 @@ const styles = StyleSheet.create({
   },
   cardText: {
     fontSize: 16,
-    color: '#6b7280',
+    color: theme.colors.subtext,
     textAlign: 'center',
   },
   workoutCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.radius.md,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -298,19 +394,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: theme.colors.border,
   },
   routineName: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: theme.colors.text,
     flex: 1,
   },
   deleteButton: {
-    backgroundColor: '#ef4444',
+    backgroundColor: theme.colors.danger,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 6,
+    borderRadius: theme.radius.sm,
   },
   deleteButtonText: {
     color: 'white',
@@ -324,28 +420,28 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: theme.colors.border,
   },
   exerciseName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: theme.colors.text,
     marginBottom: 4,
   },
   exerciseDetails: {
     fontSize: 14,
-    color: '#6b7280',
+    color: theme.colors.subtext,
     marginLeft: 8,
   },
   exerciseGroup: {
     marginBottom: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: theme.colors.border,
   },
   sectionDivider: {
     height: 1,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: theme.colors.border,
     marginVertical: 12,
   },
 });
