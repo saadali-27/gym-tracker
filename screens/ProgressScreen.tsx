@@ -541,11 +541,14 @@ export default function ProgressScreen() {
   const [selectedExercise, setSelectedExercise] = useState<string>('');
   const [weightProgressionData, setWeightProgressionData] = useState<any[]>([]);
   const [weeklyVolumeData, setWeeklyVolumeData] = useState<any[]>([]);
-    const [totalSessions, setTotalSessions] = useState(0);
-    const [mostUsedExercise, setMostUsedExercise] = useState('');
-    const [recentExercises, setRecentExercises] = useState<any[]>([]);
-    const [showDropdown, setShowDropdown] = useState(false);
-    const screenWidth = Dimensions.get('window').width;
+  const [totalSessions, setTotalSessions] = useState(0);
+  const [mostUsedExercise, setMostUsedExercise] = useState('');
+  const [recentExercises, setRecentExercises] = useState<any[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [stats, setStats] = useState({ totalVolume: 0, totalReps: 0, totalSets: 0 });
+  const [muscleGroupVolume, setMuscleGroupVolume] = useState<{[key: string]: number}>({});
+  const [chartData, setChartData] = useState<any[]>([]);
+  const screenWidth = Dimensions.get('window').width;
 
   useFocusEffect(
     React.useCallback(() => {
@@ -555,11 +558,14 @@ export default function ProgressScreen() {
 
   const fetchProgressData = async () => {
     try {
-      // Fetch all data with proper joins
+      // Fetch ALL workout_entries joined with workouts
       const { data: entriesData, error: entriesError } = await supabase
         .from('workout_entries')
         .select(`
-          *,
+          id,
+          exercise_id,
+          reps,
+          weight,
           exercises!inner(
             id,
             name,
@@ -577,53 +583,155 @@ export default function ProgressScreen() {
         return;
       }
 
-      // Extract unique exercises the user has actually logged
+      // Helper function to get start of week
+      const getStartOfWeek = () => {
+        const now = new Date();
+        const day = now.getDay();
+        const diff = now.getDate() - day;
+        const start = new Date(now.setDate(diff));
+        start.setHours(0,0,0,0);
+        return start;
+      };
+
       console.log('Raw entries data:', entriesData);
-      
-      const loggedExercises = entriesData?.map(entry => entry.exercises).filter((ex, index, arr) => 
-        arr.findIndex(item => item.id === ex.id) === index
-      ) || [];
-      
-      console.log('Extracted unique exercises:', loggedExercises);
+
+      // Helper to safely access nested data
+      const getExerciseData = (entry: any) => Array.isArray(entry.exercises) ? entry.exercises[0] : entry.exercises;
+      const getWorkoutData = (entry: any) => Array.isArray(entry.workouts) ? entry.workouts[0] : entry.workouts;
+
+      // WEEKLY VOLUME (FIX)
+      const weeklyVolume = entriesData
+        ?.filter(e => {
+          const workout = getWorkoutData(e);
+          return workout && new Date(workout.created_at) >= getStartOfWeek();
+        })
+        ?.reduce((sum, e) => sum + (e.weight * e.reps), 0) || 0;
+
+      // ALL TIME VOLUME
+      const totalVolume = entriesData?.reduce((sum, e) => sum + (e.weight * e.reps), 0) || 0;
+
+      // EXERCISES TRAINED
+      const uniqueExercises = new Set(
+        entriesData?.map(e => {
+          const exercise = getExerciseData(e);
+          return exercise?.name;
+        }).filter(Boolean)
+      ).size;
+
+      // TOTAL SESSIONS
+      const sessions = new Set(
+        entriesData?.map(e => {
+          const workout = getWorkoutData(e);
+          return workout?.created_at;
+        }).filter(Boolean)
+      ).size;
+
+      // MOST USED EXERCISE
+      const freq: { [key: string]: number } = {};
+      entriesData?.forEach(e => {
+        const exercise = getExerciseData(e);
+        const exerciseName = exercise?.name;
+        if (exerciseName) {
+          freq[exerciseName] = (freq[exerciseName] || 0) + 1;
+        }
+      });
+      const mostUsed = Object.keys(freq).reduce((a, b) => freq[a] > freq[b] ? a : b, '');
+
+      // MUSCLE GROUP VOLUME (FIX)
+      const muscleMap: { [key: string]: string } = {
+        "Bench Press": "Chest",
+        "Chest Fly": "Chest",
+        "Incline Bench": "Chest",
+        "Decline Bench": "Chest",
+        "Pull Ups": "Back",
+        "Barbell Row": "Back",
+        "Deadlift": "Back",
+        "Lat Pulldown": "Back",
+        "Squat": "Legs",
+        "Leg Press": "Legs",
+        "Leg Curl": "Legs",
+        "Leg Extension": "Legs",
+        "Shoulder Press": "Shoulders",
+        "Lateral Raise": "Shoulders",
+        "Front Raise": "Shoulders",
+        "Bicep Curl": "Arms",
+        "Tricep Extension": "Arms",
+        "Hammer Curl": "Arms"
+      };
+
+      const muscleVolume: { [key: string]: number } = {};
+      entriesData?.forEach(e => {
+        const exercise = getExerciseData(e);
+        const exerciseName = exercise?.name;
+        if (exerciseName) {
+          const group = muscleMap[exerciseName] || "Other";
+          const vol = e.weight * e.reps;
+          muscleVolume[group] = (muscleVolume[group] || 0) + vol;
+        }
+      });
+
+      // Extract unique exercises for selection
+      const loggedExercises: any[] = [];
+      const exerciseIds = new Set();
+      entriesData?.forEach(e => {
+        const exercise = getExerciseData(e);
+        if (exercise && !exerciseIds.has(exercise.id)) {
+          exerciseIds.add(exercise.id);
+          loggedExercises.push(exercise);
+        }
+      });
 
       // Find most recently used exercise
-      const mostRecentEntry = entriesData?.reduce((mostRecent, entry) => {
-        const entryDate = new Date(entry.workouts.created_at);
-        const mostRecentDate = mostRecent ? new Date(mostRecent.workouts.created_at) : new Date(0);
-        return entryDate > mostRecentDate ? entry : mostRecent;
-      }, null);
+      let mostRecentEntry: any = null;
+      entriesData?.forEach(entry => {
+        const workout = getWorkoutData(entry);
+        if (workout) {
+          const entryDate = new Date(workout.created_at);
+          if (!mostRecentEntry || entryDate > new Date(getWorkoutData(mostRecentEntry).created_at)) {
+            mostRecentEntry = entry;
+          }
+        }
+      });
 
-      const mostRecentExerciseId = mostRecentEntry?.exercises?.id || '';
+      const mostRecentExerciseId = getExerciseData(mostRecentEntry)?.id || '';
       const mostRecentExercise = loggedExercises.find(ex => ex.id === mostRecentExerciseId);
 
       // Set exercises for selection
       setUserExercises(loggedExercises);
       setExercises(loggedExercises);
 
-      // Calculate overview statistics
-      const totalSessionsCount = entriesData?.length || 0;
-      setTotalSessions(totalSessionsCount);
-
-      // Find most used exercise (by frequency)
-      const exerciseFrequency: {[key: string]: number} = {};
-      entriesData?.forEach(entry => {
-        if (entry.exercises && entry.exercises.name) {
-          exerciseFrequency[entry.exercises.name] = (exerciseFrequency[entry.exercises.name] || 0) + 1;
-        }
+      // Set stats
+      setStats({
+        totalVolume,
+        totalReps: entriesData?.reduce((sum, e) => sum + e.reps, 0) || 0,
+        totalSets: entriesData?.length || 0
       });
-      
-      const mostUsed = Object.entries(exerciseFrequency).reduce((max, [name, count]) => 
-        count > max.count ? { name, count } : max, { name: '', count: 0 }
-      );
-      setMostUsedExercise(mostUsed.name);
 
-      // Get recent exercises (last 5 unique exercises)
-      const recentEx = entriesData?.slice(-10).map(entry => entry.exercises).filter((ex, index, arr) => 
-        arr.findIndex(item => item.id === ex.id) === index
-      ).reverse() || [];
-      setRecentExercises(recentEx);
+      // Set muscle group volume
+      setMuscleGroupVolume(muscleVolume);
 
-      // Set default to most recently used exercise
+      // Prepare data for weight progress chart
+      const exerciseData = entriesData?.filter(e => {
+        const exercise = getExerciseData(e);
+        return exercise?.name === selectedExercise;
+      });
+      const chartData = exerciseData
+        ?.sort((a, b) => {
+          const workoutA = getWorkoutData(a);
+          const workoutB = getWorkoutData(b);
+          return new Date(workoutA.created_at).getTime() - new Date(workoutB.created_at).getTime();
+        })
+        ?.map(entry => {
+          const workout = getWorkoutData(entry);
+          return {
+            date: new Date(workout.created_at).toLocaleDateString(),
+            weight: entry.weight,
+            reps: entry.reps
+          };
+        }) || [];
+
+      setChartData(chartData);
+
       if (mostRecentExerciseId && !selectedExercise) {
         setSelectedExercise(mostRecentExerciseId);
         fetchWeightProgression(mostRecentExerciseId);
@@ -643,23 +751,23 @@ export default function ProgressScreen() {
 
       // Filter entries for last 7 days using proper date parsing
       const weeklyEntries = entriesData?.filter(entry => {
-        const workoutDate = new Date(entry.workouts.created_at);
-        return workoutDate >= sevenDaysAgo;
+        const workout = getWorkoutData(entry);
+        return workout && new Date(workout.created_at) >= sevenDaysAgo;
       }) || [];
 
       // Filter entries for previous week (7-14 days ago)
       const previousWeekEntries = entriesData?.filter(entry => {
-        const workoutDate = new Date(entry.workouts.created_at);
-        return workoutDate >= fourteenDaysAgo && workoutDate < sevenDaysAgo;
+        const workout = getWorkoutData(entry);
+        return workout && new Date(workout.created_at) >= fourteenDaysAgo && new Date(workout.created_at) < sevenDaysAgo;
       }) || [];
 
       console.log('Weekly entries (last 7 days):', weeklyEntries.length);
       console.log('Previous week entries (7-14 days ago):', previousWeekEntries.length);
 
-      // Calculate total weekly volume
+      // Calculate total weekly volume (each entry is one set)
       const totalWeeklyVolume = weeklyEntries.reduce((sum, entry) => {
-        const entryVolume = entry.sets * entry.reps * entry.weight;
-        console.log(`Entry volume: ${entry.sets} × ${entry.reps} × ${entry.weight} = ${entryVolume}`);
+        const entryVolume = entry.reps * entry.weight;
+        console.log(`Entry volume: ${entry.reps} × ${entry.weight} = ${entryVolume}`);
         return sum + entryVolume;
       }, 0);
       
@@ -667,8 +775,8 @@ export default function ProgressScreen() {
 
       // Calculate previous week volume
       const previousWeekVolume = previousWeekEntries.reduce((sum, entry) => {
-        const entryVolume = entry.sets * entry.reps * entry.weight;
-        console.log(`Previous entry volume: ${entry.sets} × ${entry.reps} × ${entry.weight} = ${entryVolume}`);
+        const entryVolume = entry.reps * entry.weight;
+        console.log(`Previous entry volume: ${entry.reps} × ${entry.weight} = ${entryVolume}`);
         return sum + entryVolume;
       }, 0);
 
@@ -677,8 +785,9 @@ export default function ProgressScreen() {
       // Calculate muscle group frequency using joined data
       const muscleFrequency: {[key: string]: number} = {};
       weeklyEntries.forEach(entry => {
-        if (entry.exercises && entry.exercises.muscle_group) {
-          muscleFrequency[entry.exercises.muscle_group] = (muscleFrequency[entry.exercises.muscle_group] || 0) + 1;
+        const exercise = getExerciseData(entry);
+        if (exercise && exercise.muscle_group) {
+          muscleFrequency[exercise.muscle_group] = (muscleFrequency[exercise.muscle_group] || 0) + 1;
         }
       });
 
@@ -710,7 +819,10 @@ export default function ProgressScreen() {
       console.log('Trend comparison:', { current: totalWeeklyVolume, previous: previousWeekVolume, message: trendMessage });
 
       // Calculate unique workouts this week
-      const uniqueWorkoutIds = new Set(weeklyEntries.map(entry => entry.workout_id));
+      const uniqueWorkoutIds = new Set(weeklyEntries.map(entry => {
+        const workout = getWorkoutData(entry);
+        return workout?.id;
+      }).filter(Boolean));
       const totalWorkoutsThisWeek = uniqueWorkoutIds.size;
 
       console.log('=== WORKOUT COUNT DEBUG ===');
@@ -726,14 +838,18 @@ export default function ProgressScreen() {
       console.log('Most trained muscle group:', mostTrained);
 
       // Calculate highest weight lifted (PR) with exercise details using joined data
-      const highestWeightEntry = entriesData?.reduce((max, entry) => 
-        entry.weight > max.weight ? entry : max, { weight: 0, exercises: null }
-      );
+      let highestWeightEntry: any = null;
+      entriesData?.forEach(entry => {
+        if (!highestWeightEntry || entry.weight > highestWeightEntry.weight) {
+          highestWeightEntry = entry;
+        }
+      });
       console.log('Highest weight entry:', highestWeightEntry);
 
       // Get exercise details for the PR using joined data
-      const prDisplay = highestWeightEntry.exercises 
-        ? `${highestWeightEntry.exercises.name} — ${highestWeightEntry.weight}kg (${highestWeightEntry.exercises.muscle_group || 'Unknown'})`
+      const prExercise = getExerciseData(highestWeightEntry);
+      const prDisplay = prExercise 
+        ? `${prExercise.name} — ${highestWeightEntry?.weight}kg (${prExercise.muscle_group || 'Unknown'})`
         : 'No PR data';
       console.log('PR display:', prDisplay);
 
@@ -743,16 +859,17 @@ export default function ProgressScreen() {
       console.log('Average reps per workout:', avgReps);
 
       // Calculate weekly volume per muscle group for bar chart using joined data
-      const muscleGroupVolume: {[key: string]: number} = {};
+      const muscleGroupVolumeChart: {[key: string]: number} = {};
       weeklyEntries.forEach(entry => {
-        if (entry.exercises && entry.exercises.muscle_group) {
-          const volume = entry.sets * entry.reps * entry.weight;
-          muscleGroupVolume[entry.exercises.muscle_group] = (muscleGroupVolume[entry.exercises.muscle_group] || 0) + volume;
+        const exercise = getExerciseData(entry);
+        if (exercise && exercise.muscle_group) {
+          const volume = entry.reps * entry.weight;
+          muscleGroupVolumeChart[exercise.muscle_group] = (muscleGroupVolumeChart[exercise.muscle_group] || 0) + volume;
         }
       });
 
       // Format data for bar chart
-      const volumeChartData = Object.entries(muscleGroupVolume).map(([muscle, volume]) => ({
+      const volumeChartData = Object.entries(muscleGroupVolumeChart).map(([muscle, volume]) => ({
         muscle,
         volume,
         formattedVolume: (volume / 1000).toFixed(1) // Convert to tons for readability
@@ -899,49 +1016,6 @@ export default function ProgressScreen() {
               {loading ? 'Loading...' : weeklyVolume.toLocaleString()}
             </Text>
             <Text style={styles.volumeLabel}>Total kg lifted</Text>
-          </View>
-        </View>
-
-        {/* Workout Overview Section */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Workout Overview</Text>
-          <View style={styles.overviewCard}>
-            {/* Summary Stats */}
-            <View style={styles.overviewStats}>
-              <View style={styles.overviewStat}>
-                <Text style={styles.overviewStatNumber}>
-                  {loading ? '...' : userExercises.length}
-                </Text>
-                <Text style={styles.overviewStatLabel}>Exercises Trained</Text>
-              </View>
-              <View style={styles.overviewStat}>
-                <Text style={styles.overviewStatNumber}>
-                  {loading ? '...' : totalSessions}
-                </Text>
-                <Text style={styles.overviewStatLabel}>Total Sessions</Text>
-              </View>
-            </View>
-            
-            {/* Most Used Exercise */}
-            <View style={styles.mostUsedContainer}>
-              <Text style={styles.overviewSubTitle}>Most Used Exercise</Text>
-              <Text style={styles.mostUsedExercise}>
-                {loading ? 'Loading...' : mostUsedExercise || 'None'}
-              </Text>
-            </View>
-            
-            {/* Recent Exercises */}
-            <View style={styles.recentExercisesContainer}>
-              <Text style={styles.overviewSubTitle}>Recent Exercises</Text>
-              <View style={styles.recentExercisesList}>
-                {recentExercises.slice(0, 5).map((exercise, index) => (
-                  <View key={exercise.id} style={styles.recentExerciseItem}>
-                    <Text style={styles.recentExerciseName}>{exercise.name}</Text>
-                    <Text style={styles.recentExerciseMuscle}>{exercise.muscle_group}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
           </View>
         </View>
 
