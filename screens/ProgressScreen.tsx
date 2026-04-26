@@ -984,40 +984,29 @@ export default function ProgressScreen() {
 
       console.log('Raw progression entries:', entriesData?.length, 'entries');
 
-      // Group by date and take MAX weight per day
-      const dateWeightMap = new Map();
+      // Collect ALL exercise data points
+      const chartData = entriesData
+        ?.map(entry => {
+          if (entry.workouts && entry.workouts.created_at) {
+            // Parse date correctly without timezone issues
+            const workoutDate = new Date(entry.workouts.created_at);
+            const dateString = workoutDate.toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric'
+            });
 
-      entriesData?.forEach(entry => {
-        if (entry.workouts && entry.workouts.created_at) {
-          // Parse date correctly without timezone issues
-          const workoutDate = new Date(entry.workouts.created_at);
-          const dateString = workoutDate.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric'
-          });
-
-          // Keep only the highest weight for each date
-          if (!dateWeightMap.has(dateString) || entry.weight > dateWeightMap.get(dateString).weight) {
-            dateWeightMap.set(dateString, {
+            return {
               date: dateString,
               weight: entry.weight,
               reps: entry.reps,
               sets: entry.sets,
               fullDate: workoutDate
-            });
+            };
           }
-        }
-      });
-
-      // Convert to array and sort by date ascending
-      const chartData = Array.from(dateWeightMap.values())
-        .sort((a, b) => a.fullDate.getTime() - b.fullDate.getTime())
-        .map(item => ({
-          date: item.date,
-          weight: item.weight,
-          reps: item.reps,
-          sets: item.sets
-        }));
+          return null;
+        })
+        .filter(item => item !== null)
+        ?.sort((a, b) => a.fullDate.getTime() - b.fullDate.getTime()) || [];
 
       console.log('Final chart data:', chartData);
       setWeightProgressionData(chartData);
@@ -1059,7 +1048,7 @@ export default function ProgressScreen() {
         pointRadius: 6,
       }]
     };
-  }, [weightProgressionData]);
+  }, [weightProgressionData, selectedExercise]);
 
   // Check if we have enough data for meaningful progression
   const hasEnoughProgressionData = weightProgressionData.length >= 2;
