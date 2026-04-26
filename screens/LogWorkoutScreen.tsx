@@ -373,19 +373,12 @@ export default function LogWorkoutScreen() {
                 Select Routine (Optional)
               </Text>
               {routineLoaded && (
-                <TouchableOpacity
-                  style={{
-                    backgroundColor: theme.colors.danger,
-                    paddingHorizontal: 12,
-                    paddingVertical: 6,
-                    borderRadius: 6,
-                  }}
+                <Button
+                  title="Clear Routine"
+                  variant="danger"
+                  size="small"
                   onPress={clearRoutine}
-                >
-                  <Text style={{ color: '#ffffff', fontSize: 14, fontWeight: '600' }}>
-                    Clear Routine
-                  </Text>
-                </TouchableOpacity>
+                />
               )}
             </View>
             
@@ -588,19 +581,12 @@ export default function LogWorkoutScreen() {
                       {exercise.muscle_group} • {exercise.sets.length} sets
                     </Text>
                   </View>
-                  <TouchableOpacity
+                  <Button
+                    title="Remove"
+                    variant="danger"
+                    size="small"
                     onPress={() => removeExerciseFromSession(exercise.exercise_id)}
-                    style={{
-                      backgroundColor: theme.colors.danger,
-                      paddingHorizontal: 12,
-                      paddingVertical: 8,
-                      borderRadius: theme.radius.sm,
-                    }}
-                  >
-                    <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '600' }}>
-                      Remove
-                    </Text>
-                  </TouchableOpacity>
+                  />
                 </View>
 
                 {/* Sets Section */}
@@ -654,42 +640,25 @@ export default function LogWorkoutScreen() {
                       />
 
                       {/* Remove Set Button */}
-                      <TouchableOpacity
+                      <Button
+                        title="×"
+                        variant="danger"
+                        size="small"
                         onPress={() => removeSetFromExercise(exercise.exercise_id, index)}
-                        style={{
-                          backgroundColor: theme.colors.danger,
-                          paddingHorizontal: 12,
-                          paddingVertical: 8,
-                          borderRadius: theme.radius.sm,
-                        }}
-                      >
-                        <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: 'bold' }}>
-                          ×
-                        </Text>
-                      </TouchableOpacity>
+                      />
                     </View>
                   ))}
 
                   {/* Add Set Button */}
-                  <TouchableOpacity
+                  <Button
+                    title="+ Add Set"
+                    variant="secondary"
                     onPress={() => addSetToExercise(exercise.exercise_id)}
-                    style={{
-                      marginTop: theme.spacing.md,
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Text style={{
-                      color: theme.colors.primary,
-                      fontSize: 15,
-                      fontWeight: '600',
-                    }}>
-                      + Add Set
-                    </Text>
-                  </TouchableOpacity>
+                  />
                 </View>
               </Card>
             ))}
-
+            
             {/* Save Session Button */}
             <Button
               title={saving 

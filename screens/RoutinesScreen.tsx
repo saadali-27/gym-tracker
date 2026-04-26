@@ -4,6 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../services/supabase';
 import { theme } from '../theme';
 import Input from '../components/Input';
+import Button from '../components/Button';
 
 interface Routine {
   id: string;
@@ -338,9 +339,11 @@ export default function RoutinesScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>All Routines</Text>
-          <TouchableOpacity style={styles.createButton} onPress={() => setShowCreateModal(true)}>
-            <Text style={styles.createButtonText}>+ Create Routine</Text>
-          </TouchableOpacity>
+          <Button 
+            title="+ Create Routine"
+            variant="primary"
+            onPress={() => setShowCreateModal(true)}
+          />
         </View>
 
         {loading ? (
@@ -365,27 +368,19 @@ export default function RoutinesScreen() {
                       {new Date(routine.created_at + 'Z').toLocaleDateString()}
                     </Text>
                   </View>
-                  <TouchableOpacity 
-                    style={styles.deleteButton}
+                  <Button 
+                    title="Delete"
+                    variant="danger"
+                    size="small"
                     onPress={() => deleteRoutine(routine.id)}
-                  >
-                    <Text style={styles.deleteButtonText}>Delete</Text>
-                  </TouchableOpacity>
+                  />
                 </View>
                 
-                <TouchableOpacity 
+                <Button 
+                  title="+ Add Exercise"
+                  variant="secondary"
                   onPress={() => openExerciseSelection(routine.id)}
-                  style={{ marginBottom: 16 }}
-                >
-                  <Text style={{ 
-                    color: theme.colors.primary, 
-                    fontSize: 15, 
-                    fontWeight: '600',
-                    textAlign: 'center'
-                  }}>
-                    + Add Exercise
-                  </Text>
-                </TouchableOpacity>
+                />
                 
                 {/* Saved Exercises from Database */}
                 {routine.exercises && routine.exercises.length > 0 && (
@@ -398,12 +393,12 @@ export default function RoutinesScreen() {
                     {routine.exercises.map((exercise) => (
                       <View key={exercise.id} style={styles.exerciseItem}>
                         <Text style={styles.exerciseName}>{exercise.name}</Text>
-                        <TouchableOpacity 
-                          style={styles.removeExerciseButton}
+                        <Button 
+                          title="Remove"
+                          variant="danger"
+                          size="small"
                           onPress={() => deleteRoutineExercise(routine.id, exercise.id)}
-                        >
-                          <Text style={styles.removeExerciseButtonText}>Remove</Text>
-                        </TouchableOpacity>
+                        />
                       </View>
                     ))}
                   </View>
@@ -416,22 +411,22 @@ export default function RoutinesScreen() {
                       <Text style={styles.selectedExercisesTitle}>
                         Selected to Add ({selectedExercises[routine.id].length})
                       </Text>
-                      <TouchableOpacity 
-                        style={styles.saveExercisesButton}
+                      <Button 
+                        title="Save"
+                        variant="primary"
+                        size="small"
                         onPress={() => saveRoutineExercises(routine.id)}
-                      >
-                        <Text style={styles.saveExercisesButtonText}>Save</Text>
-                      </TouchableOpacity>
+                      />
                     </View>
                     {selectedExercises[routine.id].map((exercise) => (
                       <View key={exercise.id} style={styles.exerciseItem}>
                         <Text style={styles.exerciseName}>{exercise.name}</Text>
-                        <TouchableOpacity 
-                          style={styles.removeExerciseButton}
+                        <Button 
+                          title="Remove"
+                          variant="danger"
+                          size="small"
                           onPress={() => removeExercise(routine.id, exercise.id)}
-                        >
-                          <Text style={styles.removeExerciseButtonText}>Remove</Text>
-                        </TouchableOpacity>
+                        />
                       </View>
                     ))}
                   </View>

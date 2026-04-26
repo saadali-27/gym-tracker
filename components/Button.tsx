@@ -4,7 +4,7 @@ import { theme } from '../theme';
 
 interface ButtonProps extends TouchableOpacityProps {
   title: string;
-  variant?: 'primary' | 'danger';
+  variant?: 'primary' | 'secondary' | 'danger';
   size?: 'small' | 'medium' | 'large';
   disabled?: boolean;
 }
@@ -21,7 +21,12 @@ export default function Button({
     const baseStyle: ViewStyle = {
       alignItems: 'center' as const,
       justifyContent: 'center' as const,
-      borderRadius: theme.radius.lg,
+      borderRadius: 14,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
     };
 
     const sizeStyle = getSizeStyle(size);
@@ -78,7 +83,7 @@ const getSizeStyle = (size: 'small' | 'medium' | 'large'): ViewStyle => {
   }
 };
 
-const getVariantStyle = (variant: 'primary' | 'danger', disabled: boolean): ViewStyle => {
+const getVariantStyle = (variant: 'primary' | 'secondary' | 'danger', disabled: boolean): ViewStyle => {
   if (disabled) {
     return {
       backgroundColor: theme.colors.border,
@@ -88,11 +93,17 @@ const getVariantStyle = (variant: 'primary' | 'danger', disabled: boolean): View
   switch (variant) {
     case 'danger':
       return {
-        backgroundColor: theme.colors.danger,
+        backgroundColor: 'rgba(255,107,107,0.15)',
+      };
+    case 'secondary':
+      return {
+        backgroundColor: 'rgba(255,255,255,0.06)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
       };
     default: // primary
       return {
-        backgroundColor: theme.colors.primary,
+        backgroundColor: '#7C9EFF',
       };
   }
 };
@@ -114,14 +125,25 @@ const getTextSizeStyle = (size: 'small' | 'medium' | 'large'): TextStyle => {
   }
 };
 
-const getTextVariantStyle = (variant: 'primary' | 'danger', disabled: boolean): TextStyle => {
+const getTextVariantStyle = (variant: 'primary' | 'secondary' | 'danger', disabled: boolean): TextStyle => {
   if (disabled) {
     return {
       color: theme.colors.subtext,
     };
   }
 
-  return {
-    color: '#ffffff',
-  };
+  switch (variant) {
+    case 'danger':
+      return {
+        color: '#FF6B6B',
+      };
+    case 'secondary':
+      return {
+        color: '#E6EAF2',
+      };
+    default: // primary
+      return {
+        color: '#0A0F1E',
+      };
+  }
 };
