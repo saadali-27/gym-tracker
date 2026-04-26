@@ -6,6 +6,8 @@ import { theme } from '../theme';
 import { LineChart, BarChart } from 'react-native-chart-kit';
 import RNPickerSelect from 'react-native-picker-select';
 
+const formatWeight = (value: number) => `${value.toLocaleString()}`;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -43,7 +45,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: theme.colors.card,
     padding: 20,
-    borderRadius: theme.radius.md,
+    borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -166,6 +168,44 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: theme.colors.accent,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  prExerciseName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.text,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  prDate: {
+    fontSize: 12,
+    color: theme.colors.subtext,
+    textAlign: 'center',
+  },
+  barTooltip: {
+    position: 'absolute',
+    backgroundColor: theme.colors.card,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: 8,
+    padding: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+    zIndex: 1000,
+  },
+  barTooltipText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.text,
+    textAlign: 'center',
+  },
+  barTooltipValue: {
+    fontSize: 12,
+    color: theme.colors.subtext,
     textAlign: 'center',
   },
   mostTrainedContainer: {
@@ -549,6 +589,8 @@ export default function ProgressScreen() {
   const [stats, setStats] = useState({ totalVolume: 0, totalReps: 0, totalSets: 0 });
   const [muscleGroupVolume, setMuscleGroupVolume] = useState<{[key: string]: number}>({});
   const [chartData, setChartData] = useState<any[]>([]);
+  const [entriesData, setEntriesData] = useState<any[]>([]);
+  const [selectedBar, setSelectedBar] = useState<{ label: string; value: number } | null>(null);
   const screenWidth = Dimensions.get('window').width;
 
   useFocusEffect(
@@ -595,6 +637,9 @@ export default function ProgressScreen() {
       };
 
       console.log('Raw entries data:', entriesData);
+      
+      // Set entriesData for PR calculation
+      setEntriesData(entriesData || []);
 
       // Helper to safely access nested data
       const getExerciseData = (entry: any) => Array.isArray(entry.exercises) ? entry.exercises[0] : entry.exercises;
@@ -850,7 +895,7 @@ export default function ProgressScreen() {
       // Get exercise details for the PR using joined data
       const prExercise = getExerciseData(highestWeightEntry);
       const prDisplay = prExercise 
-        ? `${prExercise.name} — ${highestWeightEntry?.weight}kg (${prExercise.muscle_group || 'Unknown'})`
+        ? `${highestWeightEntry?.weight}kg`
         : 'No PR data';
       console.log('PR display:', prDisplay);
 
@@ -859,21 +904,47 @@ export default function ProgressScreen() {
       const avgReps = totalWorkoutsThisWeek > 0 ? Math.round(totalReps / totalWorkoutsThisWeek) : 0;
       console.log('Average reps per workout:', avgReps);
 
-      // Calculate weekly volume per muscle group for bar chart using joined data
+      // Calculate weekly volume per muscle group for bar chart using joined data (last 7 days only)
       const muscleGroupVolumeChart: {[key: string]: number} = {};
-      weeklyEntries.forEach(entry => {
+      console.log('=== MUSCLE GROUP VOLUME DEBUG ===');
+      console.log('Processing', weeklyEntries.length, 'weekly entries for volume calculation');
+      
+      weeklyEntries.forEach((entry, index) => {
         const exercise = getExerciseData(entry);
         if (exercise && exercise.muscle_group) {
-          const volume = entry.reps * entry.weight;
+          const volume = entry.reps * entry.weight; // volume per set = weight * reps
+          console.log(`Entry ${index + 1}: ${exercise.name} (${exercise.muscle_group}) - ${entry.reps} × ${entry.weight} = ${volume}kg`);
           muscleGroupVolumeChart[exercise.muscle_group] = (muscleGroupVolumeChart[exercise.muscle_group] || 0) + volume;
         }
       });
 
-      // Format data for bar chart
-      const volumeChartData = Object.entries(muscleGroupVolumeChart).map(([muscle, volume]) => ({
+      console.log('Final muscle group volume (last 7 days):', muscleGroupVolumeChart);
+      console.log('====================================');
+
+      // Sanity check for realistic values
+      const sanityCheck = Object.entries(muscleGroupVolumeChart).map(([muscle, volume]) => {
+        const isRealistic = volume <= 5000; // 5000kg per muscle group per week is extremely high
+        if (!isRealistic) {
+          console.warn(`⚠️ UNREALISTIC VOLUME DETECTED: ${muscle} = ${volume}kg (should be < 5000kg/week)`);
+        }
+        return { muscle, volume, realistic: isRealistic };
+      });
+
+      // Filter out any unrealistic values (optional - comment out if you want to see all data)
+      const filteredVolumeChart = Object.fromEntries(
+        sanityCheck.filter(item => item.realistic).map(item => [item.muscle, item.volume])
+      );
+
+      // Use filtered data for chart
+      const finalVolumeData = Object.keys(filteredVolumeChart).length > 0 ? filteredVolumeChart : muscleGroupVolumeChart;
+
+      console.log('Final volume data for chart:', finalVolumeData);
+
+      // Format data for bar chart - keep in KG, no abbreviations
+      const volumeChartData = Object.entries(finalVolumeData).map(([muscle, volume]) => ({
         muscle,
         volume,
-        formattedVolume: (volume / 1000).toFixed(1) // Convert to tons for readability
+        formattedVolume: volume.toFixed(0) // Keep as KG, no conversion to tons
       }));
 
       setWeeklyVolume(totalWeeklyVolume);
@@ -963,6 +1034,17 @@ export default function ProgressScreen() {
     }
   }, []);
 
+  // Calculate Personal Record for selected exercise
+  const calculatePersonalRecord = useCallback((exerciseId: string) => {
+    if (!entriesData || entriesData.length === 0) return 0;
+    
+    const exerciseEntries = entriesData.filter((entry: any) => entry.exercise_id === exerciseId);
+    if (exerciseEntries.length === 0) return 0;
+    
+    const maxWeight = Math.max(...exerciseEntries.map((entry: any) => entry.weight));
+    return maxWeight;
+  }, [entriesData]);
+
   // Handle exercise selection
   const handleExerciseSelect = useCallback((exerciseId: string) => {
     setSelectedExercise(exerciseId);
@@ -993,10 +1075,41 @@ export default function ProgressScreen() {
   const barChartData = useMemo(() => {
     if (weeklyVolumeData.length === 0) return null;
 
+    // Get raw volumes
+    const volumes = weeklyVolumeData.map(item => item.volume);
+    const maxVolume = Math.max(...volumes);
+    
+    // Create clean Y-axis steps with realistic scaling
+    const steps = 5;
+    let stepValue;
+    
+    // Smart step calculation for realistic gym values
+    if (maxVolume <= 100) {
+      stepValue = 20; // 0, 20, 40, 60, 80, 100
+    } else if (maxVolume <= 500) {
+      stepValue = 100; // 0, 100, 200, 300, 400, 500
+    } else if (maxVolume <= 1000) {
+      stepValue = 200; // 0, 200, 400, 600, 800, 1000
+    } else if (maxVolume <= 2000) {
+      stepValue = 400; // 0, 400, 800, 1200, 1600, 2000
+    } else {
+      stepValue = Math.ceil(maxVolume / steps / 100) * 100; // Round to nearest 100
+    }
+    
+    const yAxisMax = stepValue * steps;
+
+    console.log('=== CHART SCALING DEBUG ===');
+    console.log('Raw volumes:', volumes);
+    console.log('Max volume:', maxVolume);
+    console.log('Step value:', stepValue);
+    console.log('Y-axis max:', yAxisMax);
+    console.log('==========================');
+
+    // Use actual volume values for chart data (let chart library handle scaling)
     return {
       labels: weeklyVolumeData.map(item => item.muscle),
       datasets: [{
-        data: weeklyVolumeData.map(item => parseFloat(item.formattedVolume))
+        data: volumes
       }]
     };
   }, [weeklyVolumeData]);
@@ -1014,156 +1127,212 @@ export default function ProgressScreen() {
           <Text style={styles.sectionTitle}>Weekly Volume</Text>
           <View style={styles.sectionCard}>
             <Text style={styles.volumeNumber}>
-              {loading ? 'Loading...' : weeklyVolume.toLocaleString()}
+              {loading ? 'Loading...' : formatWeight(weeklyVolume)}
             </Text>
             <Text style={styles.volumeLabel}>Total kg lifted</Text>
           </View>
         </View>
 
-        {/* Charts Section */}
+        {/* Personal Record Section */}
         <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Charts</Text>
-        
-        {/* Exercise Selector */}
-        <View style={styles.exerciseSelectorBlock}>
-          <Text style={styles.selectorLabel}>Select Exercise:</Text>
-          <View style={styles.customDropdownContainer}>
-            {/* Selected Exercise Display */}
-            <TouchableOpacity 
-              style={styles.dropdownInput}
-              onPress={() => setShowDropdown(!showDropdown)}
-            >
-              <Text style={styles.dropdownText}>
-                {selectedExercise 
-                  ? userExercises.find(ex => ex.id === selectedExercise)?.name || 'Select an exercise'
-                  : 'Select an exercise'
-                }
-              </Text>
-              <Text style={styles.dropdownArrow}>
-                {showDropdown ? '↑' : '↓'}
-              </Text>
-            </TouchableOpacity>
-            
-            {/* Dropdown List */}
-            {showDropdown && (
-              <View style={styles.dropdownList}>
-                <ScrollView style={styles.dropdownScroll} nestedScrollEnabled={false}>
-                  {userExercises.map((exercise) => (
-                    <TouchableOpacity
-                      key={exercise.id}
-                      style={styles.dropdownItem}
-                      onPress={() => {
-                        setSelectedExercise(exercise.id);
-                        setShowDropdown(false);
-                        fetchWeightProgression(exercise.id);
-                      }}
-                    >
-                      <Text style={styles.dropdownItemText}>{exercise.name}</Text>
-                      <Text style={styles.dropdownItemSubtext}>{exercise.muscle_group}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-          </View>
-        </View>
-        
-        {/* Weight Progression Chart */}
-        {selectedExercise && lineChartData ? (
-          <View style={styles.chartCard}>
-            <Text style={styles.chartTitle}>
-              {exercises.find(ex => ex.id === selectedExercise)?.name} Progress
-            </Text>
-            {hasEnoughProgressionData ? (
-              <View style={styles.chartContainer}>
-                <Text style={styles.chartTitle}>Weight Progress</Text>
-                <LineChart
-                  data={lineChartData}
-                  width={screenWidth - 60}
-                  height={180}
-                  chartConfig={{
-                    backgroundColor: theme.colors.card,
-                    backgroundGradientFrom: theme.colors.card,
-                    backgroundGradientTo: theme.colors.card,
-                    decimalPlaces: 0,
-                    color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`,
-                    labelColor: (opacity = 1) => `rgba(156, 163, 175, ${opacity})`,
-                    style: {
-                      borderRadius: 16
-                    },
-                    propsForDots: {
-                      r: '4',
-                      strokeWidth: '2',
-                      stroke: theme.colors.primary
-                    }
-                  }}
-                  bezier
-                  style={styles.chart}
-                />
-              </View>
-            ) : null}
-            
-            {/* Progress Summary Below Chart */}
-            {hasEnoughProgressionData && (
-              <View style={styles.progressSummaryContainer}>
-                <View style={styles.progressSummaryRow}>
-                  <Text style={styles.progressSummaryLabel}>Latest:</Text>
-                  <Text style={styles.progressSummaryValue}>
-                    {weightProgressionData[weightProgressionData.length - 1].weight}kg
-                  </Text>
+          <Text style={styles.sectionTitle}>Personal Record</Text>
+          
+          {/* Exercise Dropdown */}
+          <View style={styles.exerciseSelectorBlock}>
+            <Text style={styles.selectorLabel}>Select Exercise:</Text>
+            <View style={styles.customDropdownContainer}>
+              <TouchableOpacity 
+                style={styles.dropdownInput}
+                onPress={() => setShowDropdown(!showDropdown)}
+              >
+                <Text style={styles.dropdownText}>
+                  {selectedExercise 
+                    ? userExercises.find(ex => ex.id === selectedExercise)?.name || 'Select an exercise'
+                    : 'Select an exercise'
+                  }
+                </Text>
+                <Text style={styles.dropdownArrow}>
+                  {showDropdown ? '↑' : '↓'}
+                </Text>
+              </TouchableOpacity>
+              
+              {showDropdown && (
+                <View style={styles.dropdownList}>
+                  <ScrollView style={styles.dropdownScroll} nestedScrollEnabled={false}>
+                    {userExercises.map((exercise) => (
+                      <TouchableOpacity
+                        key={exercise.id}
+                        style={styles.dropdownItem}
+                        onPress={() => {
+                          setSelectedExercise(exercise.id);
+                          setShowDropdown(false);
+                          fetchWeightProgression(exercise.id);
+                        }}
+                      >
+                        <Text style={styles.dropdownItemText}>{exercise.name}</Text>
+                        <Text style={styles.dropdownItemSubtext}>{exercise.muscle_group}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
                 </View>
-                <View style={styles.progressSummaryRow}>
-                  <Text style={styles.progressSummaryLabel}>Progress:</Text>
-                  <Text style={styles.progressSummaryValue}>
-                    +{weightProgressionData[weightProgressionData.length - 1].weight - weightProgressionData[0].weight}kg
-                  </Text>
-                </View>
-              </View>
-            )}
-          </View>
-        ) : (
-          <View style={styles.chartCard}>
-            <View style={styles.noDataContainer}>
-              <Text style={styles.noDataText}>
-                {selectedExercise ? 'No progression data available' : 'Select an exercise to view progress'}
-              </Text>
+              )}
             </View>
           </View>
-        )}
-        
-        {/* Weekly Volume Bar Chart */}
-        <View style={styles.chartCard}>
-          <Text style={styles.chartTitle}>Muscle Group Volume</Text>
-          {barChartData ? (
-            <View style={styles.chartContainer}>
-              <BarChart
-                data={barChartData}
+          
+          {/* PR Display */}
+          {selectedExercise && (
+            <View style={styles.card}>
+              <Text style={styles.prExerciseName}>
+                {userExercises.find(ex => ex.id === selectedExercise)?.name || 'Select an exercise'}
+              </Text>
+              <Text style={styles.prNumber}>
+                {formatWeight(calculatePersonalRecord(selectedExercise))}
+              </Text>
+              <Text style={styles.prDate}>
+                {new Date().toLocaleDateString()}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* Charts Section */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Weight Progress</Text>
+          
+          {/* Weight Progression Chart */}
+          {selectedExercise && lineChartData ? (
+            <View style={styles.chartCard}>
+              <LineChart
+                data={lineChartData}
                 width={screenWidth - 60}
                 height={180}
-                yAxisLabel=""
-                yAxisSuffix="t"
                 chartConfig={{
                   backgroundColor: theme.colors.card,
                   backgroundGradientFrom: theme.colors.card,
                   backgroundGradientTo: theme.colors.card,
-                  decimalPlaces: 1,
-                  color: (opacity = 1) => `rgba(34, 197, 94, ${opacity})`,
-                  labelColor: (opacity = 1) => `rgba(156, 163, 175, ${opacity})`,
+                  decimalPlaces: 0,
+                  color: (opacity = 1) => `rgba(79, 140, 255, ${opacity})`,
+                  labelColor: (opacity = 1) => `rgba(154, 164, 178, ${opacity})`,
                   style: {
                     borderRadius: 16
+                  },
+                  propsForDots: {
+                    r: '4',
+                    strokeWidth: '2',
+                    stroke: theme.colors.primary
                   }
                 }}
+                bezier
                 style={styles.chart}
               />
-              <Text style={styles.chartSubtitle}>Volume (tons)</Text>
+              
+              {/* Progress Summary Below Chart */}
+              {hasEnoughProgressionData && (
+                <View style={styles.progressSummaryContainer}>
+                  <View style={styles.progressSummaryRow}>
+                    <Text style={styles.progressSummaryLabel}>Latest:</Text>
+                    <Text style={styles.progressSummaryValue}>
+                      {formatWeight(weightProgressionData[weightProgressionData.length - 1].weight)} kg
+                    </Text>
+                  </View>
+                  <View style={styles.progressSummaryRow}>
+                    <Text style={styles.progressSummaryLabel}>Progress:</Text>
+                    <Text style={styles.progressSummaryValue}>
+                      +{formatWeight(weightProgressionData[weightProgressionData.length - 1].weight - weightProgressionData[0].weight)} kg
+                    </Text>
+                  </View>
+                </View>
+              )}
             </View>
           ) : (
-            <View style={styles.noDataContainer}>
-              <Text style={styles.noDataText}>No volume data available</Text>
+            <View style={styles.chartCard}>
+              <View style={styles.noDataContainer}>
+                <Text style={styles.noDataText}>
+                  {selectedExercise ? 'No progression data available' : 'Select an exercise to view progress'}
+                </Text>
+              </View>
             </View>
           )}
         </View>
-      </View>
+
+        {/* Volume Progress Section */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Volume Progress</Text>
+          <View style={styles.chartCard}>
+            <Text style={styles.chartTitle}>Muscle Group Volume</Text>
+            {barChartData && barChartData.labels && barChartData.labels.length > 0 ? (
+              <View style={styles.chartContainer}>
+                <TouchableOpacity
+                  onPress={(event) => {
+                    // Calculate which bar was pressed based on touch position
+                    const touchX = event.nativeEvent.locationX;
+                    const chartWidth = screenWidth - 60;
+                    const barWidth = chartWidth / barChartData.labels.length;
+                    const barIndex = Math.floor(touchX / barWidth);
+                    
+                    if (barIndex >= 0 && barIndex < barChartData.labels.length) {
+                      const label = barChartData.labels[barIndex];
+                      const volumeData = weeklyVolumeData.find(item => item.muscle === label);
+                      if (volumeData) {
+                        setSelectedBar({ label, value: volumeData.volume });
+                        // Hide tooltip after 2 seconds
+                        setTimeout(() => setSelectedBar(null), 2000);
+                      }
+                    }
+                  }}
+                  style={{ position: 'relative' }}
+                >
+                  <BarChart
+                    data={barChartData}
+                    width={screenWidth - 60}
+                    height={180}
+                    yAxisLabel=""
+                    yAxisSuffix="kg"
+                    fromZero={true}
+                    chartConfig={{
+                      backgroundColor: theme.colors.card,
+                      backgroundGradientFrom: theme.colors.card,
+                      backgroundGradientTo: theme.colors.card,
+                      decimalPlaces: 0,
+                      color: (opacity = 1) => `rgba(34, 197, 94, ${opacity})`,
+                      labelColor: (opacity = 1) => `rgba(156, 163, 175, ${opacity})`,
+                      style: {
+                        borderRadius: 16
+                      },
+                      propsForBackgroundLines: {
+                        strokeDasharray: 'none'
+                      },
+                      propsForLabels: {
+                        fontSize: 10,
+                        fontWeight: '500'
+                      }
+                    }}
+                    style={styles.chart}
+                  />
+                  
+                  {/* Tooltip */}
+                  {selectedBar && (
+                    <View style={[
+                      styles.barTooltip,
+                      {
+                        left: (screenWidth - 60) * (barChartData.labels.indexOf(selectedBar.label) + 0.5) / barChartData.labels.length - 50,
+                        top: 20,
+                      }
+                    ]}>
+                      <Text style={styles.barTooltipText}>{selectedBar.label}</Text>
+                      <Text style={styles.barTooltipValue}>{formatWeight(selectedBar.value)}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+                <Text style={styles.chartSubtitle}>Volume (kg) - Last 7 Days</Text>
+              </View>
+            ) : (
+              <View style={styles.noDataContainer}>
+                <Text style={styles.noDataText}>No volume data available</Text>
+              </View>
+            )}
+          </View>
+        </View>
 
       {/* Stats Section */}
       <View style={styles.sectionContainer}>
@@ -1184,13 +1353,7 @@ export default function ProgressScreen() {
           </View>
         </View>
 
-        <View style={styles.sectionCard}>
-          <Text style={styles.chartSectionTitle}>Personal Record</Text>
-          <Text style={styles.prNumber}>
-            {loading ? 'Loading...' : highestWeightLifted}
-          </Text>
-        </View>
-
+        
         <View style={[styles.sectionCard, { marginTop: 16 }]}>
           <Text style={styles.chartSectionTitle}>Most Trained</Text>
           <View style={styles.mostTrainedContainer}>

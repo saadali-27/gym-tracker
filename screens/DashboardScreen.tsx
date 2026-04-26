@@ -6,6 +6,8 @@ import { theme } from '../theme';
 import Card from '../components/Card';
 import Button from '../components/Button';
 
+const formatWeight = (value: number) => `${value.toLocaleString()} kg`;
+
 export default function DashboardScreen() {
   const [totalWorkouts, setTotalWorkouts] = useState(0);
   const [weeklyWorkouts, setWeeklyWorkouts] = useState(0);
@@ -170,65 +172,120 @@ export default function DashboardScreen() {
           </Text>
         </View>
 
-        {/* Top Stats - 3 Cards in a Row */}
+        {/* Fitness Stats - 2x2 Grid */}
         <View style={{
-          flexDirection: 'row',
-          gap: theme.spacing.sm,
+          paddingHorizontal: theme.spacing.lg,
           marginBottom: theme.spacing.lg,
         }}>
-          <Card style={{ flex: 1, padding: theme.spacing.md }}>
-            <Text style={{
-              fontSize: 24,
-              fontWeight: 'bold',
-              color: '#ffffff',
-              textAlign: 'center',
+          <Text style={{
+            fontSize: 20,
+            fontWeight: 'bold',
+            color: theme.colors.text,
+            marginBottom: theme.spacing.md,
+          }}>
+            Fitness Stats
+          </Text>
+          <View style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: theme.spacing.sm,
+          }}>
+            <Card style={{ 
+              width: '48%', 
+              padding: theme.spacing.lg,
+              backgroundColor: theme.colors.card,
+              borderRadius: 16,
             }}>
-              {totalWorkouts}
-            </Text>
-            <Text style={{
-              fontSize: 12,
-              color: theme.colors.subtext,
-              textAlign: 'center',
+              <Text style={{
+                fontSize: 24,
+                fontWeight: 'bold',
+                color: theme.colors.primary,
+                textAlign: 'center',
+                marginBottom: 4,
+              }}>
+                {formatWeight(totalVolume)}
+              </Text>
+              <Text style={{
+                fontSize: 12,
+                color: theme.colors.subtext,
+                textAlign: 'center',
+              }}>
+                Total Volume
+              </Text>
+            </Card>
+            
+            <Card style={{ 
+              width: '48%', 
+              padding: theme.spacing.lg,
+              backgroundColor: theme.colors.card,
+              borderRadius: 16,
             }}>
-              Workouts
-            </Text>
-          </Card>
-          
-          <Card style={{ flex: 1, padding: theme.spacing.md }}>
-            <Text style={{
-              fontSize: 24,
-              fontWeight: 'bold',
-              color: '#ffffff',
-              textAlign: 'center',
+              <Text style={{
+                fontSize: 24,
+                fontWeight: 'bold',
+                color: theme.colors.primary,
+                textAlign: 'center',
+                marginBottom: 4,
+              }}>
+                {totalReps.toLocaleString()}
+              </Text>
+              <Text style={{
+                fontSize: 12,
+                color: theme.colors.subtext,
+                textAlign: 'center',
+              }}>
+                Total Reps
+              </Text>
+            </Card>
+            
+            <Card style={{ 
+              width: '48%', 
+              padding: theme.spacing.lg,
+              backgroundColor: theme.colors.card,
+              borderRadius: 16,
             }}>
-              {weeklyWorkouts}
-            </Text>
-            <Text style={{
-              fontSize: 12,
-              color: theme.colors.subtext,
-              textAlign: 'center',
+              <Text style={{
+                fontSize: 24,
+                fontWeight: 'bold',
+                color: theme.colors.primary,
+                textAlign: 'center',
+                marginBottom: 4,
+              }}>
+                {totalSets}
+              </Text>
+              <Text style={{
+                fontSize: 12,
+                color: theme.colors.subtext,
+                textAlign: 'center',
+              }}>
+                Total Sets
+              </Text>
+            </Card>
+            
+            <Card style={{ 
+              width: '48%', 
+              padding: theme.spacing.lg,
+              backgroundColor: theme.colors.card,
+              borderRadius: 16,
             }}>
-              This Week
-            </Text>
-          </Card>
-          
-          <Card style={{ flex: 1, padding: theme.spacing.md }}>
-            <Text style={{
-              fontSize: 24,
-              fontWeight: 'bold',
-              color: '#ffffff',
-              textAlign: 'center',
-            }}>
-              0
-            </Text>
-            <Text style={{
-              fontSize: 12,
-              color: theme.colors.subtext,
-              textAlign: 'center',
-            }}>
-              Streak
-            </Text>
-          </Card>
+              <Text style={{
+                fontSize: 24,
+                fontWeight: 'bold',
+                color: theme.colors.primary,
+                textAlign: 'center',
+                marginBottom: 4,
+              }}>
+                {mostTrainedMuscle}
+              </Text>
+              <Text style={{
+                fontSize: 12,
+                color: theme.colors.subtext,
+                textAlign: 'center',
+              }}>
+                Most Trained
+              </Text>
+            </Card>
+          </View>
         </View>
 
         {/* Recent Activity */}
@@ -291,115 +348,7 @@ export default function DashboardScreen() {
           )}
         </View>
 
-        {/* Fitness Stats - 2x2 Grid */}
-        <View style={{ marginBottom: theme.spacing.lg }}>
-          <Text style={{
-            fontSize: 20,
-            fontWeight: 'bold',
-            color: theme.colors.text,
-            marginBottom: theme.spacing.md,
-          }}>
-            Fitness Stats
-          </Text>
-          <View style={{
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            gap: theme.spacing.sm,
-          }}>
-            {/* Row 1 */}
-            <Card style={{ 
-              width: '48%', 
-              padding: theme.spacing.md,
-              marginBottom: theme.spacing.sm,
-            }}>
-              <Text style={{
-                fontSize: 24,
-                fontWeight: 'bold',
-                color: '#ffffff',
-                textAlign: 'center',
-                marginBottom: 4,
-              }}>
-                {(totalVolume / 1000).toFixed(1)}k
-              </Text>
-              <Text style={{
-                fontSize: 12,
-                color: theme.colors.subtext,
-                textAlign: 'center',
-              }} numberOfLines={1}>
-                Volume
-              </Text>
-            </Card>
-            
-            <Card style={{ 
-              width: '48%', 
-              padding: theme.spacing.md,
-              marginBottom: theme.spacing.sm,
-            }}>
-              <Text style={{
-                fontSize: 24,
-                fontWeight: 'bold',
-                color: '#ffffff',
-                textAlign: 'center',
-                marginBottom: 4,
-              }}>
-                {totalReps.toLocaleString()}
-              </Text>
-              <Text style={{
-                fontSize: 12,
-                color: theme.colors.subtext,
-                textAlign: 'center',
-              }} numberOfLines={1}>
-                Reps
-              </Text>
-            </Card>
-            
-            {/* Row 2 */}
-            <Card style={{ 
-              width: '48%', 
-              padding: theme.spacing.md,
-            }}>
-              <Text style={{
-                fontSize: 24,
-                fontWeight: 'bold',
-                color: '#ffffff',
-                textAlign: 'center',
-                marginBottom: 4,
-              }}>
-                {totalSets}
-              </Text>
-              <Text style={{
-                fontSize: 12,
-                color: theme.colors.subtext,
-                textAlign: 'center',
-              }} numberOfLines={1}>
-                Sets
-              </Text>
-            </Card>
-            
-            <Card style={{ 
-              width: '48%', 
-              padding: theme.spacing.md,
-            }}>
-              <Text style={{
-                fontSize: 24,
-                fontWeight: 'bold',
-                color: '#ffffff',
-                textAlign: 'center',
-                marginBottom: 4,
-              }}>
-                {mostTrainedMuscle}
-              </Text>
-              <Text style={{
-                fontSize: 12,
-                color: theme.colors.subtext,
-                textAlign: 'center',
-              }} numberOfLines={1}>
-                Top Muscle
-              </Text>
-            </Card>
-          </View>
-        </View>
-
+        
       </ScrollView>
     </View>
   );

@@ -374,10 +374,17 @@ export default function RoutinesScreen() {
                 </View>
                 
                 <TouchableOpacity 
-                  style={styles.addExerciseButton}
                   onPress={() => openExerciseSelection(routine.id)}
+                  style={{ marginBottom: 16 }}
                 >
-                  <Text style={styles.addExerciseButtonText}>+ Add Exercise</Text>
+                  <Text style={{ 
+                    color: theme.colors.primary, 
+                    fontSize: 15, 
+                    fontWeight: '600',
+                    textAlign: 'center'
+                  }}>
+                    + Add Exercise
+                  </Text>
                 </TouchableOpacity>
                 
                 {/* Saved Exercises from Database */}
@@ -614,16 +621,14 @@ const styles = StyleSheet.create({
   },
   routineCard: {
     backgroundColor: theme.colors.card,
+    borderRadius: 16,
     padding: 20,
-    borderRadius: theme.radius.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    marginHorizontal: 16,
   },
   routineInfo: {
     flex: 1,
@@ -852,13 +857,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: theme.colors.border,
-    paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 8,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    paddingHorizontal: 16,
+    marginBottom: 4,
   },
   exerciseName: {
     fontSize: 15,
@@ -867,13 +868,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   removeExerciseButton: {
-    backgroundColor: theme.colors.danger,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: theme.radius.sm,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   removeExerciseButtonText: {
-    color: '#ffffff',
+    color: theme.colors.danger,
     fontSize: 12,
     fontWeight: '600',
   },

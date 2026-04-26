@@ -3,6 +3,7 @@ import { Text, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { theme } from '../theme';
+import { LayoutDashboard, PlusSquare, Clock, TrendingUp, ListChecks } from 'lucide-react-native';
 
 import DashboardScreen from '../screens/DashboardScreen';
 import LogWorkoutScreen from '../screens/LogWorkoutScreen';
@@ -21,13 +22,20 @@ export default function AppNavigator() {
           tabBarActiveTintColor: theme.colors.primary,
           tabBarInactiveTintColor: theme.colors.subtext,
           tabBarStyle: {
-            backgroundColor: theme.colors.background,
+            backgroundColor: theme.colors.card,
+            borderTopWidth: 1,
             borderTopColor: theme.colors.border,
-            height: 65,
-            paddingBottom: 6,
+            height: 70,
+            paddingBottom: 8,
+            paddingTop: 8,
           },
           tabBarLabelStyle: {
-            fontSize: 12,
+            fontSize: 11,
+            fontWeight: '500',
+            marginTop: 4,
+          },
+          tabBarIconStyle: {
+            marginBottom: 2,
           },
         }}
       >
@@ -39,7 +47,7 @@ export default function AppNavigator() {
           tabBarLabel: 'Dashboard',
           tabBarIcon: ({ color, size }) => (
             <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={{ color, fontSize: size - 4, fontWeight: 'bold' }}>Home</Text>
+              <LayoutDashboard size={24} strokeWidth={2} color={color} />
             </View>
           ),
           headerShown: false,
@@ -53,7 +61,7 @@ export default function AppNavigator() {
           tabBarLabel: 'Log Workout',
           tabBarIcon: ({ color, size }) => (
             <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={{ color, fontSize: size - 2, fontWeight: 'bold' }}>+</Text>
+              <PlusSquare size={24} strokeWidth={2} color={color} />
             </View>
           ),
           headerShown: false,
@@ -67,7 +75,7 @@ export default function AppNavigator() {
           tabBarLabel: 'History',
           tabBarIcon: ({ color, size }) => (
             <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={{ color, fontSize: size - 6, fontWeight: 'bold' }}>History</Text>
+              <Clock size={24} strokeWidth={2} color={color} />
             </View>
           ),
           headerShown: false,
@@ -81,7 +89,7 @@ export default function AppNavigator() {
           tabBarLabel: 'Progress',
           tabBarIcon: ({ color, size }) => (
             <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={{ color, fontSize: size - 6, fontWeight: 'bold' }}>Progress</Text>
+              <TrendingUp size={24} strokeWidth={2} color={color} />
             </View>
           ),
           headerShown: false,
@@ -95,7 +103,7 @@ export default function AppNavigator() {
           tabBarLabel: 'Routines',
           tabBarIcon: ({ color, size }) => (
             <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={{ color, fontSize: size - 6, fontWeight: 'bold' }}>Routines</Text>
+              <ListChecks size={24} strokeWidth={2} color={color} />
             </View>
           ),
           headerShown: false,

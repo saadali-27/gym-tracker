@@ -390,8 +390,8 @@ export default function LogWorkoutScreen() {
             </View>
             
             <View style={{
-                backgroundColor: theme.colors.card,
-                borderRadius: 12,
+                backgroundColor: theme.colors.cardSoft,
+                borderRadius: 16,
                 borderWidth: 1,
                 borderColor: theme.colors.border,
                 marginBottom: 16,
@@ -671,14 +671,21 @@ export default function LogWorkoutScreen() {
                   ))}
 
                   {/* Add Set Button */}
-                  <Button
-                    title="+ Add Set"
-                    variant="primary"
+                  <TouchableOpacity
                     onPress={() => addSetToExercise(exercise.exercise_id)}
                     style={{
                       marginTop: theme.spacing.md,
+                      alignItems: 'center',
                     }}
-                  />
+                  >
+                    <Text style={{
+                      color: theme.colors.primary,
+                      fontSize: 15,
+                      fontWeight: '600',
+                    }}>
+                      + Add Set
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </Card>
             ))}
