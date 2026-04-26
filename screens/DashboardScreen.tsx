@@ -5,6 +5,7 @@ import { supabase } from '../services/supabase';
 import { theme } from '../theme';
 import Card from '../components/Card';
 import Button from '../components/Button';
+import { getMostTrainedMuscle } from '../utils/muscleUtils';
 
 const formatWeight = (value: number) => `${value.toLocaleString()} kg`;
 
@@ -70,17 +71,9 @@ export default function DashboardScreen() {
         const sets = entriesData?.length || 0;
         setTotalSets(sets);
 
-        // Calculate most trained muscle group
-        const muscleFreq: { [key: string]: number } = {};
-        entriesData?.forEach(e => {
-          const exercise = getExerciseData(e);
-          const muscleGroup = exercise?.muscle_group;
-          if (muscleGroup) {
-            muscleFreq[muscleGroup] = (muscleFreq[muscleGroup] || 0) + 1;
-          }
-        });
-        const mostMuscle = Object.keys(muscleFreq).reduce((a, b) => muscleFreq[a] > muscleFreq[b] ? a : b, 'None');
-        setMostTrainedMuscle(mostMuscle);
+        // Calculate most trained muscle group using volume
+        const mostTrained = getMostTrainedMuscle(entriesData || []);
+        setMostTrainedMuscle(mostTrained.muscle);
       }
 
       // Fetch total workouts count

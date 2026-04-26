@@ -5,6 +5,7 @@ import { supabase } from '../services/supabase';
 import { theme } from '../theme';
 import { LineChart, BarChart } from 'react-native-chart-kit';
 import RNPickerSelect from 'react-native-picker-select';
+import { getMostTrainedMuscle } from '../utils/muscleUtils';
 
 const formatWeight = (value: number) => `${value.toLocaleString()}`;
 
@@ -828,14 +829,7 @@ export default function ProgressScreen() {
 
       console.log('Previous week total volume:', previousWeekVolume);
 
-      // Calculate muscle group frequency using joined data
-      const muscleFrequency: {[key: string]: number} = {};
-      weeklyEntries.forEach(entry => {
-        const exercise = getExerciseData(entry);
-        if (exercise && exercise.muscle_group) {
-          muscleFrequency[exercise.muscle_group] = (muscleFrequency[exercise.muscle_group] || 0) + 1;
-        }
-      });
+      // Muscle group calculation now handled by getMostTrainedMuscle utility function
 
       // Calculate trend message with meaningful comparisons
       let trendMessage = 'No recent data';
@@ -877,10 +871,8 @@ export default function ProgressScreen() {
       console.log('Total workouts this week (unique sessions):', totalWorkoutsThisWeek);
       console.log('========================');
 
-      // Find most trained muscle group
-      const mostTrained = Object.entries(muscleFrequency).reduce((max, [muscle, count]) => 
-        count > max.count ? { muscle, count } : max, { muscle: 'None', count: 0 }
-      );
+      // Find most trained muscle group using volume
+      const mostTrained = getMostTrainedMuscle(weeklyEntries || []);
       console.log('Most trained muscle group:', mostTrained);
 
       // Calculate highest weight lifted (PR) with exercise details using joined data
@@ -948,7 +940,7 @@ export default function ProgressScreen() {
       }));
 
       setWeeklyVolume(totalWeeklyVolume);
-      setMuscleGroupFrequency(muscleFrequency);
+      setMuscleGroupFrequency({});
       setTrend(trendMessage);
       setTotalWorkoutsThisWeek(totalWorkoutsThisWeek);
       setMostTrainedMuscleGroup(mostTrained.muscle);
