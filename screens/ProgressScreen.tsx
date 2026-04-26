@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Pressable } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../services/supabase';
 import { theme } from '../theme';
@@ -587,6 +587,61 @@ export default function ProgressScreen() {
   const [mostUsedExercise, setMostUsedExercise] = useState('');
   const [recentExercises, setRecentExercises] = useState<any[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedDataPoint, setSelectedDataPoint] = useState<any>(null);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+// Tooltip component
+const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
+  if (!visible || !data) return null;
+
+  // Handle different data structures for weight progression vs volume chart
+  const isVolumeChart = data.label && data.value !== undefined;
+  const title = isVolumeChart ? data.label : data.date;
+  const value = isVolumeChart ? data.value : data.weight;
+
+  return (
+    <View
+      style={[
+        {
+          position: 'absolute',
+          left: x - width / 2,
+          top: y - height - 10,
+          backgroundColor: 'rgba(20,25,45,0.95)',
+          paddingVertical: 6,
+          paddingHorizontal: 10,
+          borderRadius: 12,
+          minWidth: 60,
+          alignItems: 'center',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.3,
+          shadowRadius: 6,
+          elevation: 6,
+        }
+      ]}
+      pointerEvents="none"
+    >
+      <Text style={{ 
+        color: '#E6EAF2', 
+        fontSize: 12, 
+        fontWeight: '500',
+        textAlign: 'center',
+        marginBottom: 4
+      }}>
+        {title}
+      </Text>
+      <Text style={{ 
+        color: '#FFFFFF', 
+        fontSize: 14, 
+        fontWeight: '600',
+        textAlign: 'center'
+      }}>
+        {value} kg
+      </Text>
+    </View>
+  );
+};
   const [stats, setStats] = useState({ totalVolume: 0, totalReps: 0, totalSets: 0 });
   const [muscleGroupVolume, setMuscleGroupVolume] = useState<{[key: string]: number}>({});
   const [chartData, setChartData] = useState<any[]>([]);
@@ -984,29 +1039,36 @@ export default function ProgressScreen() {
 
       console.log('Raw progression entries:', entriesData?.length, 'entries');
 
-      // Collect ALL exercise data points
-      const chartData = entriesData
-        ?.map(entry => {
-          if (entry.workouts && entry.workouts.created_at) {
-            // Parse date correctly without timezone issues
-            const workoutDate = new Date(entry.workouts.created_at);
-            const dateString = workoutDate.toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric'
-            });
+      // Group workouts by date for per-day aggregation
+      const dailyWeightMap = new Map();
 
-            return {
-              date: dateString,
-              weight: entry.weight,
-              reps: entry.reps,
-              sets: entry.sets,
-              fullDate: workoutDate
-            };
+      entriesData?.forEach(entry => {
+        if (entry.workouts && entry.workouts.created_at && entry.exercise_id === exerciseId) {
+          // Parse date correctly without timezone issues
+          const workoutDate = new Date(entry.workouts.created_at);
+          const dateString = workoutDate.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric'
+          });
+
+          // For each day, keep only the maximum weight
+          const currentMax = dailyWeightMap.get(dateString) || 0;
+          if (entry.weight > currentMax) {
+            dailyWeightMap.set(dateString, entry.weight);
           }
-          return null;
-        })
-        .filter(item => item !== null)
-        ?.sort((a, b) => a.fullDate.getTime() - b.fullDate.getTime()) || [];
+        }
+      });
+
+      // Convert to array and sort by date ascending
+      const chartData = Array.from(dailyWeightMap.entries())
+        .map(([dateString, weight]) => ({
+          date: dateString,
+          weight: weight,
+          reps: 1, // Single entry per day
+          sets: 1,
+          fullDate: new Date(dateString)
+        }))
+        .sort((a, b) => a.fullDate.getTime() - b.fullDate.getTime()) || [];
 
       console.log('Final chart data:', chartData);
       setWeightProgressionData(chartData);
@@ -1031,6 +1093,15 @@ export default function ProgressScreen() {
     setSelectedExercise(exerciseId);
     fetchWeightProgression(exerciseId);
   }, [fetchWeightProgression]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   // Memoized chart data
   const lineChartData = useMemo(() => {
@@ -1182,30 +1253,87 @@ export default function ProgressScreen() {
           
           {/* Weight Progression Chart */}
           {selectedExercise && lineChartData ? (
-            <View style={styles.chartCard}>
-              <LineChart
-                data={lineChartData}
-                width={screenWidth - 60}
-                height={180}
-                chartConfig={{
-                  backgroundColor: theme.colors.card,
-                  backgroundGradientFrom: theme.colors.card,
-                  backgroundGradientTo: theme.colors.card,
-                  decimalPlaces: 0,
-                  color: (opacity = 1) => `rgba(79, 140, 255, ${opacity})`,
-                  labelColor: (opacity = 1) => `rgba(154, 164, 178, ${opacity})`,
-                  style: {
-                    borderRadius: 16
-                  },
-                  propsForDots: {
-                    r: '4',
-                    strokeWidth: '2',
-                    stroke: theme.colors.primary
-                  }
-                }}
-                bezier
-                style={styles.chart}
-              />
+            <View>
+              <Pressable style={styles.chartCard} onPress={() => setShowTooltip(false)}>
+                <LineChart
+                  data={lineChartData}
+                  width={screenWidth - 60}
+                  height={180}
+                  chartConfig={{
+                    backgroundColor: theme.colors.card,
+                    backgroundGradientFrom: theme.colors.card,
+                    backgroundGradientTo: theme.colors.card,
+                    decimalPlaces: 0,
+                    color: (opacity = 1) => `rgba(79, 140, 255, ${opacity})`,
+                    labelColor: (opacity = 1) => `rgba(154, 164, 178, ${opacity})`,
+                    style: {
+                      borderRadius: 16
+                    },
+                    propsForDots: {
+                      r: '8',
+                      strokeWidth: '4',
+                      stroke: theme.colors.primary,
+                    }
+                  }}
+                  bezier
+                  style={styles.chart}
+                  onDataPointClick={(data) => {
+                    const originalData = weightProgressionData[data.index];
+                    if (originalData) {
+                      setSelectedDataPoint(originalData);
+                      setShowTooltip(true);
+
+                      // clear previous timer
+                      if (timeoutRef.current) {
+                        clearTimeout(timeoutRef.current);
+                      }
+
+                      // start new timer
+                      timeoutRef.current = setTimeout(() => {
+                        setShowTooltip(false);
+                      }, 2000);
+                    }
+                  }}
+                />
+              </Pressable>
+              {/* Tooltip */}
+              {showTooltip && selectedDataPoint && (
+                <View style={{
+                  position: 'absolute',
+                  left: selectedDataPoint.x - 30,
+                  top: selectedDataPoint.y - 50,
+                  backgroundColor: 'rgba(10,15,30,0.95)',
+                  padding: 8,
+                  paddingHorizontal: 10,
+                  borderRadius: 10,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.2,
+                  shadowRadius: 4,
+                  elevation: 3,
+                  minWidth: 80,
+                  maxWidth: 200,
+                  zIndex: 999,
+                }}>
+                  <Text style={{ 
+                    color: '#E6EAF2', 
+                    fontSize: 12, 
+                    fontWeight: '500',
+                    textAlign: 'center',
+                    marginBottom: 4
+                  }}>
+                    {selectedDataPoint.date}
+                  </Text>
+                  <Text style={{ 
+                    color: '#FFFFFF', 
+                    fontSize: 14, 
+                    fontWeight: '600',
+                    textAlign: 'center'
+                  }}>
+                    {selectedDataPoint.weight} kg
+                  </Text>
+                </View>
+              )}
               
               {/* Progress Summary Below Chart */}
               {hasEnoughProgressionData && (
@@ -1241,21 +1369,26 @@ export default function ProgressScreen() {
           <Text style={styles.sectionTitle}>Volume Progress</Text>
           <View style={styles.chartCard}>
             <Text style={styles.chartTitle}>Muscle Group Volume</Text>
-            {barChartData && barChartData.labels && barChartData.labels.length > 0 ? (
+            {barChartData?.labels && barChartData.labels.length > 0 ? (
               <View style={styles.chartContainer}>
                 <TouchableOpacity
                   onPress={(event) => {
+                    console.log('Bar chart clicked');
                     // Calculate which bar was pressed based on touch position
                     const touchX = event.nativeEvent.locationX;
                     const chartWidth = screenWidth - 60;
-                    const barWidth = chartWidth / barChartData.labels.length;
+                    const barWidth = chartWidth / barChartData!.labels.length;
                     const barIndex = Math.floor(touchX / barWidth);
                     
-                    if (barIndex >= 0 && barIndex < barChartData.labels.length) {
-                      const label = barChartData.labels[barIndex];
+                    console.log('Touch position:', touchX, 'Bar width:', barWidth, 'Bar index:', barIndex);
+                    
+                    if (barIndex >= 0 && barIndex < barChartData!.labels.length) {
+                      const label = barChartData!.labels[barIndex];
                       const volumeData = weeklyVolumeData.find(item => item.muscle === label);
+                      console.log('Found volume data:', volumeData);
                       if (volumeData) {
                         setSelectedBar({ label, value: volumeData.volume });
+                        console.log('Setting selectedBar:', { label, value: volumeData.volume });
                         // Hide tooltip after 2 seconds
                         setTimeout(() => setSelectedBar(null), 2000);
                       }
@@ -1264,7 +1397,7 @@ export default function ProgressScreen() {
                   style={{ position: 'relative' }}
                 >
                   <BarChart
-                    data={barChartData}
+                    data={barChartData!}
                     width={screenWidth - 60}
                     height={180}
                     yAxisLabel=""
@@ -1293,16 +1426,20 @@ export default function ProgressScreen() {
                   
                   {/* Tooltip */}
                   {selectedBar && (
-                    <View style={[
-                      styles.barTooltip,
-                      {
-                        left: (screenWidth - 60) * (barChartData.labels.indexOf(selectedBar.label) + 0.5) / barChartData.labels.length - 50,
-                        top: 20,
-                      }
-                    ]}>
-                      <Text style={styles.barTooltipText}>{selectedBar.label}</Text>
-                      <Text style={styles.barTooltipValue}>{formatWeight(selectedBar.value)}</Text>
-                    </View>
+                    <>
+                      {console.log('Rendering tooltip for:', selectedBar)}
+                      <Tooltip
+                        x={(screenWidth - 60) * (barChartData!.labels.indexOf(selectedBar!.label) + 0.5) / barChartData!.labels.length}
+                        y={50} // Fixed position above the chart instead of using data value
+                        width={150}
+                        height={60}
+                        visible={!!selectedBar}
+                        data={selectedBar}
+                        onHide={() => {
+                          setTimeout(() => setSelectedBar(null), 2000);
+                        }}
+                      />
+                    </>
                   )}
                 </TouchableOpacity>
                 <Text style={styles.chartSubtitle}>Volume (kg) - Last 7 Days</Text>
