@@ -558,7 +558,7 @@ export default function LogWorkoutScreen() {
                   textAlign: 'center',
                   fontWeight: '600',
                 }}>
-                  💪 Routine loaded — log your sets below
+                  💪 Routine loaded log your sets below
                 </Text>
               </Card>
             )}
