@@ -4,6 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../services/supabase';
 import { theme } from '../theme';
 import Card from '../components/Card';
+import Button from '../components/Button';
 
 // STEP 2: SAFE DATE HANDLING
 const safeDate = (value: any) => {
@@ -242,23 +243,12 @@ export default function HistoryScreen() {
                         }) || 'Unknown Date'}
                       </Text>
                       
-                      <TouchableOpacity
-                        style={{
-                          backgroundColor: theme.colors.danger,
-                          paddingHorizontal: 12,
-                          paddingVertical: 6,
-                          borderRadius: theme.radius.sm,
-                        }}
+                      <Button
+                        title="Delete"
+                        variant="danger"
+                        size="small"
                         onPress={() => deleteWorkout(routineGroup.workouts[0]?.id)}
-                      >
-                        <Text style={{ 
-                          color: '#ffffff', 
-                          fontSize: 12, 
-                          fontWeight: '600' 
-                        }}>
-                          Delete
-                        </Text>
-                      </TouchableOpacity>
+                      />
                     </View>
                   </View>
 

@@ -38,12 +38,14 @@ export default function Button({
     const baseStyle: ViewStyle = {
       alignItems: 'center' as const,
       justifyContent: 'center' as const,
-      borderRadius: 14,
+      borderRadius: 16,
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 3,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.25,
+      shadowRadius: 6,
+      elevation: 4,
+      minWidth: 80,
+      flexShrink: 0,
     };
 
     const sizeStyle = getSizeStyle(size);
@@ -81,7 +83,7 @@ export default function Button({
         onPressOut={handlePressOut}
         {...props}
       >
-        <Text style={getTextStyle()}>
+        <Text style={getTextStyle()} numberOfLines={1}>
           {title}
         </Text>
       </TouchableOpacity>
@@ -93,18 +95,21 @@ const getSizeStyle = (size: 'small' | 'medium' | 'large'): ViewStyle => {
   switch (size) {
     case 'small':
       return {
-        paddingVertical: 10,
+        paddingVertical: 12,
         paddingHorizontal: 16,
+        minWidth: 80,
       };
     case 'large':
       return {
-        paddingVertical: 18,
-        paddingHorizontal: 24,
+        paddingVertical: 14,
+        paddingHorizontal: 20,
+        minWidth: 100,
       };
     default: // medium
       return {
-        paddingVertical: 14,
-        paddingHorizontal: 20,
+        paddingVertical: 12,
+        paddingHorizontal: 18,
+        minWidth: 90,
       };
   }
 };
@@ -119,17 +124,17 @@ const getVariantStyle = (variant: 'primary' | 'secondary' | 'danger', disabled: 
   switch (variant) {
     case 'danger':
       return {
-        backgroundColor: 'rgba(255,107,107,0.15)',
+        backgroundColor: 'rgba(255,107,107,0.18)',
       };
     case 'secondary':
       return {
-        backgroundColor: 'rgba(255,255,255,0.06)',
+        backgroundColor: 'rgba(255,255,255,0.08)',
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
+        borderColor: 'rgba(255,255,255,0.12)',
       };
     default: // primary
       return {
-        backgroundColor: '#7C9EFF',
+        backgroundColor: '#6C8CFF',
       };
   }
 };
@@ -142,11 +147,11 @@ const getTextSizeStyle = (size: 'small' | 'medium' | 'large'): TextStyle => {
       };
     case 'large':
       return {
-        fontSize: 18,
+        fontSize: 16,
       };
     default: // medium
       return {
-        fontSize: 16,
+        fontSize: 15,
       };
   }
 };
@@ -169,7 +174,7 @@ const getTextVariantStyle = (variant: 'primary' | 'secondary' | 'danger', disabl
       };
     default: // primary
       return {
-        color: '#0A0F1E',
+        color: '#FFFFFF',
       };
   }
 };
