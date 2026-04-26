@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, TouchableOpacityProps, ViewStyle, TextStyle } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, TouchableOpacityProps, ViewStyle, TextStyle, Animated } from 'react-native';
 import { theme } from '../theme';
 
 interface ButtonProps extends TouchableOpacityProps {
@@ -17,6 +17,23 @@ export default function Button({
   style,
   ...props 
 }: ButtonProps) {
+  const scaleValue = React.useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.timing(scaleValue, {
+      toValue: 0.96,
+      duration: 150,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.timing(scaleValue, {
+      toValue: 1,
+      duration: 150,
+      useNativeDriver: true,
+    }).start();
+  };
   const getButtonStyle = (): ViewStyle => {
     const baseStyle: ViewStyle = {
       alignItems: 'center' as const,
@@ -48,18 +65,27 @@ export default function Button({
   };
 
   return (
-    <TouchableOpacity 
+    <Animated.View 
       style={[
         getButtonStyle(),
-        style
+        style,
+        {
+          transform: [{ scale: scaleValue }]
+        }
       ]} 
-      disabled={disabled}
-      {...props}
     >
-      <Text style={getTextStyle()}>
-        {title}
-      </Text>
-    </TouchableOpacity>
+      <TouchableOpacity 
+        style={StyleSheet.absoluteFillObject}
+        disabled={disabled}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        {...props}
+      >
+        <Text style={getTextStyle()}>
+          {title}
+        </Text>
+      </TouchableOpacity>
+    </Animated.View>
   );
 }
 

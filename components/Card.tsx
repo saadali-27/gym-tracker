@@ -15,22 +15,24 @@ export default function Card({
   style, 
   padding = theme.spacing.md,
   marginBottom = theme.spacing.md,
-  borderRadius = theme.radius.md,
+  borderRadius = 18,
   ...props 
 }: CardProps) {
   return (
     <View 
       style={[
         {
-          backgroundColor: theme.colors.card,
+          backgroundColor: 'rgba(255,255,255,0.05)',
+          borderWidth: 1,
+          borderColor: 'rgba(255,255,255,0.08)',
           borderRadius: borderRadius,
           padding: padding,
           marginBottom: marginBottom,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-          elevation: 3,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.15,
+          shadowRadius: 8,
+          elevation: 5,
         }, 
         style
       ]} 
