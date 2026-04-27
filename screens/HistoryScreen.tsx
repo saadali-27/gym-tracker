@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../services/supabase';
 import { theme } from '../theme';
 import Card from '../components/Card';
@@ -15,6 +16,7 @@ const safeDate = (value: any) => {
 export default function HistoryScreen() {
   const [groupedWorkouts, setGroupedWorkouts] = useState<any>({});
   const [loading, setLoading] = useState(true);
+  const insets = useSafeAreaInsets();
 
   useFocusEffect(
     React.useCallback(() => {
@@ -146,7 +148,12 @@ export default function HistoryScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + 80
+        }}
+      >
         <View style={styles.header}>
           <Text style={styles.title}>History</Text>
           <Text style={styles.subtitle}>Your workout timeline</Text>
@@ -344,6 +351,7 @@ const styles = StyleSheet.create({
   section: {
     paddingHorizontal: 20,
     marginBottom: 24,
+    paddingTop: 12,
   },
   dateHeader: {
     marginBottom: 12,

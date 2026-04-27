@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, Text, TextInput, TouchableOpacity, View, Alert, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../services/supabase';
 import { theme } from '../theme';
@@ -46,6 +47,7 @@ export default function LogWorkoutScreen() {
   const [selectedRoutine, setSelectedRoutine] = useState<string>('');
   const [showRoutineDropdown, setShowRoutineDropdown] = useState(false);
   const [routineLoaded, setRoutineLoaded] = useState(false);
+  const insets = useSafeAreaInsets();
 
   useFocusEffect(
     React.useCallback(() => {
@@ -359,8 +361,16 @@ export default function LogWorkoutScreen() {
 };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-      <ScrollView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <KeyboardAvoidingView 
+      style={{ flex: 1 }} 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView 
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + 80
+        }}
+      >
         <View style={{ padding: 20 }}>
           <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.colors.text, marginBottom: 20 }}>
             Log Workout

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, FlatList } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../services/supabase';
 import { theme } from '../theme';
@@ -32,6 +33,7 @@ export default function RoutinesScreen() {
   const [showExerciseModal, setShowExerciseModal] = useState(false);
   const [selectedRoutineId, setSelectedRoutineId] = useState<string | null>(null);
   const [selectedExercises, setSelectedExercises] = useState<{[key: string]: Exercise[]}>({});
+  const insets = useSafeAreaInsets();
 
   useFocusEffect(
     React.useCallback(() => {
@@ -329,37 +331,7 @@ export default function RoutinesScreen() {
     );
   };
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>My Routines</Text>
-        <Text style={styles.subtitle}>Your workout programs</Text>
-      </View>
-
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>All Routines</Text>
-          <Button 
-            title="+ Create Routine"
-            variant="primary"
-            onPress={() => setShowCreateModal(true)}
-          />
-        </View>
-
-        {loading ? (
-          <View style={styles.loadingCard}>
-            <Text style={styles.cardText}>Loading routines...</Text>
-          </View>
-        ) : routines.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Text style={styles.cardText}>No routines found</Text>
-            <Text style={styles.cardSubtitle}>Create your first routine to get started</Text>
-          </View>
-        ) : (
-          <FlatList
-            data={routines}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item: routine }) => (
+  const renderRoutineItem = ({ item: routine }: { item: Routine }) => (
               <View style={styles.routineCard}>
                 <View style={styles.routineHeader}>
                   <View style={styles.routineInfo}>
@@ -432,13 +404,54 @@ export default function RoutinesScreen() {
                   </View>
                 )}
               </View>
-            )}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.routinesListContainer}
-            ItemSeparatorComponent={() => <View style={styles.routineSeparator} />}
-          />
-        )}
+  );
+
+  const renderListHeader = () => (
+    <>
+      <View style={styles.header}>
+        <Text style={styles.title}>My Routines</Text>
+        <Text style={styles.subtitle}>Your workout programs</Text>
       </View>
+
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>All Routines</Text>
+          <Button 
+            title="+ Create Routine"
+            variant="primary"
+            onPress={() => setShowCreateModal(true)}
+          />
+        </View>
+
+        {loading ? (
+          <View style={styles.loadingCard}>
+            <Text style={styles.cardText}>Loading routines...</Text>
+          </View>
+        ) : routines.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <Text style={styles.cardText}>No routines found</Text>
+            <Text style={styles.cardSubtitle}>Create your first routine to get started</Text>
+          </View>
+        ) : null}
+      </View>
+    </>
+  );
+
+  return (
+    <View style={styles.container}>
+      <FlatList
+        data={routines.length === 0 ? [] : routines}
+        keyExtractor={(item) => item.id}
+        renderItem={renderRoutineItem}
+        ListHeaderComponent={renderListHeader}
+        ItemSeparatorComponent={() => <View style={styles.routineSeparator} />}
+        style={styles.scrollView}
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + 80,
+          paddingHorizontal: 0
+        }}
+        showsVerticalScrollIndicator={false}
+      />
 
       {/* Create Routine Modal */}
       <Modal
@@ -567,14 +580,15 @@ const styles = StyleSheet.create({
   },
   section: {
     paddingHorizontal: 0,
-    marginBottom: 20,
+    marginBottom: 24,
     flex: 1,
+    paddingTop: 12,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
     paddingHorizontal: 24,
   },
   sectionTitle: {
@@ -595,7 +609,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: theme.colors.card,
-    padding: 20,
+    padding: 18,
     borderRadius: theme.radius.md,
     borderWidth: 1,
     borderColor: theme.colors.border,
@@ -669,15 +683,21 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     fontSize: 16,
-    color: theme.colors.subtext,
+    color: '#E6EAF2',
+    fontWeight: '600',
   },
   saveButton: {
     fontSize: 16,
-    color: theme.colors.primary,
+    color: '#0A0F1E',
     fontWeight: '600',
+    backgroundColor: '#7C9EFF',
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: 14,
   },
   saveButtonDisabled: {
     color: theme.colors.border,
+    backgroundColor: theme.colors.border,
   },
   modalContent: {
     flex: 1,
@@ -873,8 +893,14 @@ const styles = StyleSheet.create({
   },
   doneButton: {
     fontSize: 16,
-    color: theme.colors.primary,
+    color: '#E6EAF2',
     fontWeight: '600',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: 14,
   },
   exerciseSelectionItemInfo: {
     flex: 1,
@@ -941,5 +967,8 @@ const styles = StyleSheet.create({
   },
   routineSeparator: {
     height: 12,
+  },
+  scrollView: {
+    flex: 1,
   },
 });

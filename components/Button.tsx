@@ -38,12 +38,7 @@ export default function Button({
     const baseStyle: ViewStyle = {
       alignItems: 'center' as const,
       justifyContent: 'center' as const,
-      borderRadius: 16,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 3 },
-      shadowOpacity: 0.25,
-      shadowRadius: 6,
-      elevation: 4,
+      borderRadius: 14,
       minWidth: 80,
       flexShrink: 0,
     };
@@ -95,14 +90,14 @@ const getSizeStyle = (size: 'small' | 'medium' | 'large'): ViewStyle => {
   switch (size) {
     case 'small':
       return {
-        paddingVertical: 12,
+        paddingVertical: 10,
         paddingHorizontal: 16,
         minWidth: 80,
       };
     case 'large':
       return {
-        paddingVertical: 14,
-        paddingHorizontal: 20,
+        paddingVertical: 12,
+        paddingHorizontal: 18,
         minWidth: 100,
       };
     default: // medium
@@ -134,7 +129,7 @@ const getVariantStyle = (variant: 'primary' | 'secondary' | 'danger', disabled: 
       };
     default: // primary
       return {
-        backgroundColor: '#6C8CFF',
+        backgroundColor: '#7C9EFF',
       };
   }
 };
@@ -174,7 +169,7 @@ const getTextVariantStyle = (variant: 'primary' | 'secondary' | 'danger', disabl
       };
     default: // primary
       return {
-        color: '#FFFFFF',
+        color: '#0A0F1E',
       };
   }
 };

@@ -13,8 +13,8 @@ interface CardProps extends ViewProps {
 export default function Card({ 
   children, 
   style, 
-  padding = theme.spacing.md,
-  marginBottom = theme.spacing.md,
+  padding = 18,
+  marginBottom = 16,
   borderRadius = 18,
   ...props 
 }: CardProps) {

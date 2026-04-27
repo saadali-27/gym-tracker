@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Pressable } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../services/supabase';
 import { theme } from '../theme';
@@ -35,7 +36,8 @@ const styles = StyleSheet.create({
   },
   section: {
     paddingHorizontal: 20,
-    marginBottom: 32,
+    marginBottom: 24,
+    paddingTop: 12,
   },
   sectionTitle: {
     fontSize: 20,
@@ -45,7 +47,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: theme.colors.card,
-    padding: 20,
+    padding: 18,
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -70,13 +72,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
-    marginBottom: 20,
+    marginBottom: 24,
   },
   measurementCard: {
     flex: 1,
     minWidth: '45%',
     backgroundColor: theme.colors.card,
-    padding: 20,
+    padding: 16,
     borderRadius: theme.radius.md,
     alignItems: 'center',
     shadowColor: '#000',
@@ -84,7 +86,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    marginBottom: 8,
+    marginBottom: 16,
   },
   measurementLabel: {
     fontSize: 14,
@@ -134,12 +136,12 @@ const styles = StyleSheet.create({
   statsGrid: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 20,
+    marginBottom: 24,
   },
   statCard: {
     flex: 1,
     backgroundColor: theme.colors.card,
-    padding: 20,
+    padding: 16,
     borderRadius: theme.radius.md,
     alignItems: 'center',
     shadowColor: '#000',
@@ -147,7 +149,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    marginBottom: 8,
+    marginBottom: 16,
   },
   statNumber: {
     fontSize: 24,
@@ -237,7 +239,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     color: theme.colors.text,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   exerciseChip: {
     backgroundColor: theme.colors.border,
@@ -262,13 +264,13 @@ const styles = StyleSheet.create({
   },
   chartContainer: {
     alignItems: 'center',
-    marginVertical: 16,
+    marginVertical: 12,
   },
   chartTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: theme.colors.text,
-    marginBottom: 16,
+    marginBottom: 12,
     textAlign: 'center',
   },
   chart: {
@@ -590,6 +592,7 @@ export default function ProgressScreen() {
   const [selectedDataPoint, setSelectedDataPoint] = useState<any>(null);
   const [showTooltip, setShowTooltip] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const insets = useSafeAreaInsets();
 
 // Tooltip component
 const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
@@ -1168,7 +1171,13 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.scrollView} 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + 80
+        }}
+      >
         <View style={styles.header}>
           <Text style={styles.title}>Progress</Text>
           <Text style={styles.subtitle}>Track your fitness journey</Text>

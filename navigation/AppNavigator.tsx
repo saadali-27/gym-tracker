@@ -15,7 +15,35 @@ const Tab = createBottomTabNavigator();
 
 export default function AppNavigator() {
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={{
+      dark: true,
+      colors: {
+        background: '#0A0F1E',
+        card: '#121826',
+        text: '#E6EAF2',
+        border: '#1F2937',
+        notification: '#4F8CFF',
+        primary: '#4F8CFF',
+      },
+      fonts: {
+        regular: {
+          fontFamily: 'System',
+          fontWeight: '400' as const,
+        },
+        medium: {
+          fontFamily: 'System',
+          fontWeight: '500' as const,
+        },
+        bold: {
+          fontFamily: 'System',
+          fontWeight: '700' as const,
+        },
+        heavy: {
+          fontFamily: 'System',
+          fontWeight: '800' as const,
+        },
+      }
+    }}>
       <Tab.Navigator
         screenOptions={{
           headerShown: false,
