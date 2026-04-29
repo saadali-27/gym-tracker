@@ -1,5 +1,5 @@
-import React from 'react';
-import { Pressable, Text, StyleSheet } from 'react-native';
+import React, { useRef } from 'react';
+import { Pressable, Text, StyleSheet, Animated } from 'react-native';
 
 const AppButton = ({ 
   title, 
@@ -9,6 +9,24 @@ const AppButton = ({
   style = null,
   ...props 
 }) => {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.timing(scale, {
+      toValue: 0.96,
+      duration: 100,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.timing(scale, {
+      toValue: 1,
+      duration: 100,
+      useNativeDriver: true,
+    }).start();
+  };
+
   const getVariantStyles = () => {
     switch (variant) {
       case 'secondary':
@@ -40,29 +58,33 @@ const AppButton = ({
   };
 
   return (
-    <Pressable
-      style={[
-        styles.container,
-        getVariantStyles(),
-        disabled && styles.disabled,
-        style
-      ]}
-      onPress={onPress}
-      disabled={disabled}
-      {...props}
-    >
-      <Text 
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Pressable
         style={[
-          styles.text,
-          { color: getTextColor() },
-          disabled && styles.disabledText
+          styles.container,
+          getVariantStyles(),
+          disabled && styles.disabled,
+          style
         ]}
-        numberOfLines={1}
-        ellipsizeMode="tail"
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        disabled={disabled}
+        {...props}
       >
-        {title}
-      </Text>
-    </Pressable>
+        <Text 
+          style={[
+            styles.text,
+            { color: getTextColor() },
+            disabled && styles.disabledText
+          ]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {title}
+        </Text>
+      </Pressable>
+    </Animated.View>
   );
 };
 

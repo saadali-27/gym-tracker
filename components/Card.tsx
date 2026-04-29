@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet, ViewProps } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, StyleSheet, ViewProps, Animated } from 'react-native';
 import { theme } from '../theme';
 
 interface CardProps extends ViewProps {
@@ -17,9 +17,31 @@ const Card: React.FC<CardProps> = ({
   marginBottom = 16, 
   ...props 
 }) => {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(10)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
   return (
-    <View 
+    <Animated.View
       style={[
+        {
+          opacity,
+          transform: [{ translateY }],
+        },
         {
           backgroundColor: theme.colors.card,
           borderRadius: theme.radius.md,
@@ -38,7 +60,7 @@ const Card: React.FC<CardProps> = ({
       {...props}
     >
       {children}
-    </View>
+    </Animated.View>
   );
 }
 
