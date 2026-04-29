@@ -6,6 +6,7 @@ import { supabase } from '../services/supabase';
 import { theme } from '../theme';
 import Input from '../components/Input';
 import Button from '../components/Button';
+import AppButton from '../components/AppButton';
 
 interface Routine {
   id: string;
@@ -334,21 +335,22 @@ export default function RoutinesScreen() {
   const renderRoutineItem = ({ item: routine }: { item: Routine }) => (
               <View style={styles.routineCard}>
                 <View style={styles.routineHeader}>
-                  <View style={styles.routineInfo}>
-                    <Text style={styles.routineName}>{routine.name}</Text>
-                    <Text style={styles.routineDate}>
-                      {new Date(routine.created_at + 'Z').toLocaleDateString()}
-                    </Text>
+                  <View style={{ flex: 1 }}>
+                    <View style={styles.routineInfo}>
+                      <Text style={styles.routineName}>{routine.name}</Text>
+                      <Text style={styles.routineDate}>
+                        {new Date(routine.created_at + 'Z').toLocaleDateString()}
+                      </Text>
+                    </View>
                   </View>
-                  <Button 
+                  <AppButton 
                     title="Delete"
                     variant="danger"
-                    size="small"
                     onPress={() => deleteRoutine(routine.id)}
                   />
                 </View>
                 
-                <Button 
+                <AppButton 
                   title="+ Add Exercise"
                   variant="secondary"
                   onPress={() => openExerciseSelection(routine.id)}
@@ -364,11 +366,12 @@ export default function RoutinesScreen() {
                     </View>
                     {routine.exercises.map((exercise) => (
                       <View key={exercise.id} style={styles.exerciseItem}>
-                        <Text style={styles.exerciseName}>{exercise.name}</Text>
-                        <Button 
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.exerciseName}>{exercise.name}</Text>
+                        </View>
+                        <AppButton 
                           title="Remove"
                           variant="danger"
-                          size="small"
                           onPress={() => deleteRoutineExercise(routine.id, exercise.id)}
                         />
                       </View>
@@ -383,20 +386,20 @@ export default function RoutinesScreen() {
                       <Text style={styles.selectedExercisesTitle}>
                         Selected to Add ({selectedExercises[routine.id].length})
                       </Text>
-                      <Button 
+                      <AppButton 
                         title="Save"
                         variant="primary"
-                        size="small"
                         onPress={() => saveRoutineExercises(routine.id)}
                       />
                     </View>
                     {selectedExercises[routine.id].map((exercise) => (
                       <View key={exercise.id} style={styles.exerciseItem}>
-                        <Text style={styles.exerciseName}>{exercise.name}</Text>
-                        <Button 
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.exerciseName}>{exercise.name}</Text>
+                        </View>
+                        <AppButton 
                           title="Remove"
                           variant="danger"
-                          size="small"
                           onPress={() => removeExercise(routine.id, exercise.id)}
                         />
                       </View>
@@ -415,8 +418,10 @@ export default function RoutinesScreen() {
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>All Routines</Text>
-          <Button 
+          <View style={{ flex: 1 }}>
+            <Text style={styles.sectionTitle}>All Routines</Text>
+          </View>
+          <AppButton 
             title="+ Create Routine"
             variant="primary"
             onPress={() => setShowCreateModal(true)}

@@ -38,8 +38,9 @@ export default function Button({
     const baseStyle: ViewStyle = {
       alignItems: 'center' as const,
       justifyContent: 'center' as const,
-      borderRadius: 14,
-      minWidth: 80,
+      flexDirection: 'row' as const,
+      borderRadius: 16,
+      minHeight: 44,
       flexShrink: 0,
     };
 
@@ -53,6 +54,7 @@ export default function Button({
     const baseStyle: TextStyle = {
       fontWeight: '600' as const,
       textAlign: 'center' as const,
+      fontSize: 16,
     };
 
     const sizeStyle = getTextSizeStyle(size);
@@ -78,7 +80,7 @@ export default function Button({
         onPressOut={handlePressOut}
         {...props}
       >
-        <Text style={getTextStyle()} numberOfLines={1}>
+        <Text style={getTextStyle()}>
           {title}
         </Text>
       </TouchableOpacity>
@@ -90,21 +92,23 @@ const getSizeStyle = (size: 'small' | 'medium' | 'large'): ViewStyle => {
   switch (size) {
     case 'small':
       return {
-        paddingVertical: 10,
-        paddingHorizontal: 16,
-        minWidth: 80,
+        paddingVertical: 8,
+        paddingHorizontal: 14,
+        borderRadius: 12,
+        alignSelf: 'flex-start' as const,
       };
     case 'large':
       return {
-        paddingVertical: 12,
-        paddingHorizontal: 18,
-        minWidth: 100,
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        width: '100%',
+        borderRadius: 16,
       };
     default: // medium
       return {
         paddingVertical: 12,
-        paddingHorizontal: 18,
-        minWidth: 90,
+        paddingHorizontal: 16,
+        borderRadius: 16,
       };
   }
 };
@@ -138,7 +142,7 @@ const getTextSizeStyle = (size: 'small' | 'medium' | 'large'): TextStyle => {
   switch (size) {
     case 'small':
       return {
-        fontSize: 14,
+        fontSize: 15,
       };
     case 'large':
       return {
@@ -146,7 +150,7 @@ const getTextSizeStyle = (size: 'small' | 'medium' | 'large'): TextStyle => {
       };
     default: // medium
       return {
-        fontSize: 15,
+        fontSize: 16,
       };
   }
 };

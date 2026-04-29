@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../services/supabase';
 import { theme } from '../theme';
 import Card from '../components/Card';
+import AppButton from '../components/AppButton';
 import Button from '../components/Button';
 
 // STEP 2: SAFE DATE HANDLING
@@ -250,10 +251,9 @@ export default function HistoryScreen() {
                         }) || 'Unknown Date'}
                       </Text>
                       
-                      <Button
+                      <AppButton
                         title="Delete"
                         variant="danger"
-                        size="small"
                         onPress={() => deleteWorkout(routineGroup.workouts[0]?.id)}
                       />
                     </View>

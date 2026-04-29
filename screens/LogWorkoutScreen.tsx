@@ -7,6 +7,7 @@ import { theme } from '../theme';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import Card from '../components/Card';
+import AppButton from '../components/AppButton';
 
 interface Routine {
   id: string;
@@ -379,31 +380,32 @@ export default function LogWorkoutScreen() {
           {/* Routine Selection */}
           <View style={{ marginBottom: 20 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <Text style={{ color: theme.colors.text, fontSize: 16, fontWeight: '600', marginBottom: 8 }}>
-                Select Routine (Optional)
-              </Text>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: theme.colors.text, fontSize: 16, fontWeight: '600', marginBottom: 8 }}>
+                  Select Routine (Optional)
+                </Text>
+              </View>
               {routineLoaded && (
-                <Button
+                <AppButton
                   title="Clear Routine"
                   variant="danger"
-                  size="small"
                   onPress={clearRoutine}
                 />
               )}
             </View>
-            
             <View style={{
-                backgroundColor: theme.colors.cardSoft,
-                borderRadius: 16,
-                borderWidth: 1,
-                borderColor: theme.colors.border,
-                marginBottom: 16,
-              }}>
+              backgroundColor: theme.colors.cardSoft,
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: theme.colors.border,
+              marginBottom: 16,
+            }}>
               <TouchableOpacity
                 style={{
-                  height: 40,
+                  paddingVertical: 10,
                   paddingHorizontal: 12,
                   justifyContent: 'center',
+                  minHeight: 44,
                 }}
                 onPress={() => setShowRoutineDropdown(!showRoutineDropdown)}
               >
@@ -415,7 +417,6 @@ export default function LogWorkoutScreen() {
                 </Text>
               </TouchableOpacity>
             </View>
-            
             {showRoutineDropdown && (
               <View style={{
                 position: 'absolute',
@@ -472,7 +473,6 @@ export default function LogWorkoutScreen() {
               </View>
             )}
           </View>
-          
           {routineLoaded && (
             <View style={{
               backgroundColor: theme.colors.primary + '10',
@@ -591,10 +591,9 @@ export default function LogWorkoutScreen() {
                       {exercise.muscle_group} • {exercise.sets.length} sets
                     </Text>
                   </View>
-                  <Button
+                  <AppButton
                     title="Remove"
                     variant="danger"
-                    size="small"
                     onPress={() => removeExerciseFromSession(exercise.exercise_id)}
                   />
                 </View>
@@ -650,17 +649,16 @@ export default function LogWorkoutScreen() {
                       />
 
                       {/* Remove Set Button */}
-                      <Button
+                      <AppButton
                         title="×"
                         variant="danger"
-                        size="small"
                         onPress={() => removeSetFromExercise(exercise.exercise_id, index)}
                       />
                     </View>
                   ))}
 
                   {/* Add Set Button */}
-                  <Button
+                  <AppButton
                     title="+ Add Set"
                     variant="secondary"
                     onPress={() => addSetToExercise(exercise.exercise_id)}
@@ -670,7 +668,7 @@ export default function LogWorkoutScreen() {
             ))}
             
             {/* Save Session Button */}
-            <Button
+            <AppButton
               title={saving 
                 ? 'Saving Session...' 
                 : routineLoaded 
@@ -680,10 +678,6 @@ export default function LogWorkoutScreen() {
               variant="primary"
               onPress={saveWorkoutSession}
               disabled={saving}
-              size="large"
-              style={{
-                marginTop: theme.spacing.lg,
-              }}
             />
           </View>
         )}
