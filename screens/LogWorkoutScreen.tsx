@@ -369,11 +369,11 @@ export default function LogWorkoutScreen() {
       <ScrollView 
         style={{ flex: 1 }}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + 80
+          paddingBottom: 100
         }}
       >
-        <View style={{ padding: 20 }}>
-          <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.colors.text, marginBottom: 20 }}>
+        <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
+          <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.colors.text, marginBottom: 8 }}>
             Log Workout
           </Text>
           
@@ -552,9 +552,9 @@ export default function LogWorkoutScreen() {
 
         {/* Session Exercises Section */}
         {sessionExercises.length > 0 && (
-          <View style={{ marginTop: theme.spacing.lg, paddingHorizontal: 20 }}>
+          <View style={{ marginTop: 24, paddingHorizontal: 16 }}>
             {routineLoaded && (
-              <Card style={{ marginBottom: theme.spacing.lg }}>
+              <Card style={{ marginBottom: 16 }}>
                 <Text style={{ 
                   fontSize: 16, 
                   color: theme.colors.text, 
@@ -567,13 +567,13 @@ export default function LogWorkoutScreen() {
             )}
             
             {sessionExercises.map((exercise) => (
-              <Card key={exercise.exercise_id} style={{ marginBottom: theme.spacing.lg }}>
+              <Card key={exercise.exercise_id} style={{ marginBottom: 16 }}>
                 {/* Exercise Header */}
                 <View style={{
                   flexDirection: 'row',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  marginBottom: theme.spacing.md,
+                  marginBottom: 12,
                 }}>
                   <View style={{ flex: 1 }}>
                     <Text style={{
@@ -599,19 +599,19 @@ export default function LogWorkoutScreen() {
                 </View>
 
                 {/* Sets Section */}
-                <View style={{ gap: theme.spacing.sm }}>
+                <View style={{ gap: 8 }}>
                   {exercise.sets.map((set, index) => (
                     <View key={index} style={{
                       flexDirection: 'row',
                       alignItems: 'center',
-                      gap: theme.spacing.sm,
+                      gap: 8,
                     }}>
                       {/* Set Number */}
                       <View style={{
                         backgroundColor: theme.colors.border,
                         paddingHorizontal: 12,
                         paddingVertical: 8,
-                        borderRadius: theme.radius.sm,
+                        borderRadius: 8,
                         minWidth: 60,
                         alignItems: 'center',
                       }}>

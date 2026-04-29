@@ -287,12 +287,13 @@ export default function DashboardScreen() {
             fontSize: 20,
             fontWeight: 'bold',
             color: theme.colors.text,
-            marginBottom: theme.spacing.md,
+            marginTop: 24,
+            marginBottom: 12,
           }}>
             Recent Activity
           </Text>
           {loading ? (
-            <Card>
+            <Card style={{ marginTop: 12 }}>
               <Text style={{ 
                 fontSize: 16, 
                 color: theme.colors.text, 
@@ -302,7 +303,7 @@ export default function DashboardScreen() {
               </Text>
             </Card>
           ) : recentWorkouts.length === 0 ? (
-            <Card>
+            <Card style={{ marginTop: 12 }}>
               <Text style={{ 
                 fontSize: 16, 
                 color: theme.colors.text, 
@@ -312,8 +313,11 @@ export default function DashboardScreen() {
               </Text>
             </Card>
           ) : (
-            recentWorkouts.map((workout) => (
-              <Card key={workout.id} style={{ marginBottom: theme.spacing.md }}>
+            recentWorkouts.map((workout, index) => (
+              <Card key={workout.id} style={{ 
+                marginBottom: theme.spacing.md,
+                marginTop: index === 0 ? 12 : 0 
+              }}>
                 <Text style={{
                   fontSize: 16,
                   fontWeight: 'bold',

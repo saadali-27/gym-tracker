@@ -452,7 +452,7 @@ export default function RoutinesScreen() {
         ItemSeparatorComponent={() => <View style={styles.routineSeparator} />}
         style={styles.scrollView}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + 80,
+          paddingBottom: 100,
           paddingHorizontal: 0
         }}
         showsVerticalScrollIndicator={false}
@@ -567,6 +567,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
+    paddingHorizontal: 16,
+    paddingTop: 10,
   },
   header: {
     paddingHorizontal: 24,
@@ -600,6 +602,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     color: theme.colors.text,
+    marginBottom: 8,
   },
   createButton: {
     backgroundColor: theme.colors.primary,
@@ -807,8 +810,10 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   // Exercise selection list styles
+  exerciseSelection: {
+    marginTop: 24,
+  },
   exerciseSelectionList: {
-    marginTop: 16,
     backgroundColor: theme.colors.background,
     borderRadius: theme.radius.sm,
     borderWidth: 1,

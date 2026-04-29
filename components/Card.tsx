@@ -10,29 +10,28 @@ interface CardProps extends ViewProps {
   borderRadius?: number;
 }
 
-export default function Card({ 
+const Card: React.FC<CardProps> = ({ 
   children, 
   style, 
-  padding = 18,
-  marginBottom = 16,
-  borderRadius = 18,
+  padding = 18, 
+  marginBottom = 16, 
   ...props 
-}: CardProps) {
+}) => {
   return (
     <View 
       style={[
         {
-          backgroundColor: 'rgba(255,255,255,0.05)',
+          backgroundColor: theme.colors.card,
+          borderRadius: theme.radius.md,
           borderWidth: 1,
-          borderColor: 'rgba(255,255,255,0.08)',
-          borderRadius: borderRadius,
-          padding: padding,
-          marginBottom: marginBottom,
+          borderColor: theme.colors.border,
+          padding,
+          marginBottom,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.15,
-          shadowRadius: 8,
-          elevation: 5,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 3,
         }, 
         style
       ]} 
@@ -42,3 +41,5 @@ export default function Card({
     </View>
   );
 }
+
+export default Card;

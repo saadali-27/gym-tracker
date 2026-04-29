@@ -14,6 +14,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
+    paddingHorizontal: 16,
+    paddingTop: 10,
   },
   scrollView: {
     flex: 1,
@@ -390,18 +392,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   mostUsedExercise: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.accent,
-    textAlign: 'center',
-  },
-  recentExercisesContainer: {
-    marginTop: 20,
-  },
-  recentExercisesList: {
-    gap: 8,
-  },
-  recentExerciseItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -1175,7 +1165,7 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
         style={styles.scrollView} 
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + 80
+          paddingBottom: 100
         }}
       >
         <View style={styles.header}>

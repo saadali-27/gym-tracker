@@ -152,7 +152,7 @@ export default function HistoryScreen() {
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + 80
+          paddingBottom: 100
         }}
       >
         <View style={styles.header}>
@@ -329,6 +329,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
+    paddingHorizontal: 16,
+    paddingTop: 10,
   },
   scrollView: {
     flex: 1,
