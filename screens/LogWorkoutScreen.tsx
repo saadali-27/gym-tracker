@@ -672,7 +672,7 @@ export default function LogWorkoutScreen() {
               title={saving 
                 ? 'Saving Session...' 
                 : routineLoaded 
-                  ? '💪 Save Routine Workout' 
+                  ? 'Save Routine Workout' 
                   : 'Save Workout Session'
               }
               variant="primary"
