@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { ScrollView, Text, TextInput, TouchableOpacity, View, Alert, KeyboardAvoidingView, Platform, StyleSheet, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import { StatusBar } from 'expo-status-bar';
 import { supabase } from '../services/supabase';
 import { theme } from '../theme';
 import Input from '../components/Input';
@@ -395,6 +396,7 @@ export default function LogWorkoutScreen() {
       style={{ flex: 1 }} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      <StatusBar style="light" />
       <ScrollView 
         style={{ flex: 1 }}
         contentContainerStyle={{

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { supabase } from '../services/supabase';
 import { theme } from '../theme';
 import Card from '../components/Card';
@@ -148,7 +149,8 @@ export default function HistoryScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <StatusBar style="light" />
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={{

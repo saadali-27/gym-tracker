@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { StatusBar } from 'expo-status-bar';
 import { supabase } from '../services/supabase';
 import { theme } from '../theme';
 import Card from '../components/Card';
@@ -143,6 +144,7 @@ export default function DashboardScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <StatusBar style="light" />
       <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
         <View style={{ 
           paddingHorizontal: theme.spacing.lg, 

@@ -2,6 +2,7 @@ import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Pressable, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import { StatusBar } from 'expo-status-bar';
 import { supabase } from '../services/supabase';
 import { theme } from '../theme';
 import { LineChart, BarChart } from 'react-native-chart-kit';
@@ -1190,6 +1191,7 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
 
   return (
     <View style={styles.container}>
+      <StatusBar style="light" />
       <ScrollView 
         style={styles.scrollView} 
         showsVerticalScrollIndicator={false}
