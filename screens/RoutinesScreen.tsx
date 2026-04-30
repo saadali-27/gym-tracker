@@ -551,31 +551,50 @@ export default function RoutinesScreen() {
                   
                   return (
                     <TouchableOpacity
-                      style={[
-                        styles.exerciseSelectionItem,
-                        isSelected && styles.exerciseSelectionItemSelected
-                      ]}
+                      style={{
+                        paddingVertical: 14,
+                        paddingHorizontal: 16,
+                        marginBottom: 12,
+                        borderRadius: 16,
+                        backgroundColor: isSelected ? 'rgba(124,158,255,0.15)' : 'rgba(255,255,255,0.04)',
+                        minHeight: 64,
+                        justifyContent: 'center',
+                      }}
                       onPress={() => selectExercise(item)}
                     >
-                      <View style={styles.exerciseSelectionItemInfo}>
-                        <Text style={[
-                          styles.exerciseSelectionItemName,
-                          isSelected && styles.exerciseSelectionItemNameSelected
-                        ]}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{
+                          fontSize: 16,
+                          fontWeight: '600',
+                          color: '#E6EAF2',
+                          marginBottom: 4,
+                        }}>
                           {item.name}
                         </Text>
-                        <Text style={styles.exerciseSelectionItemMuscle}>
+                        <Text style={{
+                          fontSize: 14,
+                          color: '#9AA4B2',
+                          opacity: 0.7,
+                        }}>
                           {item.muscle_group}
                         </Text>
                       </View>
                       {isSelected && (
-                        <Text style={styles.exerciseSelectionItemCheck}>✓</Text>
+                        <Text style={{
+                          fontSize: 18,
+                          color: '#7C9EFF',
+                          fontWeight: '600',
+                        }}>✓</Text>
                       )}
                     </TouchableOpacity>
                   );
                 }}
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.exerciseListContainer}
+                contentContainerStyle={{
+                  paddingHorizontal: 16,
+                  paddingTop: 12,
+                  paddingBottom: 140,
+                }}
               />
             )}
           </View>
