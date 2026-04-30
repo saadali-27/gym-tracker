@@ -400,7 +400,9 @@ export default function LogWorkoutScreen() {
       <ScrollView 
         style={{ flex: 1 }}
         contentContainerStyle={{
-          paddingBottom: 100
+          paddingHorizontal: 16,
+          paddingTop: 12,
+          paddingBottom: 140
         }}
       >
         <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
@@ -555,12 +557,13 @@ export default function LogWorkoutScreen() {
                 key={ex.id}
                 onPress={() => addExerciseToSession(ex)}
                 style={{
-                  backgroundColor: theme.colors.card,
-                  padding: 14,
-                  borderBottomWidth: 1,
-                  borderBottomColor: theme.colors.border,
-                  marginBottom: 8,
-                  borderRadius: 8,
+                  paddingVertical: 16,
+                  paddingHorizontal: 16,
+                  marginBottom: 12,
+                  borderRadius: 16,
+                  backgroundColor: 'rgba(255,255,255,0.04)',
+                  minHeight: 64,
+                  justifyContent: 'center',
                 }}
               >
                 <Text style={{ 
@@ -572,8 +575,8 @@ export default function LogWorkoutScreen() {
                   {ex.name}
                 </Text>
                 <Text style={{ 
-                  fontSize: 14, 
-                  color: theme.colors.subtext 
+                  fontSize: 13, 
+                  color: '#9AA4B2' 
                 }}>
                   {ex.muscle_group || 'No muscle group'}
                 </Text>

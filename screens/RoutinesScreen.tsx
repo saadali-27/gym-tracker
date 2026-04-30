@@ -367,7 +367,18 @@ export default function RoutinesScreen() {
                     {routine.exercises.map((exercise) => (
                       <View key={exercise.id} style={styles.exerciseItem}>
                         <View style={{ flex: 1 }}>
-                          <Text style={styles.exerciseName}>{exercise.name}</Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                            <View style={{
+                              width: 6,
+                              height: 6,
+                              borderRadius: 3,
+                              backgroundColor: '#7C9EFF',
+                              marginRight: 10,
+                            }} />
+                            <Text style={{ color: '#E6EAF2', fontSize: 15 }}>
+                              {exercise.name}
+                            </Text>
+                          </View>
                         </View>
                         <AppButton 
                           title="Remove"
@@ -395,7 +406,18 @@ export default function RoutinesScreen() {
                     {selectedExercises[routine.id].map((exercise) => (
                       <View key={exercise.id} style={styles.exerciseItem}>
                         <View style={{ flex: 1 }}>
-                          <Text style={styles.exerciseName}>{exercise.name}</Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                            <View style={{
+                              width: 6,
+                              height: 6,
+                              borderRadius: 3,
+                              backgroundColor: '#7C9EFF',
+                              marginRight: 10,
+                            }} />
+                            <Text style={{ color: '#E6EAF2', fontSize: 15 }}>
+                              {exercise.name}
+                            </Text>
+                          </View>
                         </View>
                         <AppButton 
                           title="Remove"
