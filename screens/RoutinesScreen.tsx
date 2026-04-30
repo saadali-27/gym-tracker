@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, FlatList } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, FlatList, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../services/supabase';
 import { theme } from '../theme';
@@ -34,7 +34,6 @@ export default function RoutinesScreen() {
   const [showExerciseModal, setShowExerciseModal] = useState(false);
   const [selectedRoutineId, setSelectedRoutineId] = useState<string | null>(null);
   const [selectedExercises, setSelectedExercises] = useState<{[key: string]: Exercise[]}>({});
-  const insets = useSafeAreaInsets();
 
   useFocusEffect(
     React.useCallback(() => {
@@ -433,10 +432,29 @@ export default function RoutinesScreen() {
 
   const renderListHeader = () => (
     <>
-      <View style={styles.header}>
-        <Text style={styles.title}>My Routines</Text>
-        <Text style={styles.subtitle}>Your workout programs</Text>
+      <View style={{ 
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 4,
+        marginBottom: 6,
+      }}>
+        <Text style={{ 
+          fontSize: 22, 
+          fontWeight: '600', 
+          color: '#E6EAF2',
+          textAlign: 'center',
+        }}>
+          My Routines
+        </Text>
       </View>
+      <View
+        style={{
+          height: 1,
+          backgroundColor: 'rgba(255,255,255,0.08)',
+          marginTop: 8,
+          marginBottom: 12,
+        }}
+      />
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
@@ -465,7 +483,8 @@ export default function RoutinesScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#0A0F1E' }}>
+      <StatusBar barStyle="light-content" />
       <FlatList
         data={routines.length === 0 ? [] : routines}
         keyExtractor={(item) => item.id}
@@ -600,7 +619,7 @@ export default function RoutinesScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 

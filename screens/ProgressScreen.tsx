@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Pressable, Animated } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { supabase } from '../services/supabase';
@@ -583,7 +583,6 @@ export default function ProgressScreen() {
   const [selectedDataPoint, setSelectedDataPoint] = useState<any>(null);
   const [showTooltip, setShowTooltip] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const insets = useSafeAreaInsets();
   const dropdownAnim = useRef(new Animated.Value(0)).current;
 
   const openDropdown = () => {
@@ -1190,7 +1189,7 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
   }, [weeklyVolumeData]);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#0A0F1E' }}>
       <StatusBar style="light" />
       <ScrollView 
         style={styles.scrollView} 
@@ -1199,10 +1198,29 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
           paddingBottom: 100
         }}
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>Progress</Text>
-          <Text style={styles.subtitle}>Track your fitness journey</Text>
+        <View style={{ 
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginTop: 4,
+          marginBottom: 6,
+        }}>
+          <Text style={{ 
+            fontSize: 22, 
+            fontWeight: '600', 
+            color: '#E6EAF2',
+            textAlign: 'center',
+          }}>
+            Progress
+          </Text>
         </View>
+        <View
+          style={{
+            height: 1,
+            backgroundColor: 'rgba(255,255,255,0.08)',
+            marginTop: 8,
+            marginBottom: 12,
+          }}
+        />
 
         {/* Weekly Volume Section */}
         <View style={styles.sectionContainer}>
@@ -1531,6 +1549,6 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
         </View>
       </View>
     </ScrollView>
-  </View>
+  </SafeAreaView>
 );
 }

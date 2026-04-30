@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { ScrollView, Text, TextInput, TouchableOpacity, View, Alert, KeyboardAvoidingView, Platform, StyleSheet, Animated } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { supabase } from '../services/supabase';
@@ -49,7 +49,6 @@ export default function LogWorkoutScreen() {
   const [selectedRoutine, setSelectedRoutine] = useState<string>('');
   const [showRoutineDropdown, setShowRoutineDropdown] = useState(false);
   const [routineLoaded, setRoutineLoaded] = useState(false);
-  const insets = useSafeAreaInsets();
   const dropdownAnim = useRef(new Animated.Value(0)).current;
 
   const openDropdown = () => {
@@ -392,11 +391,12 @@ export default function LogWorkoutScreen() {
 };
 
   return (
-    <KeyboardAvoidingView 
-      style={{ flex: 1 }} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <StatusBar style="light" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#0A0F1E' }}>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <StatusBar style="light" />
       <ScrollView 
         style={{ flex: 1 }}
         contentContainerStyle={{
@@ -405,12 +405,31 @@ export default function LogWorkoutScreen() {
           paddingBottom: 140
         }}
       >
-        <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
-          <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.colors.text, marginBottom: 8 }}>
+        <View style={{ 
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginTop: 4,
+          marginBottom: 6,
+        }}>
+          <Text style={{ 
+            fontSize: 22, 
+            fontWeight: '600', 
+            color: '#E6EAF2',
+            textAlign: 'center',
+          }}>
             Log Workout
           </Text>
-          
-          {/* Routine Selection */}
+        </View>
+        <View
+          style={{
+            height: 1,
+            backgroundColor: 'rgba(255,255,255,0.08)',
+            marginTop: 8,
+            marginBottom: 12,
+          }}
+        />
+
+        {/* Routine Selection */}
           <View style={{ marginBottom: 20 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <View style={{ flex: 1 }}>
@@ -532,7 +551,8 @@ export default function LogWorkoutScreen() {
             </View>
           )}
           
-          <Input
+          <View>
+            <Input
             style={{
               marginBottom: 20,
               backgroundColor: theme.colors.card,
@@ -728,5 +748,6 @@ export default function LogWorkoutScreen() {
         )}
       </ScrollView>
     </KeyboardAvoidingView>
+  </SafeAreaView>
   );
 }

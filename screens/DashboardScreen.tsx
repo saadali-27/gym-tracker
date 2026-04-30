@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { supabase } from '../services/supabase';
@@ -143,29 +144,32 @@ export default function DashboardScreen() {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#0A0F1E' }}>
       <StatusBar style="light" />
       <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
         <View style={{ 
-          paddingHorizontal: theme.spacing.lg, 
-          paddingTop: 60, 
-          paddingBottom: 16 
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginTop: 4,
+          marginBottom: 6,
         }}>
           <Text style={{ 
-            fontSize: 32, 
-            fontWeight: 'bold', 
-            color: theme.colors.text, 
-            marginBottom: 4 
+            fontSize: 22, 
+            fontWeight: '600', 
+            color: '#E6EAF2',
+            textAlign: 'center',
           }}>
             Dashboard
           </Text>
-          <Text style={{ 
-            fontSize: 16, 
-            color: theme.colors.subtext 
-          }}>
-            Welcome back!
-          </Text>
         </View>
+        <View
+          style={{
+            height: 1,
+            backgroundColor: 'rgba(255,255,255,0.08)',
+            marginTop: 8,
+            marginBottom: 12,
+          }}
+        />
 
         {/* Fitness Stats - 2x2 Grid */}
         <View style={{
@@ -349,6 +353,6 @@ export default function DashboardScreen() {
 
         
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }

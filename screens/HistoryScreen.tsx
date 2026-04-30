@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { supabase } from '../services/supabase';
 import { theme } from '../theme';
@@ -18,7 +18,6 @@ const safeDate = (value: any) => {
 export default function HistoryScreen() {
   const [groupedWorkouts, setGroupedWorkouts] = useState<any>({});
   const [loading, setLoading] = useState(true);
-  const insets = useSafeAreaInsets();
 
   useFocusEffect(
     React.useCallback(() => {
@@ -149,7 +148,7 @@ export default function HistoryScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#0A0F1E' }}>
       <StatusBar style="light" />
       <ScrollView 
         style={styles.scrollView}
@@ -157,10 +156,29 @@ export default function HistoryScreen() {
           paddingBottom: 100
         }}
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>History</Text>
-          <Text style={styles.subtitle}>Your workout timeline</Text>
+        <View style={{ 
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginTop: 4,
+          marginBottom: 6,
+        }}>
+          <Text style={{ 
+            fontSize: 22, 
+            fontWeight: '600', 
+            color: '#E6EAF2',
+            textAlign: 'center',
+          }}>
+            History
+          </Text>
         </View>
+        <View
+          style={{
+            height: 1,
+            backgroundColor: 'rgba(255,255,255,0.08)',
+            marginTop: 8,
+            marginBottom: 12,
+          }}
+        />
 
         {loading ? (
           <View style={{ marginTop: theme.spacing.lg }}>
@@ -322,7 +340,7 @@ export default function HistoryScreen() {
           ))
         )}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
