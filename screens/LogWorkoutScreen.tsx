@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { ScrollView, Text, TextInput, TouchableOpacity, View, Alert, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { ScrollView, Text, TextInput, TouchableOpacity, View, Alert, KeyboardAvoidingView, Platform, StyleSheet, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../services/supabase';
@@ -49,6 +49,35 @@ export default function LogWorkoutScreen() {
   const [showRoutineDropdown, setShowRoutineDropdown] = useState(false);
   const [routineLoaded, setRoutineLoaded] = useState(false);
   const insets = useSafeAreaInsets();
+  const dropdownAnim = useRef(new Animated.Value(0)).current;
+
+  const openDropdown = () => {
+    Animated.timing(dropdownAnim, {
+      toValue: 1,
+      duration: 150,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const closeDropdown = () => {
+    Animated.timing(dropdownAnim, {
+      toValue: 0,
+      duration: 120,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const dropdownStyle = {
+    opacity: dropdownAnim,
+    transform: [
+      {
+        translateY: dropdownAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [-5, 0],
+        }),
+      },
+    ],
+  };
 
   useFocusEffect(
     React.useCallback(() => {
@@ -407,7 +436,15 @@ export default function LogWorkoutScreen() {
                   justifyContent: 'center',
                   minHeight: 44,
                 }}
-                onPress={() => setShowRoutineDropdown(!showRoutineDropdown)}
+                onPress={() => {
+                  if (!showRoutineDropdown) {
+                    setShowRoutineDropdown(true);
+                    openDropdown();
+                  } else {
+                    closeDropdown();
+                    setTimeout(() => setShowRoutineDropdown(false), 120);
+                  }
+                }}
               >
                 <Text style={{ fontSize: 16, color: theme.colors.text }}>
                   {selectedRoutine 
@@ -418,23 +455,26 @@ export default function LogWorkoutScreen() {
               </TouchableOpacity>
             </View>
             {showRoutineDropdown && (
-              <View style={{
-                position: 'absolute',
-                top: 70,
-                left: 20,
-                right: 20,
-                backgroundColor: theme.colors.card,
-                borderWidth: 1,
-                borderColor: theme.colors.border,
-                borderRadius: 8,
-                maxHeight: 200,
-                zIndex: 1000,
-                elevation: 5,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-              }}>
+              <Animated.View style={[
+                dropdownStyle,
+                {
+                  position: 'absolute',
+                  top: 70,
+                  left: 20,
+                  right: 20,
+                  backgroundColor: theme.colors.card,
+                  borderWidth: 1,
+                  borderColor: theme.colors.border,
+                  borderRadius: 8,
+                  maxHeight: 200,
+                  zIndex: 1000,
+                  elevation: 5,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 4,
+                }
+              ]}>
                 <ScrollView>
                   {routines.length === 0 ? (
                     <TouchableOpacity
@@ -470,7 +510,7 @@ export default function LogWorkoutScreen() {
                     </>
                   )}
                 </ScrollView>
-              </View>
+              </Animated.View>
             )}
           </View>
           {routineLoaded && (

@@ -200,7 +200,7 @@ export default function HistoryScreen() {
               {/* STEP 4: UI DISPLAY - Date Header */}
               <View style={styles.dateHeader}>
                 <Text style={styles.dateText}>
-                  {safeDate(Object.values(routineGroups)[0]?.workouts?.[0]?.date)?.toLocaleDateString('en-US', {
+                  {safeDate((Object.values(routineGroups)[0] as any)?.workouts?.[0]?.date)?.toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'short',
                     day: 'numeric'

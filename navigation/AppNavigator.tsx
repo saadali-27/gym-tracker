@@ -5,11 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { theme } from '../theme';
 import { LayoutDashboard, PlusSquare, Clock, TrendingUp, ListChecks } from 'lucide-react-native';
 
-import DashboardScreen from '../screens/DashboardScreen';
-import LogWorkoutScreen from '../screens/LogWorkoutScreen';
-import HistoryScreen from '../screens/HistoryScreen';
-import ProgressScreen from '../screens/ProgressScreen';
-import RoutinesScreen from '../screens/RoutinesScreen';
+import SwipeWrapper from '../components/SwipeWrapper';
 
 const Tab = createBottomTabNavigator();
 
@@ -47,106 +43,73 @@ export default function AppNavigator() {
       <Tab.Navigator
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: '#7C9EFF',
-          tabBarInactiveTintColor: '#7A8599',
           tabBarStyle: {
-            backgroundColor: 'rgba(10,15,30,0.95)',
+            backgroundColor: '#121826',
+            borderTopColor: '#1F2937',
             borderTopWidth: 1,
-            borderTopColor: 'rgba(255,255,255,0.08)',
-            height: 75,
-            paddingBottom: 10,
-            paddingTop: 10,
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            elevation: 8,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: -2 },
-            shadowOpacity: 0.15,
-            shadowRadius: 12,
+            paddingBottom: 8,
+            paddingTop: 8,
+            height: 60,
           },
+          tabBarActiveTintColor: '#4F8CFF',
+          tabBarInactiveTintColor: '#9CA3AF',
           tabBarLabelStyle: {
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: '500',
-            marginTop: 4,
-          },
-          tabBarIconStyle: {
-            marginBottom: 2,
           },
         }}
       >
-      <Tab.Screen
-        name="Dashboard"
-        component={DashboardScreen}
-        options={{
-          title: 'Dashboard',
-          tabBarLabel: 'Dashboard',
-          tabBarIcon: ({ color, size }) => (
-            <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-              <LayoutDashboard size={24} strokeWidth={2} color={color} />
-            </View>
-          ),
-          headerShown: false,
-        }}
-      />
-      <Tab.Screen
-        name="LogWorkout"
-        component={LogWorkoutScreen}
-        options={{
-          title: 'Log Workout',
-          tabBarLabel: 'Log Workout',
-          tabBarIcon: ({ color, size }) => (
-            <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-              <PlusSquare size={24} strokeWidth={2} color={color} />
-            </View>
-          ),
-          headerShown: false,
-        }}
-      />
-      <Tab.Screen
-        name="History"
-        component={HistoryScreen}
-        options={{
-          title: 'History',
-          tabBarLabel: 'History',
-          tabBarIcon: ({ color, size }) => (
-            <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-              <Clock size={24} strokeWidth={2} color={color} />
-            </View>
-          ),
-          headerShown: false,
-        }}
-      />
-      <Tab.Screen
-        name="Progress"
-        component={ProgressScreen}
-        options={{
-          title: 'Progress',
-          tabBarLabel: 'Progress',
-          tabBarIcon: ({ color, size }) => (
-            <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-              <TrendingUp size={24} strokeWidth={2} color={color} />
-            </View>
-          ),
-          headerShown: false,
-        }}
-      />
-      <Tab.Screen
-        name="Routines"
-        component={RoutinesScreen}
-        options={{
-          title: 'Routines',
-          tabBarLabel: 'Routines',
-          tabBarIcon: ({ color, size }) => (
-            <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-              <ListChecks size={24} strokeWidth={2} color={color} />
-            </View>
-          ),
-          headerShown: false,
-        }}
-      />
-    </Tab.Navigator>
+        <Tab.Screen 
+          name="Home" 
+          component={SwipeWrapper}
+          options={{
+            tabBarLabel: 'Home',
+            tabBarIcon: ({ color, size }) => (
+              <LayoutDashboard size={size} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen 
+          name="Log" 
+          component={SwipeWrapper}
+          options={{
+            tabBarLabel: 'Log',
+            tabBarIcon: ({ color, size }) => (
+              <PlusSquare size={size} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen 
+          name="History" 
+          component={SwipeWrapper}
+          options={{
+            tabBarLabel: 'History',
+            tabBarIcon: ({ color, size }) => (
+              <Clock size={size} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen 
+          name="Progress" 
+          component={SwipeWrapper}
+          options={{
+            tabBarLabel: 'Progress',
+            tabBarIcon: ({ color, size }) => (
+              <TrendingUp size={size} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen 
+          name="Routines" 
+          component={SwipeWrapper}
+          options={{
+            tabBarLabel: 'Routines',
+            tabBarIcon: ({ color, size }) => (
+              <ListChecks size={size} color={color} />
+            ),
+          }}
+        />
+      </Tab.Navigator>
     </NavigationContainer>
   );
 }

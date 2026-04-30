@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Pressable, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../services/supabase';
@@ -583,6 +583,35 @@ export default function ProgressScreen() {
   const [showTooltip, setShowTooltip] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const insets = useSafeAreaInsets();
+  const dropdownAnim = useRef(new Animated.Value(0)).current;
+
+  const openDropdown = () => {
+    Animated.timing(dropdownAnim, {
+      toValue: 1,
+      duration: 150,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const closeDropdown = () => {
+    Animated.timing(dropdownAnim, {
+      toValue: 0,
+      duration: 120,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const dropdownStyle = {
+    opacity: dropdownAnim,
+    transform: [
+      {
+        translateY: dropdownAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [-5, 0],
+        }),
+      },
+    ],
+  };
 
 // Tooltip component
 const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
@@ -1194,7 +1223,15 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
             <View style={styles.customDropdownContainer}>
               <TouchableOpacity 
                 style={styles.dropdownInput}
-                onPress={() => setShowDropdown(!showDropdown)}
+                onPress={() => {
+                  if (!showDropdown) {
+                    setShowDropdown(true);
+                    openDropdown();
+                  } else {
+                    closeDropdown();
+                    setTimeout(() => setShowDropdown(false), 120);
+                  }
+                }}
               >
                 <Text style={styles.dropdownText}>
                   {selectedExercise 
@@ -1208,7 +1245,10 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
               </TouchableOpacity>
               
               {showDropdown && (
-                <View style={styles.dropdownList}>
+                <Animated.View style={[
+                  dropdownStyle,
+                  styles.dropdownList
+                ]}>
                   <ScrollView style={styles.dropdownScroll} nestedScrollEnabled={false}>
                     {userExercises.map((exercise) => (
                       <TouchableOpacity
@@ -1225,7 +1265,7 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
                       </TouchableOpacity>
                     ))}
                   </ScrollView>
-                </View>
+                </Animated.View>
               )}
             </View>
           </View>
