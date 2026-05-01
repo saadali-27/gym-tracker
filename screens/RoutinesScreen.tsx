@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, FlatList, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { supabase } from '../services/supabase';
+import { supabase, getCurrentUser } from '../services/supabase';
 import { theme } from '../theme';
 import Input from '../components/Input';
 import Button from '../components/Button';
@@ -35,51 +35,70 @@ export default function RoutinesScreen() {
   const [selectedRoutineId, setSelectedRoutineId] = useState<string | null>(null);
   const [selectedExercises, setSelectedExercises] = useState<{[key: string]: Exercise[]}>({});
 
+  useEffect(() => {
+    fetchRoutinesWithExercises();
+  }, []);
+
   useFocusEffect(
     React.useCallback(() => {
-      fetchRoutines();
+      fetchRoutinesWithExercises();
       fetchExercises();
     }, [])
   );
 
-  const fetchRoutines = async () => {
-    console.log('🔍 FETCHING ROUTINES WITH EXERCISES');
-    try {
-      const { data, error } = await supabase
-        .from('routines')
-        .select(`
-          *,
-          routine_exercises (
-            exercises (
-              id,
-              name,
-              muscle_group
-            )
-          )
-        `)
-        .order('created_at', { ascending: false });
+  const fetchRoutinesWithExercises = async () => {
+  try {
+    const user = await getCurrentUser();
 
-      if (error) {
-        console.error('Error fetching routines:', error);
-        return;
-      }
-
-      console.log('📥 ROUTINES WITH EXERCISES RESPONSE:', data);
-      
-      // Format data and extract exercises
-      const formattedRoutines = data?.map(routine => ({
-        ...routine,
-        exercises: routine.routine_exercises?.map((re: any) => re.exercises).filter(Boolean) || []
-      })) || [];
-
-      console.log('✅ FORMATTED ROUTINES WITH EXERCISES:', formattedRoutines);
-      setRoutines(formattedRoutines);
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setLoading(false);
+    if (!user) {
+      console.log("No user");
+      setRoutines([]);
+      return;
     }
-  };
+
+    const { data: routinesData, error } = await supabase
+      .from('routines')
+      .select('*')
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.log(error);
+      return;
+    }
+
+    // Get all routine_exercises with exercise details
+    const { data: routineExercises } = await supabase
+      .from('routine_exercises')
+      .select(`
+        *,
+        exercises (
+          id,
+          name,
+          muscle_group
+        )
+      `);
+
+    // Merge them
+    const merged = (routinesData || []).map((routine) => {
+      const exercises = (routineExercises || [])
+        .filter((e) => e.routine_id === routine.id)
+        .map((re) => re.exercises)
+        .filter(Boolean);
+
+      return {
+        ...routine,
+        exercises,
+      };
+    });
+
+    setRoutines(merged);
+
+  } catch (err) {
+    console.log(err);
+  } finally {
+    setLoading(false); // 🔥 THIS IS IMPORTANT
+  }
+};
 
   const fetchExercises = async () => {
     console.log('🔍 FETCHING EXERCISES');
@@ -114,10 +133,16 @@ export default function RoutinesScreen() {
 
     setCreatingRoutine(true);
     try {
+      // Get current user
+      const user = await getCurrentUser();
+      
       // Insert routine into Supabase
       const { data, error } = await supabase
         .from('routines')
-        .insert({ name: newRoutineName.trim() })
+        .insert({
+          name: newRoutineName.trim(),
+          user_id: user?.id
+        })
         .select()
         .single();
 
@@ -133,7 +158,7 @@ export default function RoutinesScreen() {
       // Reset form
       setNewRoutineName('');
       setShowCreateModal(false);
-      fetchRoutines();
+      fetchRoutinesWithExercises();
       
     } catch (error) {
       console.error('Unexpected error:', error);
@@ -169,7 +194,7 @@ export default function RoutinesScreen() {
 
               console.log('✅ Routine deleted successfully');
               Alert.alert('Success', 'Routine deleted successfully');
-              fetchRoutines();
+              fetchRoutinesWithExercises();
               
             } catch (error) {
               console.error('Unexpected error:', error);
@@ -238,53 +263,58 @@ export default function RoutinesScreen() {
     console.log('📋 EXERCISES TO SAVE:', exercisesToSave);
     
     try {
-      // First, delete existing exercises for this routine
-      console.log('🗑️ DELETING EXISTING ROUTINE EXERCISES');
-      const { error: deleteError } = await supabase
-        .from('routine_exercises')
-        .delete()
-        .eq('routine_id', routineId);
-
-      if (deleteError) {
-        console.error('❌ ERROR DELETING EXISTING EXERCISES:', deleteError);
-        Alert.alert('Error', 'Failed to update routine exercises');
-        return;
-      }
-
-      console.log('✅ EXISTING EXERCISES DELETED');
-
-      // Insert new exercises
-      console.log('📤 INSERTING NEW ROUTINE EXERCISES');
+      console.log('� ADDING ROUTINE EXERCISES (APPEND MODE)');
       const routineExercisesData = exercisesToSave.map(exercise => ({
         routine_id: routineId,
         exercise_id: exercise.id
       }));
 
-      console.log('📋 ROUTINE EXERCISES DATA TO INSERT:', routineExercisesData);
+      // Get current user
+      const user = await getCurrentUser();
 
-      const { data, error: insertError } = await supabase
+      // Fetch existing exercises for this routine
+      const { data: existingExercises } = await supabase
         .from('routine_exercises')
-        .insert(routineExercisesData)
-        .select();
+        .select('*')
+        .eq('routine_id', routineId);
 
-      if (insertError) {
-        console.error('❌ ERROR INSERTING ROUTINE EXERCISES:', insertError);
-        console.error('Error details:', JSON.stringify(insertError, null, 2));
-        Alert.alert('Error', 'Failed to save routine exercises');
-        return;
+      // Prevent duplicates
+      const existingExerciseIds = existingExercises?.map(e => e.exercise_id) || [];
+      const newExercises = routineExercisesData.filter(
+        (e) => !existingExerciseIds.includes(e.exercise_id)
+      );
+
+      console.log('📋 ROUTINE EXERCISES DATA TO INSERT:', newExercises);
+
+      // Insert only new ones
+      if (newExercises.length > 0) {
+        const { data, error: insertError } = await supabase
+          .from('routine_exercises')
+          .insert(newExercises)
+          .select();
+
+        if (insertError) {
+          console.error('❌ ERROR INSERTING ROUTINE EXERCISES:', insertError);
+          console.error('Error details:', JSON.stringify(insertError, null, 2));
+          Alert.alert('Error', 'Failed to save routine exercises');
+          return;
+        }
+
+        console.log('✅ ROUTINE EXERCISES SAVED SUCCESSFULLY:', data);
+        Alert.alert('Success', 'Routine exercises saved successfully');
+        
+        // Refresh to show updated exercises
+        fetchRoutinesWithExercises();
+      } else {
+        console.log('ℹ️ NO NEW EXERCISES TO ADD');
+        Alert.alert('Info', 'No new exercises to add');
       }
-
-      console.log('✅ ROUTINE EXERCISES SAVED SUCCESSFULLY:', data);
-      Alert.alert('Success', 'Routine exercises saved successfully');
       
       // Clear selected exercises for this routine
       setSelectedExercises({
         ...selectedExercises,
         [routineId]: []
       });
-      
-      // Refresh routines to show saved exercises
-      fetchRoutines();
       
     } catch (error) {
       console.error('❌ UNEXPECTED ERROR SAVING ROUTINE EXERCISES:', error);
@@ -319,7 +349,7 @@ export default function RoutinesScreen() {
 
               console.log('✅ ROUTINE EXERCISE DELETED SUCCESSFULLY');
               Alert.alert('Success', 'Exercise removed from routine');
-              fetchRoutines();
+              fetchRoutinesWithExercises();
               
             } catch (error) {
               console.error('❌ UNEXPECTED ERROR:', error);

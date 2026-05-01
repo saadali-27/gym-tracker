@@ -3,7 +3,7 @@ import { ScrollView, Text, TextInput, TouchableOpacity, View, Alert, KeyboardAvo
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
-import { supabase } from '../services/supabase';
+import { supabase, getCurrentUser } from '../services/supabase';
 import { theme } from '../theme';
 import Input from '../components/Input';
 import Button from '../components/Button';
@@ -331,11 +331,15 @@ export default function LogWorkoutScreen() {
       String(now.getSeconds()).padStart(2, '0');
 
     console.log("Creating new workout with routine_id:", selectedRoutine);
+    
+    const authUser = await getCurrentUser();
+    
     const { data: newWorkout, error: createError } = await supabase
       .from('workouts')
       .insert({
         date: localDateString,
         routine_id: selectedRoutine || null,
+        user_id: authUser?.id
       })
       .select()
       .single();
@@ -364,9 +368,16 @@ export default function LogWorkoutScreen() {
       });
     });
 
+    const currentUser = await getCurrentUser();
+
+    const updatedEntries = workoutEntries.map((entry) => ({
+      ...entry,
+      user_id: currentUser?.id,
+    }));
+
     const { error: entryError } = await supabase
       .from('workout_entries')
-      .insert(workoutEntries);
+      .insert(updatedEntries);
 
     if (entryError) throw entryError;
 

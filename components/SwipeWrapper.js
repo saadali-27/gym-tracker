@@ -25,7 +25,7 @@ export default function SwipeWrapper() {
       case 'Progress':
         return 'Progress';
       case 'Routines':
-        return 'Routines';
+        return 'RoutinesScreen';
       default:
         return 'Dashboard';
     }
@@ -43,7 +43,7 @@ export default function SwipeWrapper() {
       <Tab.Screen name="LogWorkout" component={LogWorkoutScreen} />
       <Tab.Screen name="History" component={HistoryScreen} />
       <Tab.Screen name="Progress" component={ProgressScreen} />
-      <Tab.Screen name="Routines" component={RoutinesScreen} />
+      <Tab.Screen name="RoutinesScreen" component={RoutinesScreen} />
     </Tab.Navigator>
   );
 }

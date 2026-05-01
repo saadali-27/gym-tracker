@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
-import { supabase } from '../services/supabase';
+import { supabase, signUpUser, signInUser, getCurrentUser } from '../services/supabase';
 import { theme } from '../theme';
 import Card from '../components/Card';
 import Button from '../components/Button';
@@ -140,6 +140,22 @@ export default function DashboardScreen() {
   useFocusEffect(
     React.useCallback(() => {
       fetchDashboardData();
+      
+      const testAuth = async () => {
+        const email = "test123@gmail.com";
+        const password = "12345678";
+
+        const signUpRes = await signUpUser(email, password);
+        console.log("SIGN UP:", signUpRes);
+
+        const signInRes = await signInUser(email, password);
+        console.log("SIGN IN:", signInRes);
+
+        const user = await getCurrentUser();
+        console.log("AUTH USER:", user);
+      };
+
+      testAuth();
     }, [])
   );
 
