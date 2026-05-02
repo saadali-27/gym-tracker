@@ -580,6 +580,13 @@ export default function ProgressScreen() {
   const [showTooltip, setShowTooltip] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const dropdownAnim = useRef(new Animated.Value(0)).current;
+  const [stats, setStats] = useState({ totalVolume: 0, totalReps: 0, totalSets: 0 });
+  const [muscleGroupVolume, setMuscleGroupVolume] = useState<{[key: string]: number}>({});
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [entriesData, setEntriesData] = useState<any[]>([]);
+  const [selectedBar, setSelectedBar] = useState<{ label: string; value: number } | null>(null);
+  const [fitnessInsights, setFitnessInsights] = useState('');
+  const screenWidth = Dimensions.get('window').width;
 
   const openDropdown = () => {
     Animated.timing(dropdownAnim, {
@@ -595,6 +602,353 @@ export default function ProgressScreen() {
       duration: 120,
       useNativeDriver: true,
     }).start();
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchProgressData();
+    }, [])
+  );
+
+  const fetchProgressData = async () => {
+    try {
+      // Fetch ALL workout_entries joined with workouts
+      const { data: entriesData, error: entriesError } = await supabase
+        .from('workout_entries')
+        .select(`
+          id,
+          exercise_id,
+          reps,
+          weight,
+          exercises!inner(
+            id,
+            name,
+            muscle_group
+          ),
+          workouts!inner(
+            id,
+            created_at
+          )
+        `);
+
+      if (entriesError) {
+        console.error('Error fetching data:', entriesError);
+        setLoading(false);
+        return;
+      }
+
+      // Helper function to get start of week
+      const getStartOfWeek = () => {
+        const now = new Date();
+        const day = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Adjust for Monday start
+        const start = new Date(now.setDate(diff));
+        start.setHours(0, 0, 0, 0);
+        return start;
+      };
+
+      console.log('Raw entries data:', entriesData);
+      console.log('Total entries count:', entriesData?.length || 0);
+      
+      // Helper to safely access nested data
+      const getExerciseData = (entry: any) => {
+        if (!entry || !entry.exercises) return null;
+        return Array.isArray(entry.exercises) ? entry.exercises[0] : entry.exercises;
+      };
+      const getWorkoutData = (entry: any) => {
+        if (!entry || !entry.workouts) return null;
+        return Array.isArray(entry.workouts) ? entry.workouts[0] : entry.workouts;
+      };
+      
+      // Debug: Show all entry dates to understand the data
+      if (entriesData && entriesData.length > 0) {
+        console.log('=== ALL WORKOUT ENTRY DATES ===');
+        entriesData.forEach((entry, index) => {
+          const workout = getWorkoutData(entry);
+          console.log(`Entry ${index + 1}: Date = ${workout?.created_at}, Parsed = ${workout ? new Date(workout.created_at) : 'No workout data'}`);
+        });
+      } else {
+        console.log('No workout entries found in database');
+      }
+      
+      // Set entriesData for PR calculation
+      setEntriesData(entriesData || []);
+
+      // Extract unique exercises for dropdown
+      const loggedExercises: any[] = [];
+      const exerciseIds = new Set();
+      entriesData?.forEach(e => {
+        const exercise = getExerciseData(e);
+        if (exercise && exercise.id && !exerciseIds.has(exercise.id)) {
+          exerciseIds.add(exercise.id);
+          loggedExercises.push(exercise);
+        }
+      });
+
+      // Set exercises for dropdown
+      setUserExercises(loggedExercises);
+      setExercises(loggedExercises);
+
+      // Find most recently used exercise
+      let mostRecentEntry: any = null;
+      entriesData?.forEach(entry => {
+        const workout = getWorkoutData(entry);
+        if (workout) {
+          const entryDate = new Date(workout.created_at);
+          if (!mostRecentEntry || entryDate > new Date(getWorkoutData(mostRecentEntry).created_at)) {
+            mostRecentEntry = entry;
+          }
+        }
+      });
+
+      const mostRecentExerciseId = getExerciseData(mostRecentEntry)?.id || '';
+      const mostRecentExercise = loggedExercises.find(ex => ex.id === mostRecentExerciseId);
+
+      if (mostRecentExerciseId && !selectedExercise) {
+        setSelectedExercise(mostRecentExerciseId);
+        fetchWeightProgression(mostRecentExerciseId);
+      }
+
+      // WEEKLY VOLUME (FIX)
+      const weeklyVolume = entriesData
+        ?.filter(e => {
+          const workout = getWorkoutData(e);
+          return workout && new Date(workout.created_at) >= getStartOfWeek();
+        })
+        ?.reduce((sum, e) => sum + (e.weight * e.reps), 0) || 0;
+
+      // ALL TIME VOLUME
+      const totalVolume = entriesData?.reduce((sum, e) => sum + (e.weight * e.reps), 0) || 0;
+
+      // EXERCISES TRAINED
+      const uniqueExercises = new Set(
+        entriesData?.map(e => {
+          const exercise = getExerciseData(e);
+          return exercise?.name;
+        }).filter(name => name) // Filter out null/undefined names
+      );
+
+      // PREVIOUS WEEK VOLUME
+      const getStartOfPreviousWeek = () => {
+        const startOfCurrentWeek = getStartOfWeek();
+        const startOfPreviousWeek = new Date(startOfCurrentWeek);
+        startOfPreviousWeek.setDate(startOfPreviousWeek.getDate() - 7);
+        return startOfPreviousWeek;
+      };
+
+      const weeklyEntries = entriesData?.filter(e => {
+        const workout = getWorkoutData(e);
+        if (!workout || !workout.created_at) return false;
+        const entryDate = new Date(workout.created_at);
+        return workout && entryDate >= getStartOfWeek();
+      }) || [];
+
+      const previousWeekEntries = entriesData?.filter(e => {
+        const workout = getWorkoutData(e);
+        if (!workout || !workout.created_at) return false;
+        const entryDate = new Date(workout.created_at);
+        return workout && entryDate >= getStartOfPreviousWeek() && entryDate < getStartOfWeek();
+      }) || [];
+
+      console.log('Current week entries (Mon-Today):', weeklyEntries.length);
+      console.log('Previous week entries (Last Mon-Sun):', previousWeekEntries.length);
+
+      // Calculate total weekly volume (each entry is one set)
+      const totalWeeklyVolume = weeklyEntries.reduce((sum, entry) => {
+        if (!entry || entry.reps == null || entry.weight == null) return sum;
+        const entryVolume = entry.reps * entry.weight;
+        console.log(`Entry volume: ${entry.reps} × ${entry.weight} = ${entryVolume}`);
+        return sum + entryVolume;
+      }, 0);
+      
+      console.log('Total weekly volume:', totalWeeklyVolume);
+
+      // Calculate previous week volume
+      const previousWeekVolume = previousWeekEntries.reduce((sum, entry) => {
+        if (!entry || entry.reps == null || entry.weight == null) return sum;
+        const entryVolume = entry.reps * entry.weight;
+        console.log(`Previous entry volume: ${entry.reps} × ${entry.weight} = ${entryVolume}`);
+        return sum + entryVolume;
+      }, 0);
+
+      console.log('Previous week total volume:', previousWeekVolume);
+
+      // Calculate professional fitness insights and recommendations
+      let trendMessage = 'No recent data';
+      let volumeChange = 0;
+      let volumeChangePercent = 0;
+      
+      // Check if this is the first week of training
+      const isFirstWeek = previousWeekVolume === 0;
+      const hasCurrentWeekData = totalWeeklyVolume > 0;
+      
+      if (isFirstWeek && hasCurrentWeekData) {
+        // First week insights - focus on achievement and encouragement
+        if (totalWeeklyVolume >= 2000) {
+          trendMessage = `🔥 Impressive first week! ${formatWeight(totalWeeklyVolume)} total volume. You started strong!`;
+        } else if (totalWeeklyVolume >= 1000) {
+          trendMessage = `💪 Great first week! ${formatWeight(totalWeeklyVolume)} total volume. Solid foundation!`;
+        } else if (totalWeeklyVolume >= 500) {
+          trendMessage = `👍 Good start! ${formatWeight(totalWeeklyVolume)} total volume. Keep building!`;
+        } else {
+          trendMessage = `🎯 First week logged! ${formatWeight(totalWeeklyVolume)} total volume. Every journey begins!`;
+        }
+      } else if (isFirstWeek && !hasCurrentWeekData) {
+        trendMessage = "Ready to start your fitness journey? Log your first workout! 💪";
+      } else {
+        volumeChange = totalWeeklyVolume - previousWeekVolume;
+        volumeChangePercent = Math.round((volumeChange / previousWeekVolume) * 100);
+        
+        // Professional fitness app insights with actionable recommendations
+        if (volumeChangePercent >= 50) {
+          trendMessage = `🔥 Outstanding! +${volumeChangePercent}% volume increase (${formatWeight(volumeChange)}kg). You're crushing it! Consider recovery this week.`;
+        } else if (volumeChangePercent >= 25) {
+          trendMessage = `📈 Excellent progress! +${volumeChangePercent}% volume increase (${formatWeight(volumeChange)}kg). Keep this intensity!`;
+        } else if (volumeChangePercent >= 10) {
+          trendMessage = `💪 Solid improvement! +${volumeChangePercent}% volume increase (${formatWeight(volumeChange)}kg). Great consistency!`;
+        } else if (volumeChangePercent > 0) {
+          trendMessage = `👍 Steady progress! +${volumeChangePercent}% volume increase (${formatWeight(volumeChange)}kg). Every rep counts!`;
+        } else if (volumeChangePercent <= -30) {
+          trendMessage = `⚠️ Significant drop: ${volumeChangePercent}% volume decrease (${formatWeight(Math.abs(volumeChange))}kg). Focus on consistency this week.`;
+        } else if (volumeChangePercent <= -10) {
+          trendMessage = `📉 Volume down ${Math.abs(volumeChangePercent)}% (${formatWeight(Math.abs(volumeChange))}kg). Time to get back on track!`;
+        } else if (volumeChangePercent < 0) {
+          trendMessage = `🔄 Slight decrease: ${volumeChangePercent}% volume (${formatWeight(Math.abs(volumeChange))}kg). Small adjustments needed!`;
+        } else {
+          trendMessage = `🗑️ Consistent volume at ${formatWeight(totalWeeklyVolume)}. Great stability! Try adding 5-10% next week.`;
+        }
+      }
+
+      console.log('Trend comparison:', { current: totalWeeklyVolume, previous: previousWeekVolume, message: trendMessage });
+
+      // Calculate unique workouts this week
+      const uniqueWorkoutIds = new Set(weeklyEntries.map(entry => {
+        const workout = getWorkoutData(entry);
+        return workout?.id;
+      }).filter(Boolean));
+      const totalWorkoutsThisWeek = uniqueWorkoutIds.size;
+
+      // Additional professional fitness insights
+      const getFitnessInsights = () => {
+        const insights = [];
+        
+        // Workout frequency analysis
+        if (totalWorkoutsThisWeek >= 4) {
+          insights.push("🏃 Excellent frequency! 4+ workouts this week shows great commitment.");
+        } else if (totalWorkoutsThisWeek >= 3) {
+          insights.push("💪 Good consistency! 3 workouts this week - keep it up!");
+        } else if (totalWorkoutsThisWeek >= 2) {
+          insights.push("👍 Solid start! 2 workouts this week. Aim for 3-4 for optimal results.");
+        } else if (totalWorkoutsThisWeek === 1) {
+          insights.push("🎯 One workout done! Add 1-2 more this week for better progress.");
+        } else {
+          insights.push("🚀 No workouts yet this week. Start with 2-3 sessions!");
+        }
+
+        // Volume intensity analysis
+        const avgVolumePerWorkout = totalWeeklyVolume > 0 ? Math.round(totalWeeklyVolume / totalWorkoutsThisWeek) : 0;
+        if (avgVolumePerWorkout > 2000) {
+          insights.push("🔥 High intensity! Your average volume per workout is excellent.");
+        } else if (avgVolumePerWorkout > 1000) {
+          insights.push("💪 Good intensity! Solid volume per workout.");
+        } else if (avgVolumePerWorkout > 0) {
+          insights.push("📈 Building intensity! Consider increasing weight or reps gradually.");
+        }
+
+        // Muscle balance analysis (if we have multiple muscle groups)
+        const muscleGroups = Object.keys({});
+        if (muscleGroups.length >= 3) {
+          insights.push("⚖️ Great muscle balance! Training multiple muscle groups.");
+        } else if (muscleGroups.length === 2) {
+          insights.push("🎯 Good focus! Consider adding more variety for balanced development.");
+        } else if (muscleGroups.length === 1) {
+          insights.push("💡 Focused training! Try adding exercises for other muscle groups.");
+        }
+
+        return insights.join(" ");
+      };
+
+      setFitnessInsights(getFitnessInsights());
+
+      console.log('=== WORKOUT COUNT DEBUG ===');
+      console.log('Weekly entries count:', weeklyEntries.length);
+      console.log('Unique workout IDs:', Array.from(uniqueWorkoutIds));
+      console.log('Total workouts this week (unique sessions):', totalWorkoutsThisWeek);
+      console.log('========================');
+
+      // Find most trained muscle group using volume
+      const mostTrained = getMostTrainedMuscle(weeklyEntries || []);
+      console.log('Most trained muscle group:', mostTrained);
+
+      // Calculate highest weight lifted (PR) with exercise details using joined data
+      let highestWeightEntry: any = null;
+      entriesData?.forEach(entry => {
+        if (!highestWeightEntry || entry.weight > highestWeightEntry.weight) {
+          highestWeightEntry = entry;
+        }
+      });
+
+      const exercise = highestWeightEntry ? getExerciseData(highestWeightEntry) : null;
+      const prDisplay = exercise 
+        ? `${highestWeightEntry.weight}kg (${exercise.name})`
+        : highestWeightEntry 
+        ? `${highestWeightEntry.weight}kg` 
+        : 'None';
+
+      // Calculate average reps per workout (unique sessions)
+      const totalReps = weeklyEntries.reduce((sum, entry) => sum + (entry.reps || 0), 0);
+      const avgReps = totalWorkoutsThisWeek > 0 ? Math.round(totalReps / totalWorkoutsThisWeek) : 0;
+      console.log('Average reps per workout:', avgReps);
+
+      // Calculate weekly volume per muscle group for bar chart using current week data only
+      const muscleGroupVolumeChart: {[key: string]: number} = {};
+      console.log('=== MUSCLE GROUP VOLUME DEBUG ===');
+      console.log('Processing', weeklyEntries.length, 'current week entries for volume calculation');
+      
+      weeklyEntries.forEach((entry, index) => {
+        const exercise = getExerciseData(entry);
+        if (exercise && exercise.muscle_group && entry && entry.reps != null && entry.weight != null) {
+          const volume = entry.reps * entry.weight; // volume per set = weight * reps
+          console.log(`Entry ${index + 1}: ${exercise.name} (${exercise.muscle_group}) - ${entry.reps} × ${entry.weight} = ${volume}kg`);
+          muscleGroupVolumeChart[exercise.muscle_group] = (muscleGroupVolumeChart[exercise.muscle_group] || 0) + volume;
+        }
+      });
+
+      console.log('Final muscle group volume (current week):', muscleGroupVolumeChart);
+      console.log('====================================');
+
+      // Sanity check for realistic values
+      const sanityCheck = Object.values(muscleGroupVolumeChart).filter(volume => volume > 50000);
+      if (sanityCheck.length > 0) {
+        console.warn('⚠️ WARNING: Unrealistic volume values detected:', sanityCheck);
+      }
+
+      // Create bar chart data with proper labels and values
+      const volumeChartData = Object.entries(muscleGroupVolumeChart)
+        .map(([muscle, volume]) => ({
+          label: muscle,
+          value: Math.min(volume, 10000), // Cap at 10k for display
+          originalValue: volume
+        }))
+        .sort((a, b) => b.value - a.value);
+
+      console.log('=== BAR CHART DATA DEBUG ===');
+      console.log('Volume chart data:', volumeChartData);
+      console.log('============================');
+
+      // Update all state variables
+      setWeeklyVolume(totalWeeklyVolume);
+      setTrend(trendMessage);
+      setTotalWorkoutsThisWeek(totalWorkoutsThisWeek);
+      setMostTrainedMuscleGroup(mostTrained.muscle);
+      setHighestWeightLifted(prDisplay);
+      setAverageRepsPerWorkout(avgReps);
+      setWeeklyVolumeData(volumeChartData);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const dropdownStyle = {
@@ -660,372 +1014,6 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
     </View>
   );
 };
-  const [stats, setStats] = useState({ totalVolume: 0, totalReps: 0, totalSets: 0 });
-  const [muscleGroupVolume, setMuscleGroupVolume] = useState<{[key: string]: number}>({});
-  const [chartData, setChartData] = useState<any[]>([]);
-  const [entriesData, setEntriesData] = useState<any[]>([]);
-  const [selectedBar, setSelectedBar] = useState<{ label: string; value: number } | null>(null);
-  const screenWidth = Dimensions.get('window').width;
-
-  useFocusEffect(
-    React.useCallback(() => {
-      fetchProgressData();
-    }, [])
-  );
-
-  const fetchProgressData = async () => {
-    try {
-      // Fetch ALL workout_entries joined with workouts
-      const { data: entriesData, error: entriesError } = await supabase
-        .from('workout_entries')
-        .select(`
-          id,
-          exercise_id,
-          reps,
-          weight,
-          exercises!inner(
-            id,
-            name,
-            muscle_group
-          ),
-          workouts!inner(
-            id,
-            created_at
-          )
-        `);
-
-      if (entriesError) {
-        console.error('Error fetching data:', entriesError);
-        setLoading(false);
-        return;
-      }
-
-      // Helper function to get start of week
-      const getStartOfWeek = () => {
-        const now = new Date();
-        const day = now.getDay();
-        const diff = now.getDate() - day;
-        const start = new Date(now.setDate(diff));
-        start.setHours(0,0,0,0);
-        return start;
-      };
-
-      console.log('Raw entries data:', entriesData);
-      
-      // Set entriesData for PR calculation
-      setEntriesData(entriesData || []);
-
-      // Helper to safely access nested data
-      const getExerciseData = (entry: any) => Array.isArray(entry.exercises) ? entry.exercises[0] : entry.exercises;
-      const getWorkoutData = (entry: any) => Array.isArray(entry.workouts) ? entry.workouts[0] : entry.workouts;
-
-      // WEEKLY VOLUME (FIX)
-      const weeklyVolume = entriesData
-        ?.filter(e => {
-          const workout = getWorkoutData(e);
-          return workout && new Date(workout.created_at) >= getStartOfWeek();
-        })
-        ?.reduce((sum, e) => sum + (e.weight * e.reps), 0) || 0;
-
-      // ALL TIME VOLUME
-      const totalVolume = entriesData?.reduce((sum, e) => sum + (e.weight * e.reps), 0) || 0;
-
-      // EXERCISES TRAINED
-      const uniqueExercises = new Set(
-        entriesData?.map(e => {
-          const exercise = getExerciseData(e);
-          return exercise?.name;
-        }).filter(Boolean)
-      ).size;
-
-      // TOTAL SESSIONS
-      const sessions = new Set(
-        entriesData?.map(e => {
-          const workout = getWorkoutData(e);
-          return workout?.created_at;
-        }).filter(Boolean)
-      ).size;
-
-      // MOST USED EXERCISE
-      const freq: { [key: string]: number } = {};
-      entriesData?.forEach(e => {
-        const exercise = getExerciseData(e);
-        const exerciseName = exercise?.name;
-        if (exerciseName) {
-          freq[exerciseName] = (freq[exerciseName] || 0) + 1;
-        }
-      });
-      const mostUsed = Object.keys(freq).reduce((a, b) => freq[a] > freq[b] ? a : b, '');
-
-      // MUSCLE GROUP VOLUME (FIX)
-      const muscleMap: { [key: string]: string } = {
-        "Bench Press": "Chest",
-        "Chest Fly": "Chest",
-        "Incline Bench": "Chest",
-        "Decline Bench": "Chest",
-        "Pull Ups": "Back",
-        "Barbell Row": "Back",
-        "Deadlift": "Back",
-        "Lat Pulldown": "Back",
-        "Squat": "Legs",
-        "Leg Press": "Legs",
-        "Leg Curl": "Legs",
-        "Leg Extension": "Legs",
-        "Shoulder Press": "Shoulders",
-        "Lateral Raise": "Shoulders",
-        "Front Raise": "Shoulders",
-        "Bicep Curl": "Arms",
-        "Tricep Extension": "Arms",
-        "Hammer Curl": "Arms"
-      };
-
-      const muscleVolume: { [key: string]: number } = {};
-      entriesData?.forEach(e => {
-        const exercise = getExerciseData(e);
-        const exerciseName = exercise?.name;
-        if (exerciseName) {
-          const group = muscleMap[exerciseName] || "Other";
-          const vol = e.weight * e.reps;
-          muscleVolume[group] = (muscleVolume[group] || 0) + vol;
-        }
-      });
-
-      // Extract unique exercises for selection
-      const loggedExercises: any[] = [];
-      const exerciseIds = new Set();
-      entriesData?.forEach(e => {
-        const exercise = getExerciseData(e);
-        if (exercise && !exerciseIds.has(exercise.id)) {
-          exerciseIds.add(exercise.id);
-          loggedExercises.push(exercise);
-        }
-      });
-
-      // Find most recently used exercise
-      let mostRecentEntry: any = null;
-      entriesData?.forEach(entry => {
-        const workout = getWorkoutData(entry);
-        if (workout) {
-          const entryDate = new Date(workout.created_at);
-          if (!mostRecentEntry || entryDate > new Date(getWorkoutData(mostRecentEntry).created_at)) {
-            mostRecentEntry = entry;
-          }
-        }
-      });
-
-      const mostRecentExerciseId = getExerciseData(mostRecentEntry)?.id || '';
-      const mostRecentExercise = loggedExercises.find(ex => ex.id === mostRecentExerciseId);
-
-      // Set exercises for selection
-      setUserExercises(loggedExercises);
-      setExercises(loggedExercises);
-
-      // Set stats
-      setStats({
-        totalVolume,
-        totalReps: entriesData?.reduce((sum, e) => sum + e.reps, 0) || 0,
-        totalSets: entriesData?.length || 0
-      });
-
-      // Set muscle group volume
-      setMuscleGroupVolume(muscleVolume);
-
-      // Prepare data for weight progress chart
-      const exerciseData = entriesData?.filter(e => {
-        const exercise = getExerciseData(e);
-        return exercise?.name === selectedExercise;
-      });
-      const chartData = exerciseData
-        ?.sort((a, b) => {
-          const workoutA = getWorkoutData(a);
-          const workoutB = getWorkoutData(b);
-          return new Date(workoutA.created_at).getTime() - new Date(workoutB.created_at).getTime();
-        })
-        ?.map(entry => {
-          const workout = getWorkoutData(entry);
-          return {
-            date: new Date(workout.created_at).toLocaleDateString(),
-            weight: entry.weight,
-            reps: entry.reps
-          };
-        }) || [];
-
-      setChartData(chartData);
-
-      if (mostRecentExerciseId && !selectedExercise) {
-        setSelectedExercise(mostRecentExerciseId);
-        fetchWeightProgression(mostRecentExerciseId);
-      }
-
-      // Calculate weekly volume (last 7 days)
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      sevenDaysAgo.setHours(0, 0, 0, 0);
-
-      const fourteenDaysAgo = new Date();
-      fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
-      fourteenDaysAgo.setHours(0, 0, 0, 0);
-
-      console.log('Seven days ago date:', sevenDaysAgo);
-      console.log('Fourteen days ago date:', fourteenDaysAgo);
-
-      // Filter entries for last 7 days using proper date parsing
-      const weeklyEntries = entriesData?.filter(entry => {
-        const workout = getWorkoutData(entry);
-        return workout && new Date(workout.created_at) >= sevenDaysAgo;
-      }) || [];
-
-      // Filter entries for previous week (7-14 days ago)
-      const previousWeekEntries = entriesData?.filter(entry => {
-        const workout = getWorkoutData(entry);
-        return workout && new Date(workout.created_at) >= fourteenDaysAgo && new Date(workout.created_at) < sevenDaysAgo;
-      }) || [];
-
-      console.log('Weekly entries (last 7 days):', weeklyEntries.length);
-      console.log('Previous week entries (7-14 days ago):', previousWeekEntries.length);
-
-      // Calculate total weekly volume (each entry is one set)
-      const totalWeeklyVolume = weeklyEntries.reduce((sum, entry) => {
-        const entryVolume = entry.reps * entry.weight;
-        console.log(`Entry volume: ${entry.reps} × ${entry.weight} = ${entryVolume}`);
-        return sum + entryVolume;
-      }, 0);
-      
-      console.log('Total weekly volume:', totalWeeklyVolume);
-
-      // Calculate previous week volume
-      const previousWeekVolume = previousWeekEntries.reduce((sum, entry) => {
-        const entryVolume = entry.reps * entry.weight;
-        console.log(`Previous entry volume: ${entry.reps} × ${entry.weight} = ${entryVolume}`);
-        return sum + entryVolume;
-      }, 0);
-
-      console.log('Previous week total volume:', previousWeekVolume);
-
-      // Muscle group calculation now handled by getMostTrainedMuscle utility function
-
-      // Calculate trend message with meaningful comparisons
-      let trendMessage = 'No recent data';
-      if (previousWeekVolume === 0 && totalWeeklyVolume > 0) {
-        trendMessage = "Log more workouts this week to see your progress trend! 📊";
-      } else if (previousWeekVolume === 0 && totalWeeklyVolume === 0) {
-        trendMessage = "Start logging workouts to track your progress! 💪";
-      } else if (totalWeeklyVolume > previousWeekVolume * 1.5) {
-        const improvement = Math.round(((totalWeeklyVolume - previousWeekVolume) / previousWeekVolume) * 100);
-        trendMessage = `Amazing! ${improvement}% increase from last week! 🔥`;
-      } else if (totalWeeklyVolume > previousWeekVolume * 1.2) {
-        const improvement = Math.round(((totalWeeklyVolume - previousWeekVolume) / previousWeekVolume) * 100);
-        trendMessage = `Great progress! ${improvement}% increase from last week! 📈`;
-      } else if (totalWeeklyVolume > previousWeekVolume) {
-        const improvement = Math.round(((totalWeeklyVolume - previousWeekVolume) / previousWeekVolume) * 100);
-        trendMessage = `Good work! ${improvement}% increase from last week! 👍`;
-      } else if (totalWeeklyVolume < previousWeekVolume * 0.8) {
-        const decline = Math.round(((previousWeekVolume - totalWeeklyVolume) / previousWeekVolume) * 100);
-        trendMessage = `Down ${decline}% from last week. Time to bounce back! 💪`;
-      } else if (totalWeeklyVolume < previousWeekVolume) {
-        const decline = Math.round(((previousWeekVolume - totalWeeklyVolume) / previousWeekVolume) * 100);
-        trendMessage = `${decline}% less than last week. Keep pushing! 🏋️`;
-      } else {
-        trendMessage = "Consistent effort! Maintain this momentum! ⚖️";
-      }
-
-      console.log('Trend comparison:', { current: totalWeeklyVolume, previous: previousWeekVolume, message: trendMessage });
-
-      // Calculate unique workouts this week
-      const uniqueWorkoutIds = new Set(weeklyEntries.map(entry => {
-        const workout = getWorkoutData(entry);
-        return workout?.id;
-      }).filter(Boolean));
-      const totalWorkoutsThisWeek = uniqueWorkoutIds.size;
-
-      console.log('=== WORKOUT COUNT DEBUG ===');
-      console.log('Weekly entries count:', weeklyEntries.length);
-      console.log('Unique workout IDs:', Array.from(uniqueWorkoutIds));
-      console.log('Total workouts this week (unique sessions):', totalWorkoutsThisWeek);
-      console.log('========================');
-
-      // Find most trained muscle group using volume
-      const mostTrained = getMostTrainedMuscle(weeklyEntries || []);
-      console.log('Most trained muscle group:', mostTrained);
-
-      // Calculate highest weight lifted (PR) with exercise details using joined data
-      let highestWeightEntry: any = null;
-      entriesData?.forEach(entry => {
-        if (!highestWeightEntry || entry.weight > highestWeightEntry.weight) {
-          highestWeightEntry = entry;
-        }
-      });
-      console.log('Highest weight entry:', highestWeightEntry);
-
-      // Get exercise details for the PR using joined data
-      const prExercise = getExerciseData(highestWeightEntry);
-      const prDisplay = prExercise 
-        ? `${highestWeightEntry?.weight}kg`
-        : 'No PR data';
-      console.log('PR display:', prDisplay);
-
-      // Calculate average reps per workout
-      const totalReps = weeklyEntries.reduce((sum, entry) => sum + entry.reps, 0);
-      const avgReps = totalWorkoutsThisWeek > 0 ? Math.round(totalReps / totalWorkoutsThisWeek) : 0;
-      console.log('Average reps per workout:', avgReps);
-
-      // Calculate weekly volume per muscle group for bar chart using joined data (last 7 days only)
-      const muscleGroupVolumeChart: {[key: string]: number} = {};
-      console.log('=== MUSCLE GROUP VOLUME DEBUG ===');
-      console.log('Processing', weeklyEntries.length, 'weekly entries for volume calculation');
-      
-      weeklyEntries.forEach((entry, index) => {
-        const exercise = getExerciseData(entry);
-        if (exercise && exercise.muscle_group) {
-          const volume = entry.reps * entry.weight; // volume per set = weight * reps
-          console.log(`Entry ${index + 1}: ${exercise.name} (${exercise.muscle_group}) - ${entry.reps} × ${entry.weight} = ${volume}kg`);
-          muscleGroupVolumeChart[exercise.muscle_group] = (muscleGroupVolumeChart[exercise.muscle_group] || 0) + volume;
-        }
-      });
-
-      console.log('Final muscle group volume (last 7 days):', muscleGroupVolumeChart);
-      console.log('====================================');
-
-      // Sanity check for realistic values
-      const sanityCheck = Object.entries(muscleGroupVolumeChart).map(([muscle, volume]) => {
-        const isRealistic = volume <= 5000; // 5000kg per muscle group per week is extremely high
-        if (!isRealistic) {
-          console.warn(`⚠️ UNREALISTIC VOLUME DETECTED: ${muscle} = ${volume}kg (should be < 5000kg/week)`);
-        }
-        return { muscle, volume, realistic: isRealistic };
-      });
-
-      // Filter out any unrealistic values (optional - comment out if you want to see all data)
-      const filteredVolumeChart = Object.fromEntries(
-        sanityCheck.filter(item => item.realistic).map(item => [item.muscle, item.volume])
-      );
-
-      // Use filtered data for chart
-      const finalVolumeData = Object.keys(filteredVolumeChart).length > 0 ? filteredVolumeChart : muscleGroupVolumeChart;
-
-      console.log('Final volume data for chart:', finalVolumeData);
-
-      // Format data for bar chart - keep in KG, no abbreviations
-      const volumeChartData = Object.entries(finalVolumeData).map(([muscle, volume]) => ({
-        muscle,
-        volume,
-        formattedVolume: volume.toFixed(0) // Keep as KG, no conversion to tons
-      }));
-
-      setWeeklyVolume(totalWeeklyVolume);
-      setMuscleGroupFrequency({});
-      setTrend(trendMessage);
-      setTotalWorkoutsThisWeek(totalWorkoutsThisWeek);
-      setMostTrainedMuscleGroup(mostTrained.muscle);
-      setHighestWeightLifted(prDisplay);
-      setAverageRepsPerWorkout(avgReps);
-      setWeeklyVolumeData(volumeChartData);
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Fetch weight progression data for selected exercise
   const fetchWeightProgression = useCallback(async (exerciseId: string) => {
@@ -1070,21 +1058,21 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
           });
 
           // For each day, keep only the maximum weight
-          const currentMax = dailyWeightMap.get(dateString) || 0;
-          if (entry.weight > currentMax) {
-            dailyWeightMap.set(dateString, entry.weight);
+          const currentMax = dailyWeightMap.get(dateString) || { weight: 0, fullDate: workoutDate };
+          if (entry.weight > currentMax.weight) {
+            dailyWeightMap.set(dateString, { weight: entry.weight, fullDate: workoutDate });
           }
         }
       });
 
       // Convert to array and sort by date ascending
       const chartData = Array.from(dailyWeightMap.entries())
-        .map(([dateString, weight]) => ({
+        .map(([dateString, data]) => ({
           date: dateString,
-          weight: weight,
+          weight: data.weight,
           reps: 1, // Single entry per day
           sets: 1,
-          fullDate: new Date(dateString)
+          fullDate: data.fullDate
         }))
         .sort((a, b) => a.fullDate.getTime() - b.fullDate.getTime()) || [];
 
@@ -1145,9 +1133,13 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
   const barChartData = useMemo(() => {
     if (weeklyVolumeData.length === 0) return null;
 
-    // Get raw volumes
-    const volumes = weeklyVolumeData.map(item => item.volume);
-    const maxVolume = Math.max(...volumes);
+    // Get raw volumes - use 'value' property instead of 'volume'
+    const volumes = weeklyVolumeData.map(item => item.value || 0);
+    const validVolumes = volumes.filter(v => v !== undefined && v !== null && !isNaN(v));
+    
+    if (validVolumes.length === 0) return null;
+    
+    const maxVolume = Math.max(...validVolumes);
     
     // Create clean Y-axis steps with realistic scaling
     const steps = 5;
@@ -1177,9 +1169,9 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
 
     // Use actual volume values for chart data (let chart library handle scaling)
     return {
-      labels: weeklyVolumeData.map(item => item.muscle),
+      labels: weeklyVolumeData.map(item => item.label),
       datasets: [{
-        data: volumes
+        data: validVolumes
       }]
     };
   }, [weeklyVolumeData]);
@@ -1446,11 +1438,12 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
                     
                     if (barIndex >= 0 && barIndex < barChartData!.labels.length) {
                       const label = barChartData!.labels[barIndex];
-                      const volumeData = weeklyVolumeData.find(item => item.muscle === label);
+                      const volumeData = weeklyVolumeData.find(item => item.label === label);
                       console.log('Found volume data:', volumeData);
                       if (volumeData) {
-                        setSelectedBar({ label, value: volumeData.volume });
-                        console.log('Setting selectedBar:', { label, value: volumeData.volume });
+                        // Use the same processed value that the bar chart displays for consistency
+                        setSelectedBar({ label, value: volumeData.value });
+                        console.log('Setting selectedBar:', { label, value: volumeData.value });
                         // Hide tooltip after 2 seconds
                         setTimeout(() => setSelectedBar(null), 2000);
                       }
@@ -1551,10 +1544,15 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
         </View>
 
         <View style={[styles.sectionCard, { marginTop: 16 }]}>
-          <Text style={styles.chartSectionTitle}>Trend</Text>
+          <Text style={styles.chartSectionTitle}>Progress Insights</Text>
           <Text style={styles.trendText}>
             {loading ? 'Loading...' : trend}
           </Text>
+          {!loading && fitnessInsights && (
+            <Text style={[styles.trendText, { marginTop: 8, fontSize: 14, color: theme.colors.subtext }]}>
+              {fitnessInsights}
+            </Text>
+          )}
         </View>
       </View>
     </ScrollView>
