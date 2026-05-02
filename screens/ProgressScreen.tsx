@@ -46,19 +46,16 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     color: theme.colors.text,
-    marginBottom: 12,
+    marginBottom: 10,
+    marginTop: 10,
   },
   card: {
-    backgroundColor: theme.colors.card,
-    padding: 18,
+    backgroundColor: '#0f172a',
     borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    alignItems: 'center',
-    marginBottom: 16,
+    padding: 16,
+    marginBottom: 16, // spacing between cards
+    borderWidth: 1,
+    borderColor: '#1e293b',
   },
   cardText: {
     fontSize: 16,
@@ -341,7 +338,6 @@ const styles = StyleSheet.create({
   },
   insufficientDataTips: {
     alignItems: 'flex-start',
-    width: '100%',
   },
   insufficientDataTip: {
     fontSize: 14,
@@ -1195,7 +1191,8 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
         style={styles.scrollView} 
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingBottom: 100
+          paddingHorizontal: 16,
+          paddingBottom: 40,
         }}
       >
         <View style={{ 
@@ -1314,9 +1311,14 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
           {selectedExercise && lineChartData ? (
             <View>
               <Pressable style={styles.chartCard} onPress={() => setShowTooltip(false)}>
-                <LineChart
+                <View style={{
+                  marginTop: 10,
+                  borderRadius: 16,
+                  overflow: 'hidden'
+                }}>
+                  <LineChart
                   data={lineChartData}
-                  width={screenWidth - 60}
+                  width={Dimensions.get('window').width - 32}
                   height={180}
                   chartConfig={{
                     backgroundColor: theme.colors.card,
@@ -1354,6 +1356,7 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
                     }
                   }}
                 />
+                </View>
               </Pressable>
               {/* Tooltip */}
               {showTooltip && selectedDataPoint && (
@@ -1435,7 +1438,7 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
                     console.log('Bar chart clicked');
                     // Calculate which bar was pressed based on touch position
                     const touchX = event.nativeEvent.locationX;
-                    const chartWidth = screenWidth - 60;
+                    const chartWidth = Dimensions.get('window').width - 32;
                     const barWidth = chartWidth / barChartData!.labels.length;
                     const barIndex = Math.floor(touchX / barWidth);
                     
@@ -1455,10 +1458,15 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
                   }}
                   style={{ position: 'relative' }}
                 >
-                  <BarChart
-                    data={barChartData!}
-                    width={screenWidth - 60}
-                    height={180}
+                  <View style={{
+                    marginTop: 10,
+                    borderRadius: 16,
+                    overflow: 'hidden'
+                  }}>
+                    <BarChart
+                      data={barChartData!}
+                      width={Dimensions.get('window').width - 32}
+                      height={180}
                     yAxisLabel=""
                     yAxisSuffix="kg"
                     fromZero={true}
@@ -1488,7 +1496,7 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
                     <>
                       {console.log('Rendering tooltip for:', selectedBar)}
                       <Tooltip
-                        x={(screenWidth - 60) * (barChartData!.labels.indexOf(selectedBar!.label) + 0.5) / barChartData!.labels.length}
+                        x={(Dimensions.get('window').width - 32) * (barChartData!.labels.indexOf(selectedBar!.label) + 0.5) / barChartData!.labels.length}
                         y={50} // Fixed position above the chart instead of using data value
                         width={150}
                         height={60}
@@ -1500,6 +1508,7 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
                       />
                     </>
                   )}
+                  </View>
                 </TouchableOpacity>
                 <Text style={styles.chartSubtitle}>Volume (kg) - Last 7 Days</Text>
               </View>

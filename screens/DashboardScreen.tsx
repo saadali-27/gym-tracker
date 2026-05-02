@@ -162,7 +162,14 @@ export default function DashboardScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0A0F1E' }}>
       <StatusBar style="light" />
-      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={{ flex: 1 }} 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingBottom: 40,
+        }}
+      >
         <View style={{ 
           alignItems: 'center',
           justifyContent: 'center',
@@ -189,7 +196,6 @@ export default function DashboardScreen() {
 
         {/* Fitness Stats - 2x2 Grid */}
         <View style={{
-          paddingHorizontal: theme.spacing.lg,
           marginBottom: theme.spacing.lg,
         }}>
           <Text style={{

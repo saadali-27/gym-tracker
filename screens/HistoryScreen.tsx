@@ -153,7 +153,8 @@ export default function HistoryScreen() {
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={{
-          paddingBottom: 100
+          paddingHorizontal: 16,
+          paddingBottom: 40,
         }}
       >
         <View style={{ 

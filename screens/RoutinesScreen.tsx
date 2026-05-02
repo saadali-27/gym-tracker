@@ -523,8 +523,8 @@ export default function RoutinesScreen() {
         ItemSeparatorComponent={() => <View style={styles.routineSeparator} />}
         style={styles.scrollView}
         contentContainerStyle={{
-          paddingBottom: 100,
-          paddingHorizontal: 0
+          paddingHorizontal: 16,
+          paddingBottom: 40,
         }}
         showsVerticalScrollIndicator={false}
       />
