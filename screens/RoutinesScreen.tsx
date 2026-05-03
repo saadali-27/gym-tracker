@@ -97,7 +97,7 @@ export default function RoutinesScreen() {
   } catch (err) {
     console.log(err);
   } finally {
-    setLoading(false); // 🔥 THIS IS IMPORTANT
+    setLoading(false); // THIS IS IMPORTANT
   }
 };
 
@@ -160,7 +160,7 @@ export default function RoutinesScreen() {
         return;
       }
 
-      console.log('✅ Routine created successfully:', data);
+      console.log('Routine created successfully:', data);
       Alert.alert('Success', 'Routine created successfully');
 
       // Reset form
@@ -177,7 +177,7 @@ export default function RoutinesScreen() {
   };
 
   const deleteRoutine = async (routineId: string) => {
-    console.log('🗑️ DELETE ROUTINE:', routineId);
+    console.log('DELETE ROUTINE:', routineId);
     
     Alert.alert(
       'Delete Routine',
@@ -200,7 +200,7 @@ export default function RoutinesScreen() {
                 return;
               }
 
-              console.log('✅ Routine deleted successfully');
+              console.log('Routine deleted successfully');
               Alert.alert('Success', 'Routine deleted successfully');
               fetchRoutinesWithExercises();
               
@@ -238,7 +238,7 @@ export default function RoutinesScreen() {
         [selectedRoutineId]: updated
       });
     } else {
-      console.log('✅ Adding exercise to selection');
+      console.log('Adding exercise to selection');
       setSelectedExercises({
         ...selectedExercises,
         [selectedRoutineId]: [...currentSelected, exercise]
@@ -247,7 +247,7 @@ export default function RoutinesScreen() {
   };
 
   const removeExercise = (routineId: string, exerciseId: string) => {
-    console.log('🗑️ REMOVE EXERCISE FROM ROUTINE:', routineId);
+    console.log('REMOVE EXERCISE FROM ROUTINE:', routineId);
     
     const currentSelected = selectedExercises[routineId] || [];
     const updated = currentSelected.filter(ex => ex.id !== exerciseId);
@@ -268,10 +268,10 @@ export default function RoutinesScreen() {
       return;
     }
 
-    console.log('📋 EXERCISES TO SAVE:', exercisesToSave);
+    console.log('EXERCISES TO SAVE:', exercisesToSave);
     
     try {
-      console.log('� ADDING ROUTINE EXERCISES (APPEND MODE)');
+      console.log('ADDING ROUTINE EXERCISES (APPEND MODE)');
       const routineExercisesData = exercisesToSave.map(exercise => ({
         routine_id: routineId,
         exercise_id: exercise.id
@@ -292,7 +292,7 @@ export default function RoutinesScreen() {
         (e) => !existingExerciseIds.includes(e.exercise_id)
       );
 
-      console.log('📋 ROUTINE EXERCISES DATA TO INSERT:', newExercises);
+      console.log('ROUTINE EXERCISES DATA TO INSERT:', newExercises);
 
       // Insert only new ones
       if (newExercises.length > 0) {
@@ -302,13 +302,13 @@ export default function RoutinesScreen() {
           .select();
 
         if (insertError) {
-          console.error('❌ ERROR INSERTING ROUTINE EXERCISES:', insertError);
+          console.error('ERROR INSERTING ROUTINE EXERCISES:', insertError);
           console.error('Error details:', JSON.stringify(insertError, null, 2));
           Alert.alert('Error', 'Failed to save routine exercises');
           return;
         }
 
-        console.log('✅ ROUTINE EXERCISES SAVED SUCCESSFULLY:', data);
+        console.log('ROUTINE EXERCISES SAVED SUCCESSFULLY:', data);
         Alert.alert('Success', 'Routine exercises saved successfully');
         
         // Refresh to show updated exercises
@@ -325,13 +325,13 @@ export default function RoutinesScreen() {
       });
       
     } catch (error) {
-      console.error('❌ UNEXPECTED ERROR SAVING ROUTINE EXERCISES:', error);
+      console.error('UNEXPECTED ERROR SAVING ROUTINE EXERCISES:', error);
       Alert.alert('Error', 'Failed to save routine exercises');
     }
   };
 
   const deleteRoutineExercise = async (routineId: string, exerciseId: string) => {
-    console.log('🗑️ DELETE ROUTINE EXERCISE:', { routineId, exerciseId });
+    console.log('DELETE ROUTINE EXERCISE:', { routineId, exerciseId });
     
     Alert.alert(
       'Remove Exercise',
@@ -350,17 +350,17 @@ export default function RoutinesScreen() {
                 .eq('exercise_id', exerciseId);
 
               if (error) {
-                console.error('❌ ERROR DELETING ROUTINE EXERCISE:', error);
+                console.error('ERROR DELETING ROUTINE EXERCISE:', error);
                 Alert.alert('Error', 'Failed to remove exercise');
                 return;
               }
 
-              console.log('✅ ROUTINE EXERCISE DELETED SUCCESSFULLY');
+              console.log('ROUTINE EXERCISE DELETED SUCCESSFULLY');
               Alert.alert('Success', 'Exercise removed from routine');
               fetchRoutinesWithExercises();
               
             } catch (error) {
-              console.error('❌ UNEXPECTED ERROR:', error);
+              console.error('UNEXPECTED ERROR:', error);
               Alert.alert('Error', 'Failed to remove exercise');
             }
           }

@@ -218,11 +218,11 @@ export default function DashboardScreen() {
 
   
   // TODAY'S FOCUS LOGIC
-  let focusTitle = "Start a workout 💪";
+  let focusTitle = "Start a workout";
   let focusSub = "Build consistency";
 
   if (workouts.length > 0) {
-    focusTitle = "Stay consistent 💪";
+    focusTitle = "Stay consistent";
     focusSub = "Keep pushing your progress";
   }
 
@@ -230,11 +230,11 @@ export default function DashboardScreen() {
   let insight = "";
 
   if (workouts.length === 0) {
-    insight = "Start your fitness journey 🚀";
+    insight = "Start your fitness journey";
   } else if (workouts.length < 3) {
-    insight = "You're building momentum 💪";
+    insight = "You're building momentum";
   } else {
-    insight = "Great consistency this week 🔥";
+    insight = "Great consistency this week";
   }
 
   return (

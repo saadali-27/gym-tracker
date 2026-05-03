@@ -323,7 +323,7 @@ export default function LogWorkoutScreen() {
   };
 
   const fetchRoutines = async () => {
-    console.log('🔍 FETCHING ROUTINES FOR LOG WORKOUT');
+    console.log('FETCHING ROUTINES FOR LOG WORKOUT');
     try {
       const { data, error } = await supabase
         .from('routines')
@@ -331,15 +331,15 @@ export default function LogWorkoutScreen() {
         .order('name');
 
       if (error) {
-        console.error('❌ ERROR fetching routines:', error);
+        console.error('ERROR fetching routines:', error);
         Alert.alert('Error', 'Failed to load routines. Please check your connection.');
       } else {
-        console.log('✅ ROUTINES FETCHED:', data);
-        console.log('✅ ROUTINES COUNT:', data?.length || 0);
+        console.log('ROUTINES FETCHED:', data);
+        console.log('ROUTINES COUNT:', data?.length || 0);
         setRoutines(data || []);
       }
     } catch (error) {
-      console.error('❌ ERROR:', error);
+      console.error('ERROR:', error);
       Alert.alert('Error', 'Failed to load routines. Please try again.');
     } finally {
       setLoading(false);
@@ -377,12 +377,12 @@ export default function LogWorkoutScreen() {
         .eq('routine_id', routineId);
 
       if (error) {
-        console.error('❌ ERROR fetching routine exercises:', error);
+        console.error('ERROR fetching routine exercises:', error);
         Alert.alert('Error', 'Failed to load routine exercises');
         return;
       }
 
-      console.log('📥 ROUTINE EXERCISES RESPONSE:', data);
+      console.log('ROUTINE EXERCISES RESPONSE:', data);
 
       // Format exercises into workout input format
       const routineExercises: SessionExercise[] = data?.map((re: any) => ({
@@ -392,7 +392,7 @@ export default function LogWorkoutScreen() {
         sets: [] // Start with empty sets as required
       })).filter(exercise => exercise.name !== 'Unknown Exercise') || [];
 
-      console.log('✅ FORMATTED ROUTINE EXERCISES:', routineExercises);
+      console.log('FORMATTED ROUTINE EXERCISES:', routineExercises);
 
       // Add exercises to session, avoiding duplicates
       const newSessionExercises = [...sessionExercises];
@@ -414,7 +414,7 @@ export default function LogWorkoutScreen() {
       
       Alert.alert('Routine Loaded', `Routine loaded — log your sets\n\n${routineExercises.length} exercises ready`);
     } catch (error) {
-      console.error('❌ ERROR loading routine exercises:', error);
+      console.error('ERROR loading routine exercises:', error);
       Alert.alert('Error', 'Failed to load routine');
     }
   };
@@ -428,16 +428,16 @@ export default function LogWorkoutScreen() {
   };
 
   const handleRoutineSelect = (routineId: string) => {
-    console.log('🎯 ROUTINE SELECTED:', routineId);
+    console.log('ROUTINE SELECTED:', routineId);
     setSelectedRoutine(routineId);
     setShowRoutineDropdown(false);
     
     if (routineId) {
-      console.log('📥 LOADING ROUTINE EXERCISES...');
+      console.log('LOADING ROUTINE EXERCISES...');
       loadRoutineExercises(routineId);
       setRoutineLoaded(true);
     } else {
-      console.log('🔄 CLEARING ROUTINE SELECTION');
+      console.log('CLEARING ROUTINE SELECTION');
       setRoutineLoaded(false);
     }
   };
@@ -813,30 +813,31 @@ export default function LogWorkoutScreen() {
           </View>
           {routineLoaded && (
             <View style={{
-              backgroundColor: theme.colors.primary + '10',
+              backgroundColor: theme.colors.primary + '08',
               borderColor: theme.colors.primary,
               borderWidth: 1,
-              borderRadius: 8,
-              padding: 12,
-              marginBottom: 12,
+              borderRadius: 12,
+              padding: 16,
+              marginBottom: 20,
+              marginHorizontal: 16,
             }}>
-              <Text style={{ color: theme.colors.primary, fontSize: 14, fontWeight: '500', textAlign: 'center' }}>
-                💪 Routine loaded — log your sets below
+              <Text style={{ color: theme.colors.primary, fontSize: 15, fontWeight: '600', textAlign: 'center' }}>
+                Routine loaded — log your sets below
               </Text>
             </View>
           )}
           
-          <View>
+          <View style={{ paddingHorizontal: 16 }}>
             <Input
-            style={{
-              marginBottom: 20,
-              backgroundColor: theme.colors.card,
-              borderRadius: 12,
-              padding: 12,
-              borderWidth: 1,
-              borderColor: theme.colors.border,
-            }}
-            placeholder="Search exercises..."
+              style={{
+                marginBottom: 24,
+                backgroundColor: theme.colors.card,
+                borderRadius: 12,
+                padding: 16,
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+              }}
+              placeholder="Search exercises..."
             placeholderTextColor={theme.colors.subtext}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -892,22 +893,25 @@ export default function LogWorkoutScreen() {
 
         {/* Session Exercises Section */}
         {sessionExercises.length > 0 && (
-          <View style={{ marginTop: 24, paddingHorizontal: 16 }}>
-            {routineLoaded && (
-              <Card style={{ marginBottom: 16 }}>
-                <Text style={{ 
-                  fontSize: 16, 
-                  color: theme.colors.text, 
-                  textAlign: 'center',
-                  fontWeight: '600',
-                }}>
-                  💪 Routine loaded log your sets below
-                </Text>
-              </Card>
-            )}
-            
+          <View style={{ marginTop: 32, paddingHorizontal: 16 }}>
+            <Text style={{
+              fontSize: 20,
+              fontWeight: '700',
+              color: theme.colors.text,
+              marginBottom: 20,
+            }}>
+              Workout Exercises
+            </Text>
+                        
             {sessionExercises.map((exercise) => (
-              <Card key={exercise.exercise_id} style={{ marginBottom: 16 }}>
+              <Card key={exercise.exercise_id} style={{ 
+                marginBottom: 20,
+                borderRadius: 16,
+                padding: 20,
+                backgroundColor: theme.colors.card,
+                borderWidth: 1,
+                borderColor: theme.colors.border,
+              }}>
                 {/* Exercise Header */}
                 <View style={{
                   flexDirection: 'row',
@@ -1059,7 +1063,7 @@ export default function LogWorkoutScreen() {
                           color: theme.colors.primary,
                           marginBottom: 4,
                         }}>
-                          💪 Progressive Overload
+                          Progressive Overload
                         </Text>
                         <Text style={{
                           fontSize: 14,
@@ -1157,17 +1161,17 @@ export default function LogWorkoutScreen() {
                   ))}
 
                   {/* Add Set and Template Buttons */}
-                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
                     <View style={{ flex: 1 }}>
                       <AppButton
-                        title="+ Add Set"
+                        title="Add Set"
                         variant="secondary"
                         onPress={() => addSetToExercise(exercise.exercise_id)}
                       />
                     </View>
                     <View style={{ flex: 1 }}>
                       <AppButton
-                        title="📋 Templates"
+                        title="Templates"
                         variant="primary"
                         onPress={() => setShowTemplateOptions(exercise.exercise_id)}
                       />
@@ -1177,9 +1181,16 @@ export default function LogWorkoutScreen() {
               </Card>
             ))}
             
-            {/* Total Workout Volume */}
+            {/* Workout Summary */}
             {sessionExercises.length > 0 && (
-              <Card style={{ marginBottom: 16 }}>
+              <Card style={{ 
+                marginBottom: 24,
+                borderRadius: 16,
+                padding: 20,
+                backgroundColor: theme.colors.primary + '05',
+                borderWidth: 1,
+                borderColor: theme.colors.primary + '20',
+              }}>
                 <View style={{
                   flexDirection: 'row',
                   justifyContent: 'space-between',
@@ -1253,7 +1264,7 @@ export default function LogWorkoutScreen() {
             marginBottom: 16,
             textAlign: 'center',
           }}>
-            📋 Choose Set Template
+            Choose Set Template
           </Text>
           
           {(() => {

@@ -61,7 +61,7 @@ export default function HistoryScreen() {
       // STEP 3: CORRECT GROUPING - DATE → ROUTINE_ID → WORKOUTS
       const grouped: any = {};
 
-      console.log('🔍 DEBUG: Raw workouts data:', workoutsData?.map(w => ({
+      console.log('DEBUG: Raw workouts data:', workoutsData?.map(w => ({
         id: w.id,
         routine_id: w.routine_id,
         routine_name: (w.routines as any)?.name,
@@ -71,7 +71,7 @@ export default function HistoryScreen() {
       workoutsData?.forEach(workout => {
         const dateKey = new Date(workout.date).toDateString();
 
-        console.log('📝 Processing workout:', {
+        console.log('Processing workout:', {
           id: workout.id,
           routine_id: workout.routine_id,
           routine_name: (workout.routines as any)?.name,
@@ -97,7 +97,7 @@ export default function HistoryScreen() {
         grouped[dateKey][routineKey].workouts.push(workout);
       });
 
-      console.log('📊 Final grouped structure:', grouped);
+      console.log('Final grouped structure:', grouped);
 
       setGroupedWorkouts(grouped);
     } catch (error) {
@@ -176,23 +176,30 @@ export default function HistoryScreen() {
           alignItems: 'center',
           justifyContent: 'center',
           marginTop: 4,
-          marginBottom: 6,
+          marginBottom: 20,
         }}>
           <Text style={{ 
-            fontSize: 22, 
-            fontWeight: '600', 
+            fontSize: 24, 
+            fontWeight: '700', 
             color: '#E6EAF2',
             textAlign: 'center',
           }}>
-            History
+            Workout History
+          </Text>
+          <Text style={{
+            fontSize: 14,
+            color: theme.colors.subtext,
+            marginTop: 4,
+          }}>
+            Track your progress and templates
           </Text>
         </View>
         <View
           style={{
             height: 1,
-            backgroundColor: 'rgba(255,255,255,0.08)',
+            backgroundColor: 'rgba(255,255,255,0.1)',
             marginTop: 8,
-            marginBottom: 12,
+            marginBottom: 24,
           }}
         />
 
@@ -211,12 +218,12 @@ export default function HistoryScreen() {
           </View>
         ) : Object.keys(groupedWorkouts).length === 0 ? (
           <View style={{ marginTop: theme.spacing.lg }}>
-            <Card>
+            <Card style={{ padding: 24, borderRadius: 16 }}>
               <Text style={{ 
                 fontSize: 18, 
                 color: theme.colors.text, 
                 textAlign: 'center',
-                fontWeight: 'bold',
+                fontWeight: '700',
                 marginBottom: theme.spacing.sm,
               }}>
                 No workouts yet
@@ -225,8 +232,9 @@ export default function HistoryScreen() {
                 fontSize: 14, 
                 color: theme.colors.subtext, 
                 textAlign: 'center',
+                lineHeight: 20,
               }}>
-                Start logging to see your history
+                Start logging workouts to see your history and track progress
               </Text>
             </Card>
           </View>
@@ -249,9 +257,12 @@ export default function HistoryScreen() {
                 <Card 
                   key={routineKey} 
                   style={{ 
-                    marginBottom: theme.spacing.md,
-                    borderRadius: theme.radius.lg,
-                    padding: theme.spacing.md,
+                    marginBottom: theme.spacing.lg,
+                    borderRadius: 16,
+                    padding: 20,
+                    backgroundColor: theme.colors.card,
+                    borderWidth: 1,
+                    borderColor: theme.colors.border,
                   }}
                 >
                   {/* Header - Left: Routine Name, Right: Date */}
@@ -309,45 +320,103 @@ export default function HistoryScreen() {
                           exerciseGroups[exerciseName].push(entry);
                         });
                       });
-                      
-                      return Object.entries(exerciseGroups).map(([exerciseName, entries]: [string, any], exerciseIndex: number) => (
-                        <View key={exerciseName}>
-                          {/* Exercise Name (Bold, White) */}
-                          <Text style={{
-                            fontSize: 16,
-                            fontWeight: 'bold',
-                            color: '#ffffff',
-                            marginBottom: theme.spacing.sm,
+
+                      // Workout Summary
+                      const totalExercises = Object.keys(exerciseGroups).length;
+                      const totalSets = routineGroup.workouts.reduce((total: number, workout: any) => 
+                        total + (workout.workout_entries?.length || 0), 0
+                      );
+                      const totalVolume = routineGroup.workouts.reduce((total: number, workout: any) => 
+                        total + workout.workout_entries?.reduce((sum: number, entry: any) => 
+                          sum + (entry.reps * entry.weight), 0
+                        ) || 0, 0
+                      );
+
+                      return (
+                        <>
+                          {/* Workout Summary */}
+                          <View style={{
+                            backgroundColor: theme.colors.primary + '05',
+                            borderRadius: 12,
+                            padding: 16,
+                            marginBottom: 16,
+                            borderWidth: 1,
+                            borderColor: theme.colors.primary + '20',
                           }}>
-                            {exerciseName}
-                          </Text>
-                          
-                          {/* Sets List */}
-                          <View style={{ 
-                            marginLeft: theme.spacing.sm,
-                            marginBottom: theme.spacing.sm,
-                          }}>
-                            {entries.map((entry: any, setIndex: number) => (
-                              <Text key={entry.id} style={{
-                                fontSize: 14,
-                                color: theme.colors.subtext,
-                                marginBottom: 2,
-                              }}>
-                                • {entry.reps} reps × {entry.weight}kg
-                              </Text>
-                            ))}
-                          </View>
-                          
-                          {/* Divider Line Between Exercises */}
-                          {exerciseIndex < Object.entries(exerciseGroups).length - 1 && (
+                            <Text style={{
+                              fontSize: 14,
+                              fontWeight: '600',
+                              color: theme.colors.primary,
+                              marginBottom: 8,
+                            }}>
+                              Workout Summary
+                            </Text>
                             <View style={{
-                              borderBottomWidth: 1,
-                              borderColor: theme.colors.border,
-                              marginVertical: theme.spacing.sm,
-                            }} />
-                          )}
-                        </View>
-                      ));
+                              flexDirection: 'row',
+                              justifyContent: 'space-between',
+                            }}>
+                              <Text style={{
+                                fontSize: 12,
+                                color: theme.colors.text,
+                              }}>
+                                {totalExercises} exercises
+                              </Text>
+                              <Text style={{
+                                fontSize: 12,
+                                color: theme.colors.text,
+                              }}>
+                                {totalSets} sets
+                              </Text>
+                              <Text style={{
+                                fontSize: 12,
+                                color: theme.colors.text,
+                              }}>
+                                {totalVolume.toLocaleString()}kg total
+                              </Text>
+                            </View>
+                          </View>
+
+                          {/* Exercise Entries */}
+                          {Object.entries(exerciseGroups).map(([exerciseName, entries]: [string, any], exerciseIndex: number) => (
+                            <View key={exerciseName}>
+                              {/* Exercise Name */}
+                              <Text style={{
+                                fontSize: 16,
+                                fontWeight: 'bold',
+                                color: '#ffffff',
+                                marginBottom: theme.spacing.sm,
+                              }}>
+                                {exerciseName}
+                              </Text>
+                              
+                              {/* Sets List */}
+                              <View style={{ 
+                                marginLeft: theme.spacing.sm,
+                                marginBottom: theme.spacing.sm,
+                              }}>
+                                {(entries as any[]).map((entry: any, setIndex: number) => (
+                                  <Text key={entry.id} style={{
+                                    fontSize: 14,
+                                    color: theme.colors.subtext,
+                                    marginBottom: 2,
+                                  }}>
+                                    • {entry.reps} reps × {entry.weight}kg
+                                  </Text>
+                                ))}
+                              </View>
+                              
+                              {/* Divider Line Between Exercises */}
+                              {exerciseIndex < Object.entries(exerciseGroups).length - 1 && (
+                                <View style={{
+                                  borderBottomWidth: 1,
+                                  borderColor: theme.colors.border,
+                                  marginVertical: theme.spacing.sm,
+                                }} />
+                              )}
+                            </View>
+                          ))}
+                        </>
+                      );
                     })()}
                   </View>
                 </Card>
