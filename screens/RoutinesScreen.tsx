@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, FlatList, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, FlatList, StatusBar, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase, getCurrentUser } from '../services/supabase';
@@ -27,6 +27,7 @@ export default function RoutinesScreen() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newRoutineName, setNewRoutineName] = useState('');
   const [creatingRoutine, setCreatingRoutine] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   
   // Exercise selection state
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -99,6 +100,13 @@ export default function RoutinesScreen() {
     setLoading(false); // 🔥 THIS IS IMPORTANT
   }
 };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchRoutinesWithExercises();
+    await fetchExercises();
+    setRefreshing(false);
+  };
 
   const fetchExercises = async () => {
     console.log('🔍 FETCHING EXERCISES');
@@ -527,6 +535,14 @@ export default function RoutinesScreen() {
           paddingBottom: 40,
         }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#4F8CFF"
+            colors={["#4F8CFF"]}
+          />
+        }
       />
 
       {/* Create Routine Modal */}

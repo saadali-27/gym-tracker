@@ -1,5 +1,5 @@
 import React from 'react';
-import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+import { View } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 
 import DashboardScreen from '../screens/DashboardScreen';
@@ -8,42 +8,30 @@ import HistoryScreen from '../screens/HistoryScreen';
 import ProgressScreen from '../screens/ProgressScreen';
 import RoutinesScreen from '../screens/RoutinesScreen';
 
-const Tab = createMaterialTopTabNavigator();
-
 export default function SwipeWrapper() {
   const route = useRoute();
   
-  // Map bottom tab names to initial screen indices
-  const getInitialRouteName = () => {
+  // Map bottom tab names to screen components
+  const getCurrentScreen = () => {
     switch (route.name) {
       case 'Home':
-        return 'Dashboard';
+        return <DashboardScreen />;
       case 'Log':
-        return 'LogWorkout';
+        return <LogWorkoutScreen />;
       case 'History':
-        return 'History';
+        return <HistoryScreen />;
       case 'Progress':
-        return 'Progress';
+        return <ProgressScreen />;
       case 'Routines':
-        return 'RoutinesScreen';
+        return <RoutinesScreen />;
       default:
-        return 'Dashboard';
+        return <DashboardScreen />;
     }
   };
 
   return (
-    <Tab.Navigator
-      initialRouteName={getInitialRouteName()}
-      screenOptions={{
-        swipeEnabled: false, // Disabled to prevent accidental navigation
-        tabBarStyle: { display: 'none' }, // hide top tabs UI
-      }}
-    >
-      <Tab.Screen name="Dashboard" component={DashboardScreen} />
-      <Tab.Screen name="LogWorkout" component={LogWorkoutScreen} />
-      <Tab.Screen name="History" component={HistoryScreen} />
-      <Tab.Screen name="Progress" component={ProgressScreen} />
-      <Tab.Screen name="RoutinesScreen" component={RoutinesScreen} />
-    </Tab.Navigator>
+    <View style={{ flex: 1, backgroundColor: '#0A0F1E', paddingBottom: 100 }}>
+      {getCurrentScreen()}
+    </View>
   );
 }

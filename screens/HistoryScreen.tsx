@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, RefreshControl } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -18,6 +18,7 @@ const safeDate = (value: any) => {
 export default function HistoryScreen() {
   const [groupedWorkouts, setGroupedWorkouts] = useState<any>({});
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -106,6 +107,12 @@ export default function HistoryScreen() {
     }
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchWorkouts();
+    setRefreshing(false);
+  };
+
   // STEP 6: DELETE FIX
   const deleteWorkout = async (workoutId: string) => {
     Alert.alert(
@@ -156,6 +163,14 @@ export default function HistoryScreen() {
           paddingHorizontal: 16,
           paddingBottom: 40,
         }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#4F8CFF"
+            colors={["#4F8CFF"]}
+          />
+        }
       >
         <View style={{ 
           alignItems: 'center',
