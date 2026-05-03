@@ -20,6 +20,8 @@ export default function DashboardScreen() {
   const [totalVolume, setTotalVolume] = useState(0);
   const [mostTrainedMuscle, setMostTrainedMuscle] = useState('None');
   const [recentRoutine, setRecentRoutine] = useState<any>(null);
+  const [workouts, setWorkouts] = useState<any[]>([]);
+  const [mostTrained, setMostTrained] = useState("");
 
   // Helper function to get start of week
   const getStartOfWeek = () => {
@@ -164,6 +166,65 @@ export default function DashboardScreen() {
     }, [])
   );
 
+  // Smart Dashboard Logic
+  useEffect(() => {
+    const fetchData = async () => {
+      const user = await getCurrentUser();
+
+      if (!user) return;
+
+      // fetch workouts
+      const { data: workoutsData } = await supabase
+        .from('workouts')
+        .select('*')
+        .eq('user_id', user.id);
+
+      setWorkouts(workoutsData || []);
+
+      // fetch workout entries (for muscle analysis)
+      const { data: entries } = await supabase
+        .from('workout_entries')
+        .select('*');
+
+      // COUNT MUSCLE FREQUENCY
+      const muscleCount: {[key: string]: number} = {};
+
+      entries?.forEach((e: any) => {
+        const muscle = e.muscle || "Other";
+
+        muscleCount[muscle] = (muscleCount[muscle] || 0) + 1;
+      });
+
+      const sorted = Object.entries(muscleCount).sort((a, b) => (b[1] as number) - (a[1] as number));
+
+      if (sorted.length > 0) {
+        setMostTrained(sorted[0][0] as string);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // TODAY'S FOCUS LOGIC
+  let focusTitle = "Start a workout 💪";
+  let focusSub = "Build consistency";
+
+  if (workouts.length > 0) {
+    focusTitle = "Stay consistent 💪";
+    focusSub = "Keep pushing your progress";
+  }
+
+  // MICRO INSIGHT
+  let insight = "";
+
+  if (workouts.length === 0) {
+    insight = "Start your fitness journey 🚀";
+  } else if (workouts.length < 3) {
+    insight = "You're building momentum 💪";
+  } else {
+    insight = "Great consistency this week 🔥";
+  }
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0A0F1E' }}>
       <StatusBar style="light" />
@@ -240,14 +301,21 @@ export default function DashboardScreen() {
             fontSize: 20,
             fontWeight: '600'
           }}>
-            {recentRoutine ? recentRoutine.name : 'Start a workout'}
+            {focusTitle}
           </Text>
 
           <Text style={{
             color: '#9AA4B2',
             marginTop: 6
           }}>
-            {recentRoutine ? 'Continue routine' : 'Begin training'}
+            {focusSub}
+          </Text>
+
+          <Text style={{
+            color: '#9AA4B2',
+            marginTop: 8
+          }}>
+            {insight}
           </Text>
         </View>
 
@@ -297,6 +365,32 @@ export default function DashboardScreen() {
               </Text>
             </TouchableOpacity>
           </View>
+        </View>
+
+        {/* Most Trained Muscle */}
+        <View style={{
+          backgroundColor: '#0f172a',
+          borderRadius: 16,
+          padding: 16,
+          marginBottom: 16,
+          borderWidth: 1,
+          borderColor: '#1e293b'
+        }}>
+          <Text style={{
+            color: '#9AA4B2',
+            fontSize: 13,
+            marginBottom: 6
+          }}>
+            MOST TRAINED
+          </Text>
+
+          <Text style={{
+            color: '#E6EAF2',
+            fontSize: 18,
+            fontWeight: '600'
+          }}>
+            {mostTrained || "No data yet"}
+          </Text>
         </View>
 
         {/* Recent Activity */}
