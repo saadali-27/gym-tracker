@@ -51,6 +51,225 @@ export default function LogWorkoutScreen() {
   const [routineLoaded, setRoutineLoaded] = useState(false);
   const dropdownAnim = useRef(new Animated.Value(0)).current;
 
+  // Volume tracking
+  const calculateExerciseVolume = (sets: ExerciseSet[]) => {
+    return sets.reduce((total, set) => {
+      const reps = parseFloat(set.reps) || 0;
+      const weight = parseFloat(set.weight) || 0;
+      return total + (reps * weight);
+    }, 0);
+  };
+
+  const calculateTotalWorkoutVolume = () => {
+    return sessionExercises.reduce((total, exercise) => {
+      return total + calculateExerciseVolume(exercise.sets);
+    }, 0);
+  };
+
+  // Rest timer functionality
+  const [activeTimer, setActiveTimer] = useState<{exerciseId: string, timeLeft: number, totalTime: number} | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
+
+  const getRestTime = (muscleGroup: string) => {
+    // Exercise-specific rest times (more practical)
+    const compoundMuscles = ['Chest', 'Back', 'Legs', 'Shoulders'];
+    const isolationMuscles = ['Biceps', 'Triceps', 'Abs', 'Calves'];
+    
+    if (compoundMuscles.includes(muscleGroup)) {
+      return 90; // 1.5 minutes for compound exercises
+    } else if (isolationMuscles.includes(muscleGroup)) {
+      return 60; // 1 minute for isolation exercises
+    } else {
+      return 75; // 1.25 minutes default
+    }
+  };
+
+  const startRestTimer = (exerciseId: string, muscleGroup: string) => {
+    const restTime = getRestTime(muscleGroup);
+    setActiveTimer({
+      exerciseId,
+      timeLeft: restTime,
+      totalTime: restTime
+    });
+    setIsPaused(false);
+  };
+
+  const stopTimer = () => {
+    setActiveTimer(null);
+    setIsPaused(false);
+  };
+
+  const togglePauseTimer = () => {
+    setIsPaused(!isPaused);
+  };
+
+  // Timer countdown effect
+  React.useEffect(() => {
+    if (activeTimer && !isPaused) {
+      const interval = setInterval(() => {
+        setActiveTimer(prev => {
+          if (!prev || prev.timeLeft <= 1) {
+            return null;
+          }
+          return { ...prev, timeLeft: prev.timeLeft - 1 };
+        });
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [activeTimer, isPaused]);
+
+  // Progressive overload functionality
+  const [exerciseSuggestions, setExerciseSuggestions] = useState<{[key: string]: {weight: number, reps: number, type: string, description: string}}>({});
+
+  const calculateProgressiveOverload = (lastPerformance: any) => {
+    if (!lastPerformance) return null;
+
+    const lastWeight = lastPerformance.weight || 0;
+    const lastReps = lastPerformance.reps || 0;
+    
+    // Progressive overload strategies
+    const suggestions = [];
+    
+    // 1. Weight increase (keep same reps)
+    if (lastWeight >= 5) { // Only suggest weight increase if weight is meaningful
+      const weightIncrease = Math.min(2.5, lastWeight * 0.05); // 5% or 2.5kg, whichever is smaller
+      const roundedIncrease = Math.round(weightIncrease / 2.5) * 2.5; // Round to nearest 2.5kg
+      suggestions.push({
+        weight: lastWeight + roundedIncrease,
+        reps: lastReps,
+        type: 'weight_increase',
+        description: `+${roundedIncrease}kg (same reps)`
+      });
+    }
+    
+    // 2. Rep increase (keep same weight)
+    if (lastReps < 12) { // Only suggest rep increase if not already high rep range
+      suggestions.push({
+        weight: lastWeight,
+        reps: Math.min(lastReps + 2, 12),
+        type: 'rep_increase',
+        description: `+${Math.min(2, 12 - lastReps)} reps (same weight)`
+      });
+    }
+    
+    // 3. Intensity boost (slight weight increase, slight rep decrease)
+    if (lastWeight >= 10 && lastReps >= 6) {
+      suggestions.push({
+        weight: lastWeight + 2.5,
+        reps: Math.max(lastReps - 1, 4),
+        type: 'intensity_boost',
+        description: `+2.5kg, -1 rep (intensity)`
+      });
+    }
+    
+    return suggestions.length > 0 ? suggestions[0] : null; // Return the first (best) suggestion
+  };
+
+  const fetchExerciseSuggestions = async (exerciseId: string) => {
+    try {
+      const user = await getCurrentUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('workout_entries')
+        .select('*')
+        .eq('exercise_id', exerciseId)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (!error && data && data.length > 0) {
+        const lastPerformance = data[0];
+        const suggestion = calculateProgressiveOverload(lastPerformance);
+        
+        if (suggestion) {
+          setExerciseSuggestions(prev => ({
+            ...prev,
+            [exerciseId]: suggestion
+          }));
+        }
+      }
+    } catch (err) {
+      console.log('Error fetching exercise suggestions:', err);
+    }
+  };
+
+  const applySuggestion = (exerciseId: string) => {
+    const suggestion = exerciseSuggestions[exerciseId];
+    if (!suggestion) return;
+
+    // Auto-fill the next set with suggested values
+    setNewSetWeight(prev => ({ ...prev, [exerciseId]: String(suggestion.weight) }));
+    setNewSetReps(prev => ({ ...prev, [exerciseId]: String(suggestion.reps) }));
+  };
+
+  // Quick Set Templates
+  const [showTemplateOptions, setShowTemplateOptions] = useState<string | null>(null);
+
+  interface SetTemplate {
+    name: string;
+    description: string;
+    sets: { reps: number, weight: number, type: string }[];
+  }
+
+  const getSetTemplates = (baseWeight: number): SetTemplate[] => {
+    if (!baseWeight || baseWeight <= 0) return [];
+
+    return [
+      {
+        name: 'Warm-up Sets',
+        description: 'Light sets to prepare muscles',
+        sets: [
+          { reps: 12, weight: Math.round(baseWeight * 0.5), type: 'warmup' },
+          { reps: 8, weight: Math.round(baseWeight * 0.75), type: 'warmup' },
+        ]
+      },
+      {
+        name: 'Pyramid Sets',
+        description: 'Decreasing reps, increasing weight',
+        sets: [
+          { reps: 12, weight: Math.round(baseWeight * 0.6), type: 'pyramid' },
+          { reps: 10, weight: Math.round(baseWeight * 0.8), type: 'pyramid' },
+          { reps: 8, weight: baseWeight, type: 'pyramid' },
+          { reps: 6, weight: Math.round(baseWeight * 1.1), type: 'pyramid' },
+        ]
+      },
+      {
+        name: 'Drop Sets',
+        description: 'Same reps, decreasing weight',
+        sets: [
+          { reps: 8, weight: baseWeight, type: 'drop' },
+          { reps: 8, weight: Math.round(baseWeight * 0.8), type: 'drop' },
+          { reps: 8, weight: Math.round(baseWeight * 0.6), type: 'drop' },
+        ]
+      }
+    ];
+  };
+
+  const applySetTemplate = (exerciseId: string, template: SetTemplate) => {
+    const exercise = sessionExercises.find(ex => ex.exercise_id === exerciseId);
+    if (!exercise) return;
+
+    // Add template sets to the exercise
+    const newSets = template.sets.map(set => ({
+      reps: String(set.reps),
+      weight: String(set.weight)
+    }));
+
+    setSessionExercises(sessionExercises.map(ex => {
+      if (ex.exercise_id === exerciseId) {
+        return {
+          ...ex,
+          sets: [...ex.sets, ...newSets]
+        };
+      }
+      return ex;
+    }));
+
+    setShowTemplateOptions(null); // Close template options
+  };
+
   const openDropdown = () => {
     Animated.timing(dropdownAnim, {
       toValue: 1,
@@ -233,6 +452,9 @@ export default function LogWorkoutScreen() {
         muscle_group: exercise.muscle_group,
         sets: []
       }]);
+      
+      // Fetch progressive overload suggestions for this exercise
+      fetchExerciseSuggestions(exercise.id);
     }
   };
 
@@ -271,6 +493,13 @@ export default function LogWorkoutScreen() {
           ...updatedSets[setIndex],
           [field]: validatedValue
         };
+        
+        // Auto-start rest timer when set is completed (both reps and weight filled)
+        const currentSet = updatedSets[setIndex];
+        if (currentSet.reps && currentSet.weight && !activeTimer) {
+          startRestTimer(exerciseId, ex.muscle_group);
+        }
+        
         return {
           ...ex,
           sets: updatedSets
@@ -701,6 +930,14 @@ export default function LogWorkoutScreen() {
                     }}>
                       {exercise.muscle_group} • {exercise.sets.length} sets
                     </Text>
+                    <Text style={{
+                      fontSize: 12,
+                      color: theme.colors.primary,
+                      fontWeight: '600',
+                      marginTop: 2,
+                    }}>
+                      Volume: {calculateExerciseVolume(exercise.sets).toLocaleString()} kg
+                    </Text>
                   </View>
                   <AppButton
                     title="Remove"
@@ -708,6 +945,157 @@ export default function LogWorkoutScreen() {
                     onPress={() => removeExerciseFromSession(exercise.exercise_id)}
                   />
                 </View>
+
+                {/* Rest Timer */}
+                {activeTimer && activeTimer.exerciseId === exercise.exercise_id && (
+                  <Card style={{ 
+                    backgroundColor: theme.colors.primary + '20',
+                    borderColor: theme.colors.primary,
+                    borderWidth: 2
+                  }}>
+                    <View style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}>
+                      <View>
+                        <Text style={{
+                          fontSize: 16,
+                          fontWeight: 'bold',
+                          color: theme.colors.primary,
+                        }}>
+                          Rest Timer
+                        </Text>
+                        <Text style={{
+                          fontSize: 12,
+                          color: theme.colors.subtext,
+                        }}>
+                          {getRestTime(exercise.muscle_group) / 60} min recommended
+                        </Text>
+                      </View>
+                      <View style={{ alignItems: 'center' }}>
+                        <Text style={{
+                          fontSize: 24,
+                          fontWeight: 'bold',
+                          color: theme.colors.primary,
+                        }}>
+                          {Math.floor(activeTimer.timeLeft / 60)}:{(activeTimer.timeLeft % 60).toString().padStart(2, '0')}
+                        </Text>
+                        <View style={{
+                          flexDirection: 'row',
+                          gap: 8,
+                          marginTop: 4,
+                        }}>
+                          <TouchableOpacity
+                            onPress={togglePauseTimer}
+                            style={{
+                              backgroundColor: theme.colors.primary,
+                              paddingHorizontal: 12,
+                              paddingVertical: 4,
+                              borderRadius: 4,
+                            }}
+                          >
+                            <Text style={{
+                              color: 'white',
+                              fontSize: 12,
+                              fontWeight: '600',
+                            }}>
+                              {isPaused ? 'Resume' : 'Pause'}
+                            </Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            onPress={stopTimer}
+                            style={{
+                              backgroundColor: theme.colors.danger,
+                              paddingHorizontal: 12,
+                              paddingVertical: 4,
+                              borderRadius: 4,
+                            }}
+                          >
+                            <Text style={{
+                              color: 'white',
+                              fontSize: 12,
+                              fontWeight: '600',
+                            }}>
+                              Skip
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    </View>
+                    {/* Progress Bar */}
+                    <View style={{
+                      height: 4,
+                      backgroundColor: theme.colors.border,
+                      borderRadius: 2,
+                      marginTop: 8,
+                    }}>
+                      <View style={{
+                        height: '100%',
+                        backgroundColor: theme.colors.primary,
+                        borderRadius: 2,
+                        width: `${((activeTimer.totalTime - activeTimer.timeLeft) / activeTimer.totalTime) * 100}%`,
+                      }} />
+                    </View>
+                  </Card>
+                )}
+
+                {/* Progressive Overload Suggestion */}
+                {exerciseSuggestions[exercise.exercise_id] && (
+                  <Card style={{ 
+                    backgroundColor: theme.colors.primary + '20',
+                    borderColor: theme.colors.primary,
+                    borderWidth: 2
+                  }}>
+                    <View style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{
+                          fontSize: 16,
+                          fontWeight: 'bold',
+                          color: theme.colors.primary,
+                          marginBottom: 4,
+                        }}>
+                          💪 Progressive Overload
+                        </Text>
+                        <Text style={{
+                          fontSize: 14,
+                          color: theme.colors.text,
+                          marginBottom: 2,
+                        }}>
+                          Suggested: {exerciseSuggestions[exercise.exercise_id].weight}kg × {exerciseSuggestions[exercise.exercise_id].reps} reps
+                        </Text>
+                        <Text style={{
+                          fontSize: 12,
+                          color: theme.colors.subtext,
+                          fontStyle: 'italic',
+                        }}>
+                          {exerciseSuggestions[exercise.exercise_id].description}
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        onPress={() => applySuggestion(exercise.exercise_id)}
+                        style={{
+                          backgroundColor: theme.colors.primary,
+                          paddingHorizontal: 16,
+                          paddingVertical: 8,
+                          borderRadius: 8,
+                        }}
+                      >
+                        <Text style={{
+                          color: 'white',
+                          fontSize: 14,
+                          fontWeight: '600',
+                        }}>
+                          Apply
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </Card>
+                )}
 
                 {/* Sets Section */}
                 <View style={{ gap: 8 }}>
@@ -768,15 +1156,59 @@ export default function LogWorkoutScreen() {
                     </View>
                   ))}
 
-                  {/* Add Set Button */}
-                  <AppButton
-                    title="+ Add Set"
-                    variant="secondary"
-                    onPress={() => addSetToExercise(exercise.exercise_id)}
-                  />
+                  {/* Add Set and Template Buttons */}
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    <View style={{ flex: 1 }}>
+                      <AppButton
+                        title="+ Add Set"
+                        variant="secondary"
+                        onPress={() => addSetToExercise(exercise.exercise_id)}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <AppButton
+                        title="📋 Templates"
+                        variant="primary"
+                        onPress={() => setShowTemplateOptions(exercise.exercise_id)}
+                      />
+                    </View>
+                  </View>
                 </View>
               </Card>
             ))}
+            
+            {/* Total Workout Volume */}
+            {sessionExercises.length > 0 && (
+              <Card style={{ marginBottom: 16 }}>
+                <View style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}>
+                  <Text style={{
+                    fontSize: 16,
+                    fontWeight: 'bold',
+                    color: theme.colors.text,
+                  }}>
+                    Total Workout Volume
+                  </Text>
+                  <Text style={{
+                    fontSize: 18,
+                    fontWeight: 'bold',
+                    color: theme.colors.primary,
+                  }}>
+                    {calculateTotalWorkoutVolume().toLocaleString()} kg
+                  </Text>
+                </View>
+                <Text style={{
+                  fontSize: 12,
+                  color: theme.colors.subtext,
+                  marginTop: 4,
+                }}>
+                  {sessionExercises.length} exercises • {sessionExercises.reduce((total, ex) => total + ex.sets.length, 0)} sets
+                </Text>
+              </Card>
+            )}
             
             {/* Save Session Button */}
             <AppButton
@@ -795,6 +1227,106 @@ export default function LogWorkoutScreen() {
       </ScrollView>
     </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
+
+    {/* Template Selection Modal */}
+    {showTemplateOptions && (
+      <View style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+      }}>
+        <Card style={{ 
+          width: '100%', 
+          maxWidth: 400,
+          padding: 20 
+        }}>
+          <Text style={{
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: theme.colors.text,
+            marginBottom: 16,
+            textAlign: 'center',
+          }}>
+            📋 Choose Set Template
+          </Text>
+          
+          {(() => {
+            const exercise = sessionExercises.find(ex => ex.exercise_id === showTemplateOptions);
+            const lastSet = exercise?.sets[exercise.sets.length - 1];
+            const baseWeight = lastSet ? parseFloat(lastSet.weight) || 0 : 0;
+            const templates = getSetTemplates(baseWeight);
+            
+            return templates.length > 0 ? (
+              templates.map((template, index) => (
+                <TouchableOpacity
+                  key={index}
+                  onPress={() => applySetTemplate(showTemplateOptions, template)}
+                  style={{
+                    backgroundColor: theme.colors.card,
+                    padding: 16,
+                    borderRadius: 12,
+                    marginBottom: 12,
+                    borderWidth: 2,
+                    borderColor: theme.colors.border,
+                  }}
+                >
+                  <Text style={{
+                    fontSize: 16,
+                    fontWeight: 'bold',
+                    color: theme.colors.text,
+                    marginBottom: 4,
+                  }}>
+                    {template.name}
+                  </Text>
+                  <Text style={{
+                    fontSize: 14,
+                    color: theme.colors.subtext,
+                    marginBottom: 8,
+                  }}>
+                    {template.description}
+                  </Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
+                    {template.sets.map((set, setIndex) => (
+                      <Text key={setIndex} style={{
+                        fontSize: 12,
+                        color: theme.colors.primary,
+                        backgroundColor: theme.colors.primary + '20',
+                        paddingHorizontal: 6,
+                        paddingVertical: 2,
+                        borderRadius: 4,
+                      }}>
+                        {set.reps}×{set.weight}kg
+                      </Text>
+                    ))}
+                  </View>
+                </TouchableOpacity>
+              ))
+            ) : (
+              <Text style={{
+                fontSize: 14,
+                color: theme.colors.subtext,
+                textAlign: 'center',
+                marginBottom: 16,
+              }}>
+                Add a set first to use templates
+              </Text>
+            );
+          })()}
+          
+          <AppButton
+            title="Cancel"
+            variant="secondary"
+            onPress={() => setShowTemplateOptions(null)}
+          />
+        </Card>
+      </View>
+    )}
   </SafeAreaView>
-  );
+);
 }
