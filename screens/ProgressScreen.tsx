@@ -1533,8 +1533,9 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
         </View>
 
         
+        
         <View style={[styles.sectionCard, { marginTop: 16 }]}>
-          <Text style={styles.chartSectionTitle}>Most Trained</Text>
+          <Text style={styles.chartSectionTitle}>Most Trained (This Week)</Text>
           <View style={styles.mostTrainedContainer}>
             <Text style={styles.mostTrainedLabel}>Muscle Group</Text>
             <Text style={styles.mostTrainedValue}>

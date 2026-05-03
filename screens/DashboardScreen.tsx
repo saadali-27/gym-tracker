@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { supabase, signUpUser, signInUser, getCurrentUser } from '../services/supabase';
 import { theme } from '../theme';
@@ -12,14 +12,14 @@ import { getMostTrainedMuscle } from '../utils/muscleUtils';
 const formatWeight = (value: number) => `${value.toLocaleString()} kg`;
 
 export default function DashboardScreen() {
+  const navigation = useNavigation();
   const [totalWorkouts, setTotalWorkouts] = useState(0);
   const [weeklyWorkouts, setWeeklyWorkouts] = useState(0);
   const [recentWorkouts, setRecentWorkouts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalVolume, setTotalVolume] = useState(0);
-  const [totalReps, setTotalReps] = useState(0);
-  const [totalSets, setTotalSets] = useState(0);
   const [mostTrainedMuscle, setMostTrainedMuscle] = useState('None');
+  const [recentRoutine, setRecentRoutine] = useState<any>(null);
 
   // Helper function to get start of week
   const getStartOfWeek = () => {
@@ -64,14 +64,6 @@ export default function DashboardScreen() {
         // Calculate total volume (reps × weight)
         const volume = entriesData?.reduce((sum, e) => sum + (e.reps * e.weight), 0) || 0;
         setTotalVolume(volume);
-
-        // Calculate total reps
-        const reps = entriesData?.reduce((sum, e) => sum + e.reps, 0) || 0;
-        setTotalReps(reps);
-
-        // Calculate total sets (each entry is one set)
-        const sets = entriesData?.length || 0;
-        setTotalSets(sets);
 
         // Calculate most trained muscle group using volume
         const mostTrained = getMostTrainedMuscle(entriesData || []);
@@ -129,6 +121,19 @@ export default function DashboardScreen() {
         console.error('Error fetching recent workouts:', recentError);
       } else {
         setRecentWorkouts(recentData || []);
+      }
+
+      // Fetch most recent routine for Today's Focus
+      const { data: routineData, error: routineError } = await supabase
+        .from('routines')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (routineError) {
+        console.error('Error fetching recent routine:', routineError);
+      } else {
+        setRecentRoutine(routineData && routineData.length > 0 ? routineData[0] : null);
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -194,190 +199,168 @@ export default function DashboardScreen() {
           }}
         />
 
-        {/* Fitness Stats - 2x2 Grid */}
+        {/* Welcome Header */}
+        <View style={{ marginBottom: 16 }}>
+          <Text style={{
+            color: '#E6EAF2',
+            fontSize: 20,
+            fontWeight: '600'
+          }}>
+            Welcome back 👋
+          </Text>
+
+          <Text style={{
+            color: '#9AA4B2',
+            fontSize: 14,
+            marginTop: 4
+          }}>
+            Stay consistent today
+          </Text>
+        </View>
+
+        {/* Today's Focus */}
         <View style={{
-          marginBottom: theme.spacing.lg,
+          backgroundColor: '#0f172a',
+          borderRadius: 18,
+          padding: 18,
+          marginBottom: 16,
+          borderWidth: 1,
+          borderColor: '#1e293b'
         }}>
           <Text style={{
-            fontSize: 20,
-            fontWeight: 'bold',
-            color: theme.colors.text,
-            marginBottom: theme.spacing.md,
+            color: '#9AA4B2',
+            fontSize: 13,
+            marginBottom: 6
           }}>
-            Fitness Stats
+            TODAY'S FOCUS
           </Text>
+
+          <Text style={{
+            color: '#E6EAF2',
+            fontSize: 20,
+            fontWeight: '600'
+          }}>
+            {recentRoutine ? recentRoutine.name : 'Start a workout'}
+          </Text>
+
+          <Text style={{
+            color: '#9AA4B2',
+            marginTop: 6
+          }}>
+            {recentRoutine ? 'Continue routine' : 'Begin training'}
+          </Text>
+        </View>
+
+        {/* Quick Actions */}
+        <View style={{ marginBottom: 16 }}>
+          <Text style={{
+            color: '#E6EAF2',
+            fontSize: 16,
+            marginBottom: 10
+          }}>
+            Quick Actions
+          </Text>
+
           <View style={{
             flexDirection: 'row',
-            flexWrap: 'wrap',
-            gap: theme.spacing.sm,
+            gap: 10
           }}>
-            <Card style={{ 
-              width: '48%', 
-              padding: theme.spacing.lg,
-              backgroundColor: theme.colors.card,
-              borderRadius: 16,
-            }}>
-              <Text style={{
-                fontSize: 24,
-                fontWeight: 'bold',
-                color: theme.colors.primary,
-                textAlign: 'center',
-                marginBottom: 4,
-              }}>
-                {formatWeight(totalVolume)}
+            <TouchableOpacity 
+              style={{
+                flex: 1,
+                backgroundColor: '#7C9EFF',
+                paddingVertical: 14,
+                borderRadius: 14,
+                alignItems: 'center'
+              }}
+              onPress={() => navigation.navigate('Log' as never)}
+            >
+              <Text style={{ color: '#0A0F1E', fontWeight: '600' }}>
+                Start Workout
               </Text>
-              <Text style={{
-                fontSize: 12,
-                color: theme.colors.subtext,
-                textAlign: 'center',
-              }}>
-                Total Volume
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={{
+                flex: 1,
+                backgroundColor: 'rgba(255,255,255,0.06)',
+                borderRadius: 14,
+                paddingVertical: 14,
+                alignItems: 'center',
+                borderWidth: 1,
+                borderColor: 'rgba(255,255,255,0.1)'
+              }}
+              onPress={() => navigation.navigate('Routines' as never)}
+            >
+              <Text style={{ color: '#E6EAF2' }}>
+                Routines
               </Text>
-            </Card>
-            
-            <Card style={{ 
-              width: '48%', 
-              padding: theme.spacing.lg,
-              backgroundColor: theme.colors.card,
-              borderRadius: 16,
-            }}>
-              <Text style={{
-                fontSize: 24,
-                fontWeight: 'bold',
-                color: theme.colors.primary,
-                textAlign: 'center',
-                marginBottom: 4,
-              }}>
-                {totalReps.toLocaleString()}
-              </Text>
-              <Text style={{
-                fontSize: 12,
-                color: theme.colors.subtext,
-                textAlign: 'center',
-              }}>
-                Total Reps
-              </Text>
-            </Card>
-            
-            <Card style={{ 
-              width: '48%', 
-              padding: theme.spacing.lg,
-              backgroundColor: theme.colors.card,
-              borderRadius: 16,
-            }}>
-              <Text style={{
-                fontSize: 24,
-                fontWeight: 'bold',
-                color: theme.colors.primary,
-                textAlign: 'center',
-                marginBottom: 4,
-              }}>
-                {totalSets}
-              </Text>
-              <Text style={{
-                fontSize: 12,
-                color: theme.colors.subtext,
-                textAlign: 'center',
-              }}>
-                Total Sets
-              </Text>
-            </Card>
-            
-            <Card style={{ 
-              width: '48%', 
-              padding: theme.spacing.lg,
-              backgroundColor: theme.colors.card,
-              borderRadius: 16,
-            }}>
-              <Text style={{
-                fontSize: 24,
-                fontWeight: 'bold',
-                color: theme.colors.primary,
-                textAlign: 'center',
-                marginBottom: 4,
-              }}>
-                {mostTrainedMuscle}
-              </Text>
-              <Text style={{
-                fontSize: 12,
-                color: theme.colors.subtext,
-                textAlign: 'center',
-              }}>
-                Most Trained
-              </Text>
-            </Card>
+            </TouchableOpacity>
           </View>
         </View>
 
         {/* Recent Activity */}
-        <View style={{ marginBottom: theme.spacing.lg }}>
+        <View>
           <Text style={{
-            fontSize: 20,
-            fontWeight: 'bold',
-            color: theme.colors.text,
-            marginTop: 24,
-            marginBottom: 12,
+            color: '#E6EAF2',
+            fontSize: 16,
+            marginBottom: 10
           }}>
             Recent Activity
           </Text>
+
           {loading ? (
-            <Card style={{ marginTop: 12 }}>
-              <Text style={{ 
-                fontSize: 16, 
-                color: theme.colors.text, 
-                textAlign: 'center' 
-              }}>
+            <View style={{
+              backgroundColor: '#0f172a',
+              borderRadius: 16,
+              padding: 16,
+              borderWidth: 1,
+              borderColor: '#1e293b'
+            }}>
+              <Text style={{ color: '#E6EAF2', fontSize: 15 }}>
                 Loading...
               </Text>
-            </Card>
+            </View>
           ) : recentWorkouts.length === 0 ? (
-            <Card style={{ marginTop: 12 }}>
-              <Text style={{ 
-                fontSize: 16, 
-                color: theme.colors.text, 
-                textAlign: 'center',
-                fontWeight: '600',
-                marginBottom: 8
-              }}>
+            <View style={{
+              backgroundColor: '#0f172a',
+              borderRadius: 16,
+              padding: 16,
+              borderWidth: 1,
+              borderColor: '#1e293b'
+            }}>
+              <Text style={{ color: '#E6EAF2', fontSize: 15 }}>
                 No recent workouts
               </Text>
-              <Text style={{ 
-                fontSize: 14, 
-                color: theme.colors.subtext, 
-                textAlign: 'center' 
+              <Text style={{
+                color: '#9AA4B2',
+                fontSize: 13,
+                marginTop: 4
               }}>
                 Start logging workouts to see your activity here
               </Text>
-            </Card>
+            </View>
           ) : (
             recentWorkouts.map((workout, index) => (
-              <Card key={workout.id} style={{ 
-                marginBottom: theme.spacing.md,
-                marginTop: index === 0 ? 12 : 0 
+              <View key={workout.id} style={{
+                backgroundColor: '#0f172a',
+                borderRadius: 16,
+                padding: 16,
+                borderWidth: 1,
+                borderColor: '#1e293b',
+                marginBottom: index < recentWorkouts.length - 1 ? 10 : 0
               }}>
-                <Text style={{
-                  fontSize: 16,
-                  fontWeight: 'bold',
-                  color: theme.colors.text,
-                  marginBottom: 4,
-                }}>
+                <Text style={{ color: '#E6EAF2', fontSize: 15 }}>
                   {workout.routines?.name || 'Custom Workout'}
                 </Text>
                 <Text style={{
-                  fontSize: 12,
-                  color: theme.colors.subtext,
-                  marginBottom: 4,
+                  color: '#9AA4B2',
+                  fontSize: 13,
+                  marginTop: 4
                 }}>
                   {new Date(workout.date).toLocaleDateString()}
                 </Text>
-                <Text style={{
-                  fontSize: 14,
-                  color: theme.colors.primary,
-                  fontWeight: '500',
-                }}>
-                  {workout.workout_entries?.length || 0} exercises
-                </Text>
-              </Card>
+              </View>
             ))
           )}
         </View>
