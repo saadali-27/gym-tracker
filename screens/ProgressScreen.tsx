@@ -785,37 +785,37 @@ export default function ProgressScreen() {
       if (isFirstWeek && hasCurrentWeekData) {
         // First week insights - focus on achievement and encouragement
         if (totalWeeklyVolume >= 2000) {
-          trendMessage = `🔥 Impressive first week! ${formatWeight(totalWeeklyVolume)} total volume. You started strong!`;
+          trendMessage = `Excellent first week with ${formatWeight(totalWeeklyVolume)} total volume. You started with impressive intensity.`;
         } else if (totalWeeklyVolume >= 1000) {
-          trendMessage = `💪 Great first week! ${formatWeight(totalWeeklyVolume)} total volume. Solid foundation!`;
+          trendMessage = `Strong first week achieving ${formatWeight(totalWeeklyVolume)} total volume. Great foundation established.`;
         } else if (totalWeeklyVolume >= 500) {
-          trendMessage = `👍 Good start! ${formatWeight(totalWeeklyVolume)} total volume. Keep building!`;
+          trendMessage = `Good start with ${formatWeight(totalWeeklyVolume)} total volume. Keep building momentum.`;
         } else {
-          trendMessage = `🎯 First week logged! ${formatWeight(totalWeeklyVolume)} total volume. Every journey begins!`;
+          trendMessage = `First week completed with ${formatWeight(totalWeeklyVolume)} total volume. Every fitness journey begins here.`;
         }
       } else if (isFirstWeek && !hasCurrentWeekData) {
-        trendMessage = "Ready to start your fitness journey? Log your first workout! 💪";
+        trendMessage = "Ready to begin your fitness journey? Log your first workout to start tracking progress.";
       } else {
         volumeChange = totalWeeklyVolume - previousWeekVolume;
         volumeChangePercent = Math.round((volumeChange / previousWeekVolume) * 100);
         
         // Professional fitness app insights with actionable recommendations
         if (volumeChangePercent >= 50) {
-          trendMessage = `🔥 Outstanding! +${volumeChangePercent}% volume increase (${formatWeight(volumeChange)}kg). You're crushing it! Consider recovery this week.`;
+          trendMessage = `Outstanding performance with +${volumeChangePercent}% volume increase (${formatWeight(volumeChange)}kg). Consider proper recovery this week.`;
         } else if (volumeChangePercent >= 25) {
-          trendMessage = `📈 Excellent progress! +${volumeChangePercent}% volume increase (${formatWeight(volumeChange)}kg). Keep this intensity!`;
+          trendMessage = `Excellent progress showing +${volumeChangePercent}% volume increase (${formatWeight(volumeChange)}kg). Maintain this training intensity.`;
         } else if (volumeChangePercent >= 10) {
-          trendMessage = `💪 Solid improvement! +${volumeChangePercent}% volume increase (${formatWeight(volumeChange)}kg). Great consistency!`;
+          trendMessage = `Solid improvement with +${volumeChangePercent}% volume increase (${formatWeight(volumeChange)}kg). Consistency is paying off.`;
         } else if (volumeChangePercent > 0) {
-          trendMessage = `👍 Steady progress! +${volumeChangePercent}% volume increase (${formatWeight(volumeChange)}kg). Every rep counts!`;
+          trendMessage = `Steady progress with +${volumeChangePercent}% volume increase (${formatWeight(volumeChange)}kg). Every repetition contributes.`;
         } else if (volumeChangePercent <= -30) {
-          trendMessage = `⚠️ Significant drop: ${volumeChangePercent}% volume decrease (${formatWeight(Math.abs(volumeChange))}kg). Focus on consistency this week.`;
+          trendMessage = `Significant volume decrease of ${volumeChangePercent}% (${formatWeight(Math.abs(volumeChange))}kg). Focus on training consistency this week.`;
         } else if (volumeChangePercent <= -10) {
-          trendMessage = `📉 Volume down ${Math.abs(volumeChangePercent)}% (${formatWeight(Math.abs(volumeChange))}kg). Time to get back on track!`;
+          trendMessage = `Volume decreased by ${Math.abs(volumeChangePercent)}% (${formatWeight(Math.abs(volumeChange))}kg). Time to refocus on training goals.`;
         } else if (volumeChangePercent < 0) {
-          trendMessage = `🔄 Slight decrease: ${volumeChangePercent}% volume (${formatWeight(Math.abs(volumeChange))}kg). Small adjustments needed!`;
+          trendMessage = `Slight volume decrease of ${volumeChangePercent}% (${formatWeight(Math.abs(volumeChange))}kg). Minor adjustments to training needed.`;
         } else {
-          trendMessage = `🗑️ Consistent volume at ${formatWeight(totalWeeklyVolume)}. Great stability! Try adding 5-10% next week.`;
+          trendMessage = `Consistent training volume at ${formatWeight(totalWeeklyVolume)}. Consider a 5-10% increase next week for progression.`;
         }
       }
 
@@ -834,35 +834,35 @@ export default function ProgressScreen() {
         
         // Workout frequency analysis
         if (totalWorkoutsThisWeek >= 4) {
-          insights.push("🏃 Excellent frequency! 4+ workouts this week shows great commitment.");
+          insights.push("Excellent training frequency with 4+ workouts this week showing strong commitment.");
         } else if (totalWorkoutsThisWeek >= 3) {
-          insights.push("💪 Good consistency! 3 workouts this week - keep it up!");
+          insights.push("Good consistency with 3 workouts this week. Maintain this training schedule.");
         } else if (totalWorkoutsThisWeek >= 2) {
-          insights.push("👍 Solid start! 2 workouts this week. Aim for 3-4 for optimal results.");
+          insights.push("Solid start with 2 workouts this week. Aim for 3-4 sessions for optimal results.");
         } else if (totalWorkoutsThisWeek === 1) {
-          insights.push("🎯 One workout done! Add 1-2 more this week for better progress.");
+          insights.push("One workout completed this week. Add 1-2 more sessions for better progress.");
         } else {
-          insights.push("🚀 No workouts yet this week. Start with 2-3 sessions!");
+          insights.push("No workouts logged this week. Start with 2-3 training sessions.");
         }
 
         // Volume intensity analysis
         const avgVolumePerWorkout = totalWeeklyVolume > 0 ? Math.round(totalWeeklyVolume / totalWorkoutsThisWeek) : 0;
         if (avgVolumePerWorkout > 2000) {
-          insights.push("🔥 High intensity! Your average volume per workout is excellent.");
+          insights.push("High training intensity with excellent average volume per workout.");
         } else if (avgVolumePerWorkout > 1000) {
-          insights.push("💪 Good intensity! Solid volume per workout.");
+          insights.push("Good training intensity with solid volume per workout.");
         } else if (avgVolumePerWorkout > 0) {
-          insights.push("📈 Building intensity! Consider increasing weight or reps gradually.");
+          insights.push("Building training intensity. Consider gradual increases in weight or repetitions.");
         }
 
         // Muscle balance analysis (if we have multiple muscle groups)
         const muscleGroups = Object.keys({});
         if (muscleGroups.length >= 3) {
-          insights.push("⚖️ Great muscle balance! Training multiple muscle groups.");
+          insights.push("Excellent muscle balance training multiple muscle groups.");
         } else if (muscleGroups.length === 2) {
-          insights.push("🎯 Good focus! Consider adding more variety for balanced development.");
+          insights.push("Focused training on specific muscle groups. Consider adding variety for balanced development.");
         } else if (muscleGroups.length === 1) {
-          insights.push("💡 Focused training! Try adding exercises for other muscle groups.");
+          insights.push("Highly focused training on one muscle group. Add exercises for other muscle groups.");
         }
 
         return insights.join(" ");
@@ -1543,15 +1543,19 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
           </View>
         </View>
 
-        <View style={[styles.sectionCard, { marginTop: 16 }]}>
+        <View style={[styles.sectionCard, { marginTop: 16, padding: 20 }]}>
           <Text style={styles.chartSectionTitle}>Progress Insights</Text>
-          <Text style={styles.trendText}>
-            {loading ? 'Loading...' : trend}
-          </Text>
-          {!loading && fitnessInsights && (
-            <Text style={[styles.trendText, { marginTop: 8, fontSize: 14, color: theme.colors.subtext }]}>
-              {fitnessInsights}
+          <View style={{ marginTop: 12 }}>
+            <Text style={styles.trendText}>
+              {loading ? 'Loading...' : trend}
             </Text>
+          </View>
+          {!loading && fitnessInsights && (
+            <View style={{ marginTop: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)' }}>
+              <Text style={[styles.trendText, { fontSize: 14, color: theme.colors.subtext, lineHeight: 20 }]}>
+                {fitnessInsights}
+              </Text>
+            </View>
           )}
         </View>
       </View>

@@ -24,8 +24,8 @@ export default function DashboardScreen() {
   // Helper function to get start of week
   const getStartOfWeek = () => {
     const now = new Date();
-    const day = now.getDay(); // 0 Sunday
-    const diff = now.getDate() - day;
+    const day = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Adjust for Monday start
     const start = new Date(now.setDate(diff));
     start.setHours(0,0,0,0);
     return start.toISOString();
