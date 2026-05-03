@@ -69,6 +69,7 @@ export default function LogWorkoutScreen() {
   // Rest timer functionality
   const [activeTimer, setActiveTimer] = useState<{exerciseId: string, timeLeft: number, totalTime: number} | null>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const [manuallyStopped, setManuallyStopped] = useState<string | null>(null);
 
   const getRestTime = (muscleGroup: string) => {
     // Exercise-specific rest times (more practical)
@@ -92,9 +93,13 @@ export default function LogWorkoutScreen() {
       totalTime: restTime
     });
     setIsPaused(false);
+    setManuallyStopped(null);
   };
 
   const stopTimer = () => {
+    if (activeTimer) {
+      setManuallyStopped(activeTimer.exerciseId);
+    }
     setActiveTimer(null);
     setIsPaused(false);
   };
@@ -496,8 +501,12 @@ export default function LogWorkoutScreen() {
         
         // Auto-start rest timer when set is completed (both reps and weight filled)
         const currentSet = updatedSets[setIndex];
-        if (currentSet.reps && currentSet.weight && !activeTimer) {
-          startRestTimer(exerciseId, ex.muscle_group);
+        if (currentSet.reps && currentSet.weight) {
+          // Start timer for this exercise if no timer is active, if it's for a different exercise,
+          // or if user manually stopped it and is now working on a different set
+          if (!activeTimer || activeTimer.exerciseId !== exerciseId || manuallyStopped !== exerciseId) {
+            startRestTimer(exerciseId, ex.muscle_group);
+          }
         }
         
         return {
@@ -1269,8 +1278,13 @@ export default function LogWorkoutScreen() {
           
           {(() => {
             const exercise = sessionExercises.find(ex => ex.exercise_id === showTemplateOptions);
-            const lastSet = exercise?.sets[exercise.sets.length - 1];
-            const baseWeight = lastSet ? parseFloat(lastSet.weight) || 0 : 0;
+            // Find the heaviest set to use as base weight for templates
+            const heaviestSet = exercise?.sets.reduce((heaviest, set) => {
+              const setWeight = parseFloat(set.weight) || 0;
+              const heaviestWeight = parseFloat(heaviest.weight) || 0;
+              return setWeight > heaviestWeight ? set : heaviest;
+            }, exercise?.sets[0] || {});
+            const baseWeight = heaviestSet ? parseFloat(heaviestSet.weight) || 0 : 0;
             const templates = getSetTemplates(baseWeight);
             
             return templates.length > 0 ? (
