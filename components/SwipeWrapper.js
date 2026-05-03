@@ -35,7 +35,7 @@ export default function SwipeWrapper() {
     <Tab.Navigator
       initialRouteName={getInitialRouteName()}
       screenOptions={{
-        swipeEnabled: true,
+        swipeEnabled: false, // Disabled to prevent accidental navigation
         tabBarStyle: { display: 'none' }, // hide top tabs UI
       }}
     >

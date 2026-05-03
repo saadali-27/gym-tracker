@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { ScrollView, Text, TextInput, TouchableOpacity, View, Alert, KeyboardAvoidingView, Platform, StyleSheet, Animated } from 'react-native';
+import { ScrollView, Text, TextInput, TouchableOpacity, View, Alert, KeyboardAvoidingView, Platform, StyleSheet, Animated, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
@@ -87,13 +87,19 @@ export default function LogWorkoutScreen() {
   );
 
   const fetchExercises = async () => {
-    const { data, error } = await supabase
-      .from('exercises')
-      .select('*');
-    if (error) {
-      console.error('Error fetching exercises:', error);
-    } else {
-      setExercises(data);
+    try {
+      const { data, error } = await supabase
+        .from('exercises')
+        .select('*');
+      if (error) {
+        console.error('Error fetching exercises:', error);
+        Alert.alert('Error', 'Failed to load exercises. Please check your connection.');
+      } else {
+        setExercises(data || []);
+      }
+    } catch (error) {
+      console.error('Unexpected error fetching exercises:', error);
+      Alert.alert('Error', 'Failed to load exercises. Please try again.');
     }
   };
 
@@ -107,6 +113,7 @@ export default function LogWorkoutScreen() {
 
       if (error) {
         console.error('❌ ERROR fetching routines:', error);
+        Alert.alert('Error', 'Failed to load routines. Please check your connection.');
       } else {
         console.log('✅ ROUTINES FETCHED:', data);
         console.log('✅ ROUTINES COUNT:', data?.length || 0);
@@ -114,6 +121,7 @@ export default function LogWorkoutScreen() {
       }
     } catch (error) {
       console.error('❌ ERROR:', error);
+      Alert.alert('Error', 'Failed to load routines. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -253,12 +261,15 @@ export default function LogWorkoutScreen() {
   };
 
   const updateSetValues = (exerciseId: string, setIndex: number, field: 'reps' | 'weight', value: string) => {
+    // Validate input before updating
+    const validatedValue = validateSetInput(value, field);
+    
     setSessionExercises(sessionExercises.map(ex => {
       if (ex.exercise_id === exerciseId) {
         const updatedSets = [...ex.sets];
         updatedSets[setIndex] = {
           ...updatedSets[setIndex],
-          [field]: value
+          [field]: validatedValue
         };
         return {
           ...ex,
@@ -297,21 +308,44 @@ export default function LogWorkoutScreen() {
       return false;
     }
     
-    // Check if any exercise has at least one valid set (with reps > 0 and weight >= 0)
+    // Check if any exercise has at least one valid set (with reps > 0 and weight > 0)
     const hasValidSets = sessionExercises.some(exercise => 
       exercise.sets.some(set => {
-        const reps = parseInt(set.reps) || 0;
-        const weight = parseFloat(set.weight) || 0;
-        return reps > 0 && weight >= 0;
+        const reps = parseInt(set.reps);
+        const weight = parseFloat(set.weight);
+        
+        // Validate that reps and weight are valid numbers
+        if (isNaN(reps) || isNaN(weight)) {
+          return false;
+        }
+        
+        // Validate ranges: reps should be 1-100, weight should be 0.5-1000kg
+        return reps > 0 && reps <= 100 && weight > 0 && weight <= 1000;
       })
     );
     
     if (!hasValidSets) {
-      Alert.alert('Error', 'Please add at least one complete set with valid reps and weight');
+      Alert.alert('Invalid Input', 'Please add at least one complete set with valid reps (1-100) and weight (0.5-1000kg)');
       return false;
     }
     
     return true;
+  };
+
+  const validateSetInput = (value: string, type: 'reps' | 'weight') => {
+    const num = parseFloat(value);
+    
+    if (value === '' || isNaN(num)) {
+      return '';
+    }
+    
+    if (type === 'reps') {
+      // Reps should be between 1 and 100
+      return num > 0 && num <= 100 ? value : Math.max(1, Math.min(100, num)).toString();
+    } else {
+      // Weight should be between 0.5 and 1000kg
+      return num > 0 && num <= 1000 ? value : Math.max(0.5, Math.min(1000, num)).toString();
+    }
   };
 
   const saveWorkoutSession = async () => {
@@ -395,7 +429,7 @@ export default function LogWorkoutScreen() {
 
   } catch (error) {
     console.error('Error saving workout:', error);
-    Alert.alert('Error', 'Failed to save workout');
+    Alert.alert('Save Failed', 'Failed to save your workout. Please check your connection and try again.');
   } finally {
     setSaving(false);
   }
@@ -408,14 +442,15 @@ export default function LogWorkoutScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <StatusBar style="light" />
-      <ScrollView 
-        style={{ flex: 1 }}
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: 12,
-          paddingBottom: 140
-        }}
-      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView 
+            style={{ flex: 1 }}
+            contentContainerStyle={{
+              paddingHorizontal: 16,
+              paddingTop: 12,
+              paddingBottom: 140
+            }}
+          >
         <View style={{ 
           alignItems: 'center',
           justifyContent: 'center',
@@ -758,6 +793,7 @@ export default function LogWorkoutScreen() {
           </View>
         )}
       </ScrollView>
+    </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   </SafeAreaView>
   );

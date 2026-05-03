@@ -335,9 +335,18 @@ export default function DashboardScreen() {
               <Text style={{ 
                 fontSize: 16, 
                 color: theme.colors.text, 
-                textAlign: 'center' 
+                textAlign: 'center',
+                fontWeight: '600',
+                marginBottom: 8
               }}>
                 No recent workouts
+              </Text>
+              <Text style={{ 
+                fontSize: 14, 
+                color: theme.colors.subtext, 
+                textAlign: 'center' 
+              }}>
+                Start logging workouts to see your activity here
               </Text>
             </Card>
           ) : (

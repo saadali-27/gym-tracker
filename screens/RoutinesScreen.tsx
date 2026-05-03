@@ -410,7 +410,7 @@ export default function RoutinesScreen() {
                           </View>
                         </View>
                         <AppButton 
-                          title="Remove"
+                          title="×"
                           variant="danger"
                           onPress={() => deleteRoutineExercise(routine.id, exercise.id)}
                         />
@@ -449,7 +449,7 @@ export default function RoutinesScreen() {
                           </View>
                         </View>
                         <AppButton 
-                          title="Remove"
+                          title="×"
                           variant="danger"
                           onPress={() => removeExercise(routine.id, exercise.id)}
                         />
