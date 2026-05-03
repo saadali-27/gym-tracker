@@ -269,7 +269,7 @@ export default function HistoryScreen() {
                         color: theme.colors.primary,
                         marginBottom: 4,
                       }}>
-                        {routineGroup.routine_name || 'Custom Workout'}
+                        {routineGroup.routine_id ? routineGroup.routine_name : 'Custom Workout'}
                       </Text>
                     </View>
                     

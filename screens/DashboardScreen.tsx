@@ -148,6 +148,56 @@ export default function DashboardScreen() {
     React.useCallback(() => {
       fetchDashboardData();
       
+      // Smart Dashboard Logic - refresh on focus
+      const fetchSmartData = async () => {
+        const user = await getCurrentUser();
+
+        if (!user) return;
+
+        // fetch workouts
+        const { data: workoutsData } = await supabase
+          .from('workouts')
+          .select('*')
+          .eq('user_id', user.id);
+
+        setWorkouts(workoutsData || []);
+
+        // fetch workout entries (for muscle analysis)
+        const { data: entries } = await supabase
+          .from('workout_entries')
+          .select(`
+            *,
+            exercises!inner (
+              muscle_group
+            ),
+            workouts!inner (
+              user_id
+            )
+          `)
+          .eq('workouts.user_id', user.id);
+
+        // COUNT MUSCLE FREQUENCY
+        const muscleCount: {[key: string]: number} = {};
+
+        entries?.forEach((e: any) => {
+          // Helper to safely access nested exercise data
+          const exercise = Array.isArray(e.exercises) ? e.exercises[0] : e.exercises;
+          const muscle = exercise?.muscle_group || "Other";
+
+          muscleCount[muscle] = (muscleCount[muscle] || 0) + 1;
+        });
+
+        const sorted = Object.entries(muscleCount).sort((a, b) => (b[1] as number) - (a[1] as number));
+
+        if (sorted.length > 0) {
+          setMostTrained(sorted[0][0] as string);
+        } else {
+          setMostTrained("");
+        }
+      };
+
+      fetchSmartData();
+      
       const testAuth = async () => {
         const email = "test123@gmail.com";
         const password = "12345678";
@@ -166,45 +216,7 @@ export default function DashboardScreen() {
     }, [])
   );
 
-  // Smart Dashboard Logic
-  useEffect(() => {
-    const fetchData = async () => {
-      const user = await getCurrentUser();
-
-      if (!user) return;
-
-      // fetch workouts
-      const { data: workoutsData } = await supabase
-        .from('workouts')
-        .select('*')
-        .eq('user_id', user.id);
-
-      setWorkouts(workoutsData || []);
-
-      // fetch workout entries (for muscle analysis)
-      const { data: entries } = await supabase
-        .from('workout_entries')
-        .select('*');
-
-      // COUNT MUSCLE FREQUENCY
-      const muscleCount: {[key: string]: number} = {};
-
-      entries?.forEach((e: any) => {
-        const muscle = e.muscle || "Other";
-
-        muscleCount[muscle] = (muscleCount[muscle] || 0) + 1;
-      });
-
-      const sorted = Object.entries(muscleCount).sort((a, b) => (b[1] as number) - (a[1] as number));
-
-      if (sorted.length > 0) {
-        setMostTrained(sorted[0][0] as string);
-      }
-    };
-
-    fetchData();
-  }, []);
-
+  
   // TODAY'S FOCUS LOGIC
   let focusTitle = "Start a workout 💪";
   let focusSub = "Build consistency";
@@ -445,7 +457,7 @@ export default function DashboardScreen() {
                 marginBottom: index < recentWorkouts.length - 1 ? 10 : 0
               }}>
                 <Text style={{ color: '#E6EAF2', fontSize: 15 }}>
-                  {workout.routines?.name || 'Custom Workout'}
+                  {workout.routine_id ? workout.routines?.name : 'Custom Workout'}
                 </Text>
                 <Text style={{
                   color: '#9AA4B2',
