@@ -3,6 +3,7 @@ import { ScrollView, Text, TextInput, TouchableOpacity, View, Alert, KeyboardAvo
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase, getCurrentUser } from '../services/supabase';
 import { theme } from '../theme';
 import { AppHeader, RowItem, SectionLabel, StatBox, PrimaryButton, GhostButton } from '../components';
@@ -342,6 +343,38 @@ export default function LogWorkoutScreen() {
       fetchRoutines();
     }, [])
   );
+
+  // Save exercises to AsyncStorage when they change
+  useEffect(() => {
+    const saveExercises = async () => {
+      try {
+        await AsyncStorage.setItem('workout_exercises', JSON.stringify(sessionExercises));
+      } catch (error) {
+        console.error('Error saving exercises:', error);
+      }
+    };
+
+    if (sessionExercises.length > 0) {
+      saveExercises();
+    }
+  }, [sessionExercises]);
+
+  // Load exercises from AsyncStorage on mount
+  useEffect(() => {
+    const loadExercises = async () => {
+      try {
+        const savedExercises = await AsyncStorage.getItem('workout_exercises');
+        if (savedExercises) {
+          const parsedExercises = JSON.parse(savedExercises);
+          setSessionExercises(parsedExercises || []);
+        }
+      } catch (error) {
+        console.error('Error loading exercises:', error);
+      }
+    };
+
+    loadExercises();
+  }, []);
 
   // Rest Timer Effect
   useEffect(() => {

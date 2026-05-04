@@ -277,6 +277,7 @@ export default function RoutinesScreen() {
   const [showExerciseModal, setShowExerciseModal] = useState(false);
   const [selectedExercises, setSelectedExercises] = useState<{[key: string]: Exercise[]}>({});
   const [selectedRoutineId, setSelectedRoutineId] = useState<string>('');
+  const [unsavedChanges, setUnsavedChanges] = useState<Set<string>>(new Set());
 
   useFocusEffect(
     React.useCallback(() => {
@@ -293,12 +294,24 @@ export default function RoutinesScreen() {
 
       const { data, error } = await supabase
         .from('routines')
-        .select('*')
+        .select(`
+          *,
+          routine_exercises (
+            exercises (*)
+          )
+        `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setRoutines(data || []);
+      
+      // Transform the data to include exercises in the expected format
+      const routinesWithExercises = (data || []).map(routine => ({
+        ...routine,
+        exercises: routine.routine_exercises?.map((re: any) => re.exercises).filter(Boolean) || []
+      }));
+      
+      setRoutines(routinesWithExercises);
     } catch (error) {
       console.error('Error fetching routines:', error);
       Alert.alert('Error', 'Failed to fetch routines');
@@ -388,18 +401,38 @@ export default function RoutinesScreen() {
 
   const openExerciseSelection = (routineId: string) => {
     setSelectedRoutineId(routineId);
+    // Initialize with empty array for new selection, not existing exercises
     setSelectedExercises(prev => ({
       ...prev,
-      [routineId]: prev[routineId] || []
+      [routineId]: []
     }));
     setShowExerciseModal(true);
   };
 
   const selectExercise = (exercise: Exercise) => {
-    setSelectedExercises(prev => ({
-      ...prev,
-      [selectedRoutineId]: [...(prev[selectedRoutineId] || []), exercise]
-    }));
+    setSelectedExercises(prev => {
+      const currentExercises = prev[selectedRoutineId] || [];
+      
+      // Check if exercise already selected
+      const alreadySelected = currentExercises.some(e => e.id === exercise.id);
+      
+      let updatedExercises: Exercise[];
+      if (alreadySelected) {
+        // Remove from selection if already selected (toggle behavior)
+        updatedExercises = [...currentExercises.filter(e => e.id !== exercise.id)];
+      } else {
+        // Add to selection if not already selected
+        updatedExercises = [...currentExercises, exercise];
+      }
+      
+      // Track unsaved changes
+      setUnsavedChanges(prevChanges => new Set([...prevChanges, selectedRoutineId]));
+      
+      return {
+        ...prev,
+        [selectedRoutineId]: updatedExercises
+      };
+    });
   };
 
   const removeExercise = (routineId: string, exerciseId: string) => {
@@ -407,39 +440,98 @@ export default function RoutinesScreen() {
       ...prev,
       [routineId]: prev[routineId].filter(e => e.id !== exerciseId)
     }));
+    
+    // Track unsaved changes
+    setUnsavedChanges(prevChanges => new Set([...prevChanges, routineId]));
   };
 
+  const editExercise = (routineId: string, exercise: Exercise) => {
+    // For now, just show an alert that editing is not implemented yet
+    // You can extend this to open an edit modal or navigation
+    Alert.alert('Edit Exercise', `Editing "${exercise.name}" is not yet implemented. This would open an edit interface.`);
+  };
+
+  const removeSavedExercise = async (routineId: string, exerciseId: string) => {
+    try {
+      const { error } = await supabase
+        .from('routine_exercises')
+        .delete()
+        .eq('routine_id', routineId)
+        .eq('exercise_id', exerciseId);
+
+      if (error) throw error;
+      
+      // Update local state to remove the exercise
+      setRoutines(prev => prev.map(routine => 
+        routine.id === routineId 
+          ? { ...routine, exercises: routine.exercises?.filter(e => e.id !== exerciseId) || [] }
+          : routine
+      ));
+      
+      Alert.alert('Success', 'Exercise removed from routine');
+    } catch (error) {
+      console.error('Error removing exercise:', error);
+      Alert.alert('Error', 'Failed to remove exercise');
+    }
+  };
+
+  
   const saveRoutineExercises = async (routineId: string) => {
     try {
       const exercises = selectedExercises[routineId] || [];
+      
+      // Get existing routine exercises to append to
+      const routine = routines.find(r => r.id === routineId);
+      const existingExercises = routine?.exercises || [];
+      
+      // Combine existing exercises with new ones (avoid duplicates)
+      const existingExerciseIds = new Set(existingExercises.map(e => e.id));
+      const newExercises = exercises.filter(e => !existingExerciseIds.has(e.id));
+      const allExercises = [...existingExercises, ...newExercises];
       
       // Delete existing routine exercises
       await supabase
         .from('routine_exercises')
         .delete()
         .eq('routine_id', routineId);
-
-      // Insert new routine exercises
-      if (exercises.length > 0) {
+      
+      // Insert all exercises (existing + new)
+      if (allExercises.length > 0) {
         const { error } = await supabase
           .from('routine_exercises')
           .insert(
-            exercises.map(exercise => ({
+            allExercises.map(exercise => ({
               routine_id: routineId,
               exercise_id: exercise.id
             }))
           );
-
+        
         if (error) throw error;
       }
-
-      // Update local state
-      setRoutines(prev => prev.map(routine => 
+      
+      // Update local state with the new exercises
+      const updatedRoutines = routines.map((routine: Routine) => 
         routine.id === routineId 
-          ? { ...routine, exercises }
+          ? { ...routine, exercises: allExercises }
           : routine
-      ));
-
+      );
+      
+      setRoutines(updatedRoutines);
+      
+      // Clear selected exercises for this routine after successful save
+      setSelectedExercises((prev: {[key: string]: Exercise[]}) => {
+        const newState = { ...prev };
+        delete newState[routineId];
+        return newState;
+      });
+      
+      // Clear unsaved changes for this routine
+      setUnsavedChanges(prevChanges => {
+        const newChanges = new Set(prevChanges);
+        newChanges.delete(routineId);
+        return newChanges;
+      });
+      
       Alert.alert('Success', 'Exercises saved to routine');
     } catch (error) {
       console.error('Error saving routine exercises:', error);
@@ -472,7 +564,13 @@ export default function RoutinesScreen() {
           {routine.exercises.map((exercise) => (
             <View key={exercise.id} style={styles.exerciseItem}>
               <View style={styles.exerciseDot} />
-              <Text style={styles.exerciseName}>{exercise.name}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flex: 1 }}>
+                <Text style={styles.exerciseName}>{exercise.name}</Text>
+                <GhostButton
+                  title="×"
+                  onPress={() => removeSavedExercise(routine.id, exercise.id)}
+                />
+              </View>
             </View>
           ))}
         </View>
@@ -484,19 +582,29 @@ export default function RoutinesScreen() {
             <Text style={styles.selectedExercisesTitle}>
               Selected Exercises ({selectedExercises[routine.id].length})
             </Text>
-            <GhostButton
-              title="Save"
-              onPress={() => saveRoutineExercises(routine.id)}
-            />
+            {unsavedChanges.has(routine.id) && (
+              <GhostButton
+                title="Save"
+                onPress={() => saveRoutineExercises(routine.id)}
+              />
+            )}
           </View>
           {selectedExercises[routine.id].map((exercise) => (
             <View key={exercise.id} style={styles.exerciseItem}>
               <View style={styles.exerciseDot} />
-              <Text style={styles.exerciseName}>{exercise.name}</Text>
-              <GhostButton
-                title="×"
-                onPress={() => removeExercise(routine.id, exercise.id)}
-              />
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flex: 1 }}>
+                <Text style={styles.exerciseName}>{exercise.name}</Text>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <GhostButton
+                    title="Edit"
+                    onPress={() => editExercise(routine.id, exercise)}
+                  />
+                  <GhostButton
+                    title="×"
+                    onPress={() => removeExercise(routine.id, exercise.id)}
+                  />
+                </View>
+              </View>
             </View>
           ))}
         </View>
@@ -521,10 +629,12 @@ export default function RoutinesScreen() {
           <View style={{ flex: 1 }}>
             <Text style={styles.sectionTitle}>All Routines</Text>
           </View>
-          <GhostButton 
-            title="+ Create Routine"
-            onPress={() => setShowCreateModal(true)}
-          />
+          {routines.length > 0 && (
+            <GhostButton 
+              title="+ Create Routine"
+              onPress={() => setShowCreateModal(true)}
+            />
+          )}
         </View>
       </View>
     </>
