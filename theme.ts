@@ -1,13 +1,13 @@
 export const theme = {
   colors: {
-    background: '#0B0F1A',
-    card: '#121826',
-    cardSoft: '#1A2233',
-    primary: '#4F8CFF',
-    accent: '#22C55E',
-    text: '#E6EAF2',
-    subtext: '#9AA4B2',
-    border: '#1F2937',
+    background: '#000000',
+    card: '#1a1a1a',
+    cardSoft: '#2a2a2a',
+    primary: '#CDDC39', // Yellow/lime green accent from design
+    accent: '#CDDC39',
+    text: '#FFFFFF',
+    subtext: '#9E9E9E',
+    border: '#333333',
     danger: '#EF4444'
   },
   spacing: {

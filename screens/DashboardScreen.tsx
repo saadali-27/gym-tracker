@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
@@ -22,6 +22,35 @@ export default function DashboardScreen() {
   const [recentRoutine, setRecentRoutine] = useState<any>(null);
   const [workouts, setWorkouts] = useState<any[]>([]);
   const [mostTrained, setMostTrained] = useState("");
+
+  // Helper function to get weekly workout data
+  const getWeeklyData = () => {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const today = new Date();
+    const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay; // Adjust to get Monday
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + mondayOffset);
+    
+    const weeklyData = days.map((day, index) => {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + index);
+      
+      // Count workouts for this day
+      const dayWorkouts = workouts.filter((workout: any) => {
+        const workoutDate = new Date(workout.date);
+        return workoutDate.toDateString() === date.toDateString();
+      });
+      
+      return {
+        day,
+        count: dayWorkouts.length,
+        isToday: index === (currentDay === 0 ? 6 : currentDay - 1)
+      };
+    });
+    
+    return weeklyData;
+  };
 
   // Helper function to get start of week
   const getStartOfWeek = () => {
@@ -238,8 +267,8 @@ export default function DashboardScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#0A0F1E' }}>
-      <StatusBar style="light" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <StatusBar style="light" backgroundColor={theme.colors.background} />
       <ScrollView 
         style={{ flex: 1 }} 
         showsVerticalScrollIndicator={false}
@@ -248,198 +277,233 @@ export default function DashboardScreen() {
           paddingBottom: 40,
         }}
       >
+
+        {/* Home Header */}
         <View style={{ 
           alignItems: 'center',
           justifyContent: 'center',
-          marginTop: 4,
-          marginBottom: 6,
+          marginBottom: 24
         }}>
-          <Text style={{ 
-            fontSize: 22, 
-            fontWeight: '600', 
-            color: '#E6EAF2',
-            textAlign: 'center',
+          <Text style={{
+            color: theme.colors.text,
+            fontSize: 16,
+            fontWeight: '500'
           }}>
-            Dashboard
+            Home
           </Text>
         </View>
-        <View
-          style={{
-            height: 1,
-            backgroundColor: 'rgba(255,255,255,0.08)',
-            marginTop: 8,
-            marginBottom: 12,
-          }}
-        />
+        
+        {/* Subtle Separator */}
+        <View style={{
+          height: 1,
+          backgroundColor: theme.colors.border,
+          marginBottom: 24,
+          marginHorizontal: 16
+        }} />
 
         {/* Welcome Header */}
-        <View style={{ marginBottom: 16 }}>
+        <View style={{ marginBottom: 20 }}>
           <Text style={{
-            color: '#E6EAF2',
-            fontSize: 20,
+            color: theme.colors.text,
+            fontSize: 24,
             fontWeight: '600'
           }}>
-            Welcome back 👋
+            Welcome Back, Saad
           </Text>
 
           <Text style={{
-            color: '#9AA4B2',
+            color: theme.colors.subtext,
             fontSize: 14,
-            marginTop: 4
+            marginTop: 4,
+            textTransform: 'uppercase'
           }}>
-            Stay consistent today
-          </Text>
-        </View>
-
-        {/* Today's Focus */}
-        <View style={{
-          backgroundColor: '#0f172a',
-          borderRadius: 18,
-          padding: 18,
-          marginBottom: 16,
-          borderWidth: 1,
-          borderColor: '#1e293b'
-        }}>
-          <Text style={{
-            color: '#9AA4B2',
-            fontSize: 13,
-            marginBottom: 6
-          }}>
-            TODAY'S FOCUS
-          </Text>
-
-          <Text style={{
-            color: '#E6EAF2',
-            fontSize: 20,
-            fontWeight: '600'
-          }}>
-            {focusTitle}
-          </Text>
-
-          <Text style={{
-            color: '#9AA4B2',
-            marginTop: 6
-          }}>
-            {focusSub}
-          </Text>
-
-          <Text style={{
-            color: '#9AA4B2',
-            marginTop: 8
-          }}>
-            {insight}
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </Text>
         </View>
 
         {/* Quick Actions */}
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{
-            color: '#E6EAF2',
-            fontSize: 16,
-            marginBottom: 10
-          }}>
-            Quick Actions
-          </Text>
-
+        <View style={{ marginBottom: 24 }}>
           <View style={{
             flexDirection: 'row',
-            gap: 10
+            gap: 12
           }}>
             <TouchableOpacity 
               style={{
                 flex: 1,
-                backgroundColor: '#7C9EFF',
-                paddingVertical: 14,
-                borderRadius: 14,
-                alignItems: 'center'
+                backgroundColor: theme.colors.card,
+                paddingVertical: 16,
+                borderRadius: 12,
+                alignItems: 'center',
+                flexDirection: 'row',
+                justifyContent: 'center',
+                gap: 8
               }}
               onPress={() => navigation.navigate('Log' as never)}
             >
-              <Text style={{ color: '#0A0F1E', fontWeight: '600' }}>
-                Start Workout
+              <Text style={{ 
+                color: theme.colors.text, 
+                fontWeight: '600',
+                fontSize: 16
+              }}>
+                +
+              </Text>
+              <Text style={{ 
+                color: theme.colors.text, 
+                fontWeight: '600',
+                fontSize: 16
+              }}>
+                Start
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
               style={{
                 flex: 1,
-                backgroundColor: 'rgba(255,255,255,0.06)',
-                borderRadius: 14,
-                paddingVertical: 14,
-                alignItems: 'center',
-                borderWidth: 1,
-                borderColor: 'rgba(255,255,255,0.1)'
+                backgroundColor: theme.colors.card,
+                borderRadius: 12,
+                paddingVertical: 16,
+                alignItems: 'center'
               }}
               onPress={() => navigation.navigate('Routines' as never)}
             >
-              <Text style={{ color: '#E6EAF2' }}>
+              <Text style={{ 
+                color: theme.colors.text,
+                fontWeight: '600',
+                fontSize: 16
+              }}>
                 Routines
               </Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Most Trained Muscle */}
-        <View style={{
-          backgroundColor: '#0f172a',
-          borderRadius: 16,
-          padding: 16,
-          marginBottom: 16,
-          borderWidth: 1,
-          borderColor: '#1e293b'
-        }}>
+        {/* Weekly Stats */}
+        <View style={{ marginBottom: 24 }}>
           <Text style={{
-            color: '#9AA4B2',
-            fontSize: 13,
-            marginBottom: 6
+            color: theme.colors.text,
+            fontSize: 16,
+            fontWeight: '600',
+            marginBottom: 16
           }}>
-            MOST TRAINED
+            THIS WEEK
           </Text>
-
-          <Text style={{
-            color: '#E6EAF2',
-            fontSize: 18,
-            fontWeight: '600'
+          
+          <View style={{
+            backgroundColor: theme.colors.card,
+            borderRadius: 12,
+            padding: 16,
+            borderWidth: 1,
+            borderColor: theme.colors.border
           }}>
-            {mostTrained || "No data yet"}
-          </Text>
+            <View style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 16
+            }}>
+              <Text style={{
+                color: theme.colors.text,
+                fontSize: 14
+              }}>
+                sessions
+              </Text>
+              <Text style={{
+                color: theme.colors.primary,
+                fontSize: 24,
+                fontWeight: 'bold'
+              }}>
+                {weeklyWorkouts}
+              </Text>
+            </View>
+            
+            {/* Weekly Progress */}
+            <View style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              {getWeeklyData().map((day, index) => (
+                <View key={index} style={{
+                  alignItems: 'center',
+                  flex: 1
+                }}>
+                  <View style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: 12,
+                    backgroundColor: day.count > 0 ? theme.colors.primary : theme.colors.border,
+                    marginBottom: 4,
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                  }}>
+                    {day.count > 0 && (
+                      <Text style={{
+                        color: theme.colors.background,
+                        fontSize: 12,
+                        fontWeight: 'bold'
+                      }}>
+                        ✓
+                      </Text>
+                    )}
+                  </View>
+                  <Text style={{
+                    color: theme.colors.subtext,
+                    fontSize: 10,
+                    textAlign: 'center'
+                  }}>
+                    {day.day}
+                  </Text>
+                </View>
+              ))}
+            </View>
+            
+            <Text style={{
+              color: theme.colors.subtext,
+              fontSize: 12,
+              marginTop: 12,
+              textAlign: 'center'
+            }}>
+              {weeklyWorkouts} out of 7 days completed
+            </Text>
+          </View>
         </View>
 
-        {/* Recent Activity */}
+        {/* Recent Sessions */}
         <View>
           <Text style={{
-            color: '#E6EAF2',
+            color: theme.colors.text,
             fontSize: 16,
-            marginBottom: 10
+            fontWeight: '600',
+            marginBottom: 16
           }}>
-            Recent Activity
+            RECENT
           </Text>
 
           {loading ? (
             <View style={{
-              backgroundColor: '#0f172a',
-              borderRadius: 16,
+              backgroundColor: theme.colors.card,
+              borderRadius: 12,
               padding: 16,
               borderWidth: 1,
-              borderColor: '#1e293b'
+              borderColor: theme.colors.border
             }}>
-              <Text style={{ color: '#E6EAF2', fontSize: 15 }}>
+              <Text style={{ color: theme.colors.text, fontSize: 15 }}>
                 Loading...
               </Text>
             </View>
           ) : recentWorkouts.length === 0 ? (
             <View style={{
-              backgroundColor: '#0f172a',
-              borderRadius: 16,
+              backgroundColor: theme.colors.card,
+              borderRadius: 12,
               padding: 16,
               borderWidth: 1,
-              borderColor: '#1e293b'
+              borderColor: theme.colors.border
             }}>
-              <Text style={{ color: '#E6EAF2', fontSize: 15 }}>
-                No recent workouts
+              <Text style={{ color: theme.colors.text, fontSize: 15 }}>
+                No sessions yet
               </Text>
               <Text style={{
-                color: '#9AA4B2',
+                color: theme.colors.subtext,
                 fontSize: 13,
                 marginTop: 4
               }}>
@@ -449,18 +513,18 @@ export default function DashboardScreen() {
           ) : (
             recentWorkouts.map((workout, index) => (
               <View key={workout.id} style={{
-                backgroundColor: '#0f172a',
-                borderRadius: 16,
+                backgroundColor: theme.colors.card,
+                borderRadius: 12,
                 padding: 16,
                 borderWidth: 1,
-                borderColor: '#1e293b',
-                marginBottom: index < recentWorkouts.length - 1 ? 10 : 0
+                borderColor: theme.colors.border,
+                marginBottom: index < recentWorkouts.length - 1 ? 8 : 0
               }}>
-                <Text style={{ color: '#E6EAF2', fontSize: 15 }}>
+                <Text style={{ color: theme.colors.text, fontSize: 15 }}>
                   {workout.routine_id ? workout.routines?.name : 'Custom Workout'}
                 </Text>
                 <Text style={{
-                  color: '#9AA4B2',
+                  color: theme.colors.subtext,
                   fontSize: 13,
                   marginTop: 4
                 }}>
