@@ -5,6 +5,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { supabase } from '../services/supabase';
 import { theme } from '../theme';
+import { AppHeader, RowItem, SectionLabel, StatBox, PrimaryButton, GhostButton } from '../components';
 import { LineChart, BarChart } from 'react-native-chart-kit';
 import RNPickerSelect from 'react-native-picker-select';
 import { getMostTrainedMuscle } from '../utils/muscleUtils';
@@ -18,8 +19,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 10,
   },
+  scrollViewContent: {
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.xl,
+  },
   scrollView: {
     flex: 1,
+  },
+  headerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: theme.spacing.xs,
+    marginBottom: theme.spacing.sm,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: theme.colors.text,
+  },
+  headerDivider: {
+    height: 1,
+    backgroundColor: theme.colors.border,
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.lg,
   },
   header: {
     paddingHorizontal: 20,
@@ -50,12 +72,12 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   card: {
-    backgroundColor: '#0f172a',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16, // spacing between cards
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md, // spacing between cards
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: theme.colors.border,
   },
   cardText: {
     fontSize: 16,
@@ -141,7 +163,7 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     backgroundColor: theme.colors.card,
-    padding: 16,
+    padding: theme.spacing.md,
     borderRadius: theme.radius.md,
     alignItems: 'center',
     shadowColor: '#000',
@@ -149,13 +171,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
   },
   statNumber: {
     fontSize: 24,
     fontWeight: 'bold',
     color: theme.colors.primary,
-    marginBottom: 8,
+    marginBottom: theme.spacing.sm,
   },
   statLabel: {
     fontSize: 12,
@@ -179,7 +201,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.text,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: theme.spacing.sm,
   },
   prDate: {
     fontSize: 12,
@@ -191,8 +213,8 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.card,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: 8,
-    padding: 8,
+    borderRadius: theme.radius.sm,
+    padding: theme.spacing.sm,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -233,20 +255,20 @@ const styles = StyleSheet.create({
   },
   // Chart styles
   exerciseSelector: {
-    marginBottom: 24,
+    marginBottom: theme.spacing.lg,
   },
   selectorLabel: {
     fontSize: 16,
     fontWeight: '500',
     color: theme.colors.text,
-    marginBottom: 10,
+    marginBottom: theme.spacing.sm,
   },
   exerciseChip: {
     backgroundColor: theme.colors.border,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginRight: 8,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.radius.xl,
+    marginRight: theme.spacing.sm,
     borderWidth: 1,
     borderColor: theme.colors.border,
   },
@@ -264,13 +286,13 @@ const styles = StyleSheet.create({
   },
   chartContainer: {
     alignItems: 'center',
-    marginVertical: 12,
+    marginVertical: theme.spacing.sm,
   },
   chartTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: theme.colors.text,
-    marginBottom: 12,
+    marginBottom: theme.spacing.sm,
     textAlign: 'center',
   },
   chart: {
@@ -280,8 +302,8 @@ const styles = StyleSheet.create({
   chartLegend: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: 10,
-    paddingTop: 10,
+    marginTop: theme.spacing.sm,
+    paddingTop: theme.spacing.sm,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
   },
@@ -294,7 +316,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.subtext,
     textAlign: 'center',
-    marginTop: 5,
+    marginTop: theme.spacing.xs,
   },
   noDataText: {
     fontSize: 16,
@@ -319,7 +341,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
   },
   insufficientDataIconText: {
     fontSize: 24,
@@ -328,13 +350,13 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     color: theme.colors.text,
-    marginBottom: 8,
+    marginBottom: theme.spacing.sm,
   },
   insufficientDataMessage: {
     fontSize: 16,
     color: theme.colors.subtext,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: theme.spacing.md,
   },
   insufficientDataTips: {
     alignItems: 'flex-start',
@@ -342,14 +364,14 @@ const styles = StyleSheet.create({
   insufficientDataTip: {
     fontSize: 14,
     color: theme.colors.subtext,
-    marginBottom: 4,
+    marginBottom: theme.spacing.sm,
   },
   // Workout Overview styles
   overviewCard: {
     backgroundColor: theme.colors.card,
     borderRadius: theme.radius.md,
-    padding: 20,
-    marginBottom: 16,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -359,7 +381,7 @@ const styles = StyleSheet.create({
   overviewStats: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: 24,
+    marginBottom: theme.spacing.lg,
   },
   overviewStat: {
     alignItems: 'center',
@@ -369,7 +391,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: theme.colors.primary,
-    marginBottom: 4,
+    marginBottom: theme.spacing.sm,
   },
   overviewStatLabel: {
     fontSize: 14,
@@ -378,15 +400,16 @@ const styles = StyleSheet.create({
   },
   mostUsedContainer: {
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingVertical: theme.spacing.lg,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
+    marginBottom: theme.spacing.sm,
   },
   overviewSubTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: theme.colors.text,
-    marginBottom: 12,
+    marginBottom: theme.spacing.md,
   },
   mostUsedExercise: {
     flexDirection: 'row',
@@ -555,6 +578,46 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.text,
     marginBottom: 16,
+  },
+  tooltipDate: {
+    color: theme.colors.subtext,
+    fontSize: 12,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  tooltipValue: {
+    color: theme.colors.text,
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  tooltipContainer: {
+    position: 'absolute',
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    padding: theme.spacing.sm,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    maxWidth: 200,
+    zIndex: 999,
+  },
+  legendContainer: {
+    position: 'relative',
+  },
+  trendContainer: {
+    marginTop: theme.spacing.sm,
+  },
+  insightsContainer: {
+    marginTop: theme.spacing.md,
+    paddingTop: theme.spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+  },
+  insightsText: {
+    fontSize: 14,
+    color: theme.colors.subtext,
+    lineHeight: 20,
   },
 });
 
@@ -994,21 +1057,10 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
       ]}
       pointerEvents="none"
     >
-      <Text style={{ 
-        color: '#E6EAF2', 
-        fontSize: 12, 
-        fontWeight: '500',
-        textAlign: 'center',
-        marginBottom: 4
-      }}>
+      <Text style={styles.tooltipDate}>
         {title}
       </Text>
-      <Text style={{ 
-        color: '#FFFFFF', 
-        fontSize: 14, 
-        fontWeight: '600',
-        textAlign: 'center'
-      }}>
+      <Text style={styles.tooltipValue}>
         {value} kg
       </Text>
     </View>
@@ -1177,38 +1229,20 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
   }, [weeklyVolumeData]);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#0A0F1E' }}>
-      <StatusBar style="light" />
+    <SafeAreaView style={styles.container}>
+      <StatusBar style="light" backgroundColor={theme.colors.background} />
       <ScrollView 
         style={styles.scrollView} 
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingBottom: 40,
-        }}
+        contentContainerStyle={styles.scrollViewContent}
       >
-        <View style={{ 
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginTop: 4,
-          marginBottom: 6,
-        }}>
-          <Text style={{ 
-            fontSize: 22, 
-            fontWeight: '600', 
-            color: '#E6EAF2',
-            textAlign: 'center',
-          }}>
+        <View style={styles.headerContainer}>
+          <Text style={styles.headerTitle}>
             Progress
           </Text>
         </View>
         <View
-          style={{
-            height: 1,
-            backgroundColor: 'rgba(255,255,255,0.08)',
-            marginTop: 8,
-            marginBottom: 12,
-          }}
+          style={styles.headerDivider}
         />
 
         {/* Weekly Volume Section */}
@@ -1303,11 +1337,7 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
           {selectedExercise && lineChartData ? (
             <View>
               <Pressable style={styles.chartCard} onPress={() => setShowTooltip(false)}>
-                <View style={{
-                  marginTop: 10,
-                  borderRadius: 16,
-                  overflow: 'hidden'
-                }}>
+                <View style={styles.chartContainer}>
                   <LineChart
                   data={lineChartData}
                   width={Dimensions.get('window').width - 32}
@@ -1352,38 +1382,11 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
               </Pressable>
               {/* Tooltip */}
               {showTooltip && selectedDataPoint && (
-                <View style={{
-                  position: 'absolute',
-                  left: selectedDataPoint.x - 30,
-                  top: selectedDataPoint.y - 50,
-                  backgroundColor: 'rgba(10,15,30,0.95)',
-                  padding: 8,
-                  paddingHorizontal: 10,
-                  borderRadius: 10,
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.2,
-                  shadowRadius: 4,
-                  elevation: 3,
-                  minWidth: 80,
-                  maxWidth: 200,
-                  zIndex: 999,
-                }}>
-                  <Text style={{ 
-                    color: '#E6EAF2', 
-                    fontSize: 12, 
-                    fontWeight: '500',
-                    textAlign: 'center',
-                    marginBottom: 4
-                  }}>
+                <View style={styles.tooltipContainer}>
+                  <Text style={styles.tooltipDate}>
                     {selectedDataPoint.date}
                   </Text>
-                  <Text style={{ 
-                    color: '#FFFFFF', 
-                    fontSize: 14, 
-                    fontWeight: '600',
-                    textAlign: 'center'
-                  }}>
+                  <Text style={styles.tooltipValue}>
                     {selectedDataPoint.weight} kg
                   </Text>
                 </View>
@@ -1449,13 +1452,9 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
                       }
                     }
                   }}
-                  style={{ position: 'relative' }}
+                  style={styles.legendContainer}
                 >
-                  <View style={{
-                    marginTop: 10,
-                    borderRadius: 16,
-                    overflow: 'hidden'
-                  }}>
+                  <View style={styles.chartContainer}>
                     <BarChart
                       data={barChartData!}
                       width={Dimensions.get('window').width - 32}
@@ -1544,16 +1543,16 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
           </View>
         </View>
 
-        <View style={[styles.sectionCard, { marginTop: 16, padding: 20 }]}>
+        <View style={[styles.sectionCard, styles.sectionCard]}>
           <Text style={styles.chartSectionTitle}>Progress Insights</Text>
-          <View style={{ marginTop: 12 }}>
+          <View style={styles.trendContainer}>
             <Text style={styles.trendText}>
               {loading ? 'Loading...' : trend}
             </Text>
           </View>
           {!loading && fitnessInsights && (
-            <View style={{ marginTop: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)' }}>
-              <Text style={[styles.trendText, { fontSize: 14, color: theme.colors.subtext, lineHeight: 20 }]}>
+            <View style={styles.insightsContainer}>
+              <Text style={styles.insightsText}>
                 {fitnessInsights}
               </Text>
             </View>

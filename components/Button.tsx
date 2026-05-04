@@ -123,17 +123,19 @@ const getVariantStyle = (variant: 'primary' | 'secondary' | 'danger', disabled: 
   switch (variant) {
     case 'danger':
       return {
-        backgroundColor: 'rgba(255,107,107,0.18)',
+        backgroundColor: theme.colors.danger + '20',
+        borderWidth: 1,
+        borderColor: theme.colors.danger,
       };
     case 'secondary':
       return {
-        backgroundColor: 'rgba(255,255,255,0.08)',
+        backgroundColor: 'transparent',
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.12)',
+        borderColor: theme.colors.border,
       };
     default: // primary
       return {
-        backgroundColor: '#7C9EFF',
+        backgroundColor: theme.colors.primary,
       };
   }
 };
@@ -158,22 +160,22 @@ const getTextSizeStyle = (size: 'small' | 'medium' | 'large'): TextStyle => {
 const getTextVariantStyle = (variant: 'primary' | 'secondary' | 'danger', disabled: boolean): TextStyle => {
   if (disabled) {
     return {
-      color: theme.colors.subtext,
+      color: '#ffffff', // Force white for disabled state
     };
   }
 
   switch (variant) {
     case 'danger':
       return {
-        color: '#FF6B6B',
+        color: '#FF6B6B', // Keep red for danger
       };
     case 'secondary':
       return {
-        color: '#E6EAF2',
+        color: '#ffffff', // Force white for secondary
       };
     default: // primary
       return {
-        color: '#0A0F1E',
+        color: '#000000', // Force black for primary
       };
   }
 };

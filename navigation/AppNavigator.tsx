@@ -14,7 +14,7 @@ export default function AppNavigator() {
     <NavigationContainer theme={{
       dark: true,
       colors: {
-        background: '#000000',
+        background: theme.colors.background,
         card: theme.colors.card,
         text: theme.colors.text,
         border: theme.colors.border,

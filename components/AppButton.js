@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { Pressable, Text, StyleSheet, Animated } from 'react-native';
+import { theme } from '../theme';
 
 const AppButton = ({ 
   title, 
@@ -31,17 +32,19 @@ const AppButton = ({
     switch (variant) {
       case 'secondary':
         return {
-          backgroundColor: 'rgba(255,255,255,0.06)',
+          backgroundColor: 'transparent',
           borderWidth: 1,
-          borderColor: 'rgba(255,255,255,0.1)',
+          borderColor: theme.colors.border,
         };
       case 'danger':
         return {
-          backgroundColor: 'rgba(255,107,107,0.15)',
+          backgroundColor: theme.colors.danger + '20',
+          borderWidth: 1,
+          borderColor: theme.colors.danger,
         };
       default: // primary
         return {
-          backgroundColor: '#7C9EFF',
+          backgroundColor: theme.colors.primary,
         };
     }
   };
@@ -49,11 +52,11 @@ const AppButton = ({
   const getTextColor = () => {
     switch (variant) {
       case 'secondary':
-        return '#E6EAF2';
+        return theme.colors.text;
       case 'danger':
-        return '#FF6B6B';
+        return theme.colors.danger;
       default: // primary
-        return '#0A0F1E';
+        return theme.colors.background;
     }
   };
 

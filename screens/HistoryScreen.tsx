@@ -5,15 +5,139 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { supabase } from '../services/supabase';
 import { theme } from '../theme';
+import { AppHeader, RowItem, SectionLabel, StatBox, PrimaryButton, GhostButton } from '../components';
 import Card from '../components/Card';
-import AppButton from '../components/AppButton';
-import Button from '../components/Button';
 
 // STEP 2: SAFE DATE HANDLING
 const safeDate = (value: any) => {
   const d = new Date(value);
   return isNaN(d.getTime()) ? null : d;
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.xl,
+  },
+  loadingContainer: {
+    marginTop: theme.spacing.lg,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: theme.colors.text,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  emptyCard: {
+    padding: theme.spacing.lg,
+    borderRadius: 16,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    color: theme.colors.text,
+    textAlign: 'center',
+    fontWeight: '700',
+    marginBottom: theme.spacing.sm,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: theme.colors.subtext,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  section: {
+    marginBottom: theme.spacing.lg,
+  },
+  workoutCard: {
+    marginBottom: theme.spacing.lg,
+    borderRadius: 16,
+    padding: theme.spacing.lg,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  workoutHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: theme.spacing.md,
+  },
+  routineName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: theme.colors.primary,
+    marginBottom: theme.spacing.xs,
+  },
+  dateContainer: {
+    alignItems: 'flex-end',
+  },
+  dateText: {
+    fontSize: 12,
+    color: theme.colors.subtext,
+    marginBottom: theme.spacing.sm,
+  },
+  exercisesContainer: {
+    gap: theme.spacing.md,
+  },
+  workoutSummary: {
+    backgroundColor: theme.colors.primary + '05',
+    borderRadius: 12,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.primary + '20',
+  },
+  workoutSummaryTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.primary,
+    marginBottom: theme.spacing.sm,
+  },
+  workoutSummaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  workoutSummaryText: {
+    fontSize: 12,
+    color: theme.colors.text,
+  },
+  exerciseName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: theme.colors.text,
+    marginBottom: theme.spacing.sm,
+  },
+  setsList: {
+    marginLeft: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
+  },
+  setItem: {
+    fontSize: 14,
+    color: theme.colors.subtext,
+    marginBottom: 2,
+  },
+  exerciseDivider: {
+    borderBottomWidth: 1,
+    borderColor: theme.colors.border,
+    marginVertical: theme.spacing.sm,
+  },
+  dateHeader: {
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+  },
+  dateHeaderText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: theme.colors.text,
+  },
+});
 
 export default function HistoryScreen() {
   const [groupedWorkouts, setGroupedWorkouts] = useState<any>({});
@@ -155,8 +279,8 @@ export default function HistoryScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#0A0F1E' }}>
-      <StatusBar style="light" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <StatusBar style="light" backgroundColor={theme.colors.background} />
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={{
@@ -172,37 +296,6 @@ export default function HistoryScreen() {
           />
         }
       >
-        <View style={{ 
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginTop: 4,
-          marginBottom: 20,
-        }}>
-          <Text style={{ 
-            fontSize: 24, 
-            fontWeight: '700', 
-            color: '#E6EAF2',
-            textAlign: 'center',
-          }}>
-            Workout History
-          </Text>
-          <Text style={{
-            fontSize: 14,
-            color: theme.colors.subtext,
-            marginTop: 4,
-          }}>
-            Track your progress and templates
-          </Text>
-        </View>
-        <View
-          style={{
-            height: 1,
-            backgroundColor: 'rgba(255,255,255,0.1)',
-            marginTop: 8,
-            marginBottom: 24,
-          }}
-        />
-
         {loading ? (
           <View style={{ marginTop: theme.spacing.lg }}>
             <Card>
@@ -243,7 +336,7 @@ export default function HistoryScreen() {
             <View key={dateKey} style={styles.section}>
               {/* STEP 4: UI DISPLAY - Date Header */}
               <View style={styles.dateHeader}>
-                <Text style={styles.dateText}>
+                <Text style={styles.dateHeaderText}>
                   {safeDate((Object.values(routineGroups)[0] as any)?.workouts?.[0]?.date)?.toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'short',
@@ -298,9 +391,8 @@ export default function HistoryScreen() {
                         }) || 'Unknown Date'}
                       </Text>
                       
-                      <AppButton
+                      <GhostButton
                         title="Delete"
-                        variant="danger"
                         onPress={() => deleteWorkout(routineGroup.workouts[0]?.id)}
                       />
                     </View>
@@ -428,125 +520,3 @@ export default function HistoryScreen() {
     </SafeAreaView>
   );
 }
-
-// STEP 7: UI CLEANUP
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-    paddingHorizontal: 16,
-    paddingTop: 10,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 16,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: theme.colors.subtext,
-  },
-  section: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
-    paddingTop: 12,
-  },
-  dateHeader: {
-    marginBottom: 12,
-  },
-  dateText: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: theme.colors.text,
-  },
-  card: {
-    backgroundColor: theme.colors.card,
-    padding: 20,
-    borderRadius: theme.radius.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  cardText: {
-    fontSize: 16,
-    color: theme.colors.subtext,
-    textAlign: 'center',
-  },
-  workoutCard: {
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.radius.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    marginBottom: 12,
-  },
-  workoutHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  routineName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.text,
-    flex: 1,
-  },
-  deleteButton: {
-    backgroundColor: theme.colors.danger,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: theme.radius.sm,
-  },
-  deleteButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  exercisesContainer: {
-    padding: 16,
-  },
-  exerciseItem: {
-    marginBottom: 12,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  exerciseName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: 4,
-  },
-  exerciseDetails: {
-    fontSize: 14,
-    color: theme.colors.subtext,
-    marginLeft: 8,
-  },
-  exerciseGroup: {
-    marginBottom: 16,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  sectionDivider: {
-    height: 1,
-    backgroundColor: theme.colors.border,
-    marginVertical: 12,
-  },
-});

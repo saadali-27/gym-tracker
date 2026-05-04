@@ -3,6 +3,8 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvo
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { signInUser, signUpUser } from '../services/supabase';
+import { theme } from '../theme';
+import { AppHeader, PrimaryButton, GhostButton } from '../components';
 
 export default function AuthScreen({ onAuth }: { onAuth: () => void }) {
   const [email, setEmail] = useState('');
@@ -99,25 +101,19 @@ export default function AuthScreen({ onAuth }: { onAuth: () => void }) {
             editable={!loading}
           />
 
-          <TouchableOpacity 
-            style={[styles.button, styles.loginButton, loading && styles.buttonDisabled]} 
+          <PrimaryButton
+            title={loading ? 'Logging in...' : 'Login'}
             onPress={handleLogin}
+            loading={loading}
             disabled={loading}
-          >
-            <Text style={styles.text}>
-              {loading ? 'Logging in...' : 'Login'}
-            </Text>
-          </TouchableOpacity>
+          />
 
-          <TouchableOpacity 
-            style={[styles.button, styles.signupButton, loading && styles.buttonDisabled]} 
+          <GhostButton
+            title={loading ? 'Creating account...' : 'Sign Up'}
             onPress={handleSignup}
+            loading={loading}
             disabled={loading}
-          >
-            <Text style={styles.text}>
-              {loading ? 'Creating account...' : 'Sign Up'}
-            </Text>
-          </TouchableOpacity>
+          />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -127,7 +123,7 @@ export default function AuthScreen({ onAuth }: { onAuth: () => void }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0F1E',
+    backgroundColor: theme.colors.background,
   },
   keyboardView: {
     flex: 1,
@@ -138,40 +134,20 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   title: {
-    color: '#E6EAF2',
+    color: theme.colors.text,
     fontSize: 28,
-    marginBottom: 20,
+    marginBottom: theme.spacing.lg,
     fontWeight: '600',
     textAlign: 'center',
   },
   input: {
-    backgroundColor: '#121826',
-    color: '#E6EAF2',
+    backgroundColor: theme.colors.card,
+    color: theme.colors.text,
     borderWidth: 1,
-    borderColor: '#1F2937',
-    padding: 14,
+    borderColor: theme.colors.border,
+    padding: theme.spacing.md,
     borderRadius: 12,
-    marginBottom: 12,
     fontSize: 16,
-  },
-  button: {
-    padding: 14,
-    borderRadius: 12,
-    marginTop: 10,
-  },
-  loginButton: {
-    backgroundColor: '#4F8CFF',
-  },
-  signupButton: {
-    backgroundColor: '#22C55E',
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  text: {
-    color: '#ffffff',
-    textAlign: 'center',
-    fontWeight: '600',
-    fontSize: 16,
+    marginTop: theme.spacing.sm,
   },
 });

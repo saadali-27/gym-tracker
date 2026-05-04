@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     borderRadius: theme.radius.md,
     padding: 12,
-    color: '#ffffff',
+    color: theme.colors.text,
     fontSize: 16,
   },
 });
