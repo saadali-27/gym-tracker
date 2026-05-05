@@ -97,11 +97,9 @@ const styles = StyleSheet.create({
   
   // Chart containers with fixed height
   chartContainer: {
-    height: 220,
     marginBottom: 20,
   },
   barChartContainer: {
-    height: 220,
     marginBottom: 20,
   },
   
@@ -1046,50 +1044,46 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
             
             {/* 7-Day Bar Chart */}
             <View style={styles.barChartContainer}>
-              <BarChart
-                data={weeklyBarChartData.datasets[0].data.map((value, index) => {
+              <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center' }}>
+                {weeklyBarChartData.datasets[0].data.map((value, index) => {
                   const isCurrentDay = weeklyBarChartData.labels[index] === getCurrentDayLabel();
-                  const displayValue = Math.max(value, 10); // Ensure minimum visible height
-                  return {
-                    value: displayValue,
-                    label: weeklyBarChartData.labels[index],
-                    frontColor: theme.colors.primary,
-                  };
+                  const displayValue = Math.max(value, 10);
+                  return (
+                    <TouchableOpacity 
+                      key={index} 
+                      style={{ width: 40, alignItems: 'center', marginHorizontal: 2 }}
+                      onPress={() => {
+                        setSelectedBar({ label: weeklyBarChartData.labels[index], value });
+                        setTimeout(() => setSelectedBar(null), 2000);
+                      }}
+                    >
+                      <View style={{ height: 140, justifyContent: 'flex-end' }}>
+                        <View style={{
+                          width: 22,
+                          height: (displayValue / (Math.max(...weeklyBarChartData.datasets[0].data) * 1.2)) * 140,
+                          backgroundColor: isCurrentDay ? theme.colors.primary : 'rgba(55, 65, 81, 1)',
+                          borderRadius: 6,
+                        }} />
+                      </View>
+                      <Text style={{
+                        color: isCurrentDay ? theme.colors.primary : theme.colors.text,
+                        fontSize: 12,
+                        fontWeight: '500',
+                        textAlign: 'center',
+                        marginTop: 8,
+                      }}>
+                        {weeklyBarChartData.labels[index]}
+                      </Text>
+                    </TouchableOpacity>
+                  );
                 })}
-                barWidth={12}
-                spacing={18}
-                initialSpacing={20}
-                frontColor={theme.colors.primary}
-                hideRules={true}
-                hideAxesAndRules={true}
-                xAxisThickness={0}
-                yAxisThickness={0}
-                roundedTop={true}
-                xAxisLabelTextStyle={{
-                  color: theme.colors.text,
-                  fontSize: 12,
-                  fontWeight: '500',
-                  width: 40,
-                  textAlign: 'center',
-                }}
-                height={180}
-                width={Dimensions.get('window').width - 64}
-                noOfSections={4}
-                stepHeight={40}
-                maxValue={Math.max(...weeklyBarChartData.datasets[0].data) * 1.2}
-                onPress={(data: any, index: number) => {
-                  const value = weeklyBarChartData.datasets[0].data[index];
-                  const label = weeklyBarChartData.labels[index];
-                  setSelectedBar({ label, value });
-                  setTimeout(() => setSelectedBar(null), 2000);
-                }}
-              />
+              </View>
               
               {selectedBar && (
                 <View style={[styles.tooltipContainer, { 
                   position: 'absolute',
-                  top: 50,
-                  left: (Dimensions.get('window').width - 64) * (weeklyBarChartData.labels.indexOf(selectedBar.label) + 0.5) / weeklyBarChartData.labels.length - 75,
+                  top: 20,
+                  left: ((Dimensions.get('window').width - 64) / weeklyBarChartData.labels.length) * (weeklyBarChartData.labels.indexOf(selectedBar.label) + 0.5) - 40,
                 }]}>
                   <Text style={styles.tooltipDate}>
                     {selectedBar.label}
@@ -1319,49 +1313,46 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
                   No data yet. Start logging workouts.
                 </Text>
               ) : (
-                <View>
-                  <BarChart
-                  data={barChartData.datasets[0].data.map((value, index) => ({
-                    value,
-                    label: barChartData.labels[index],
-                    frontColor: theme.colors.primary,
-                  }))}
-                  barWidth={22}
-                  spacing={18}
-                  initialSpacing={35}
-                  frontColor={theme.colors.primary}
-                  hideRules={true}
-                  hideAxesAndRules={true}
-                  xAxisThickness={0}
-                  yAxisThickness={0}
-                  roundedTop={true}
-                  xAxisLabelTextStyle={{
-                    color: theme.colors.text,
-                    fontSize: 12,
-                    fontWeight: '500',
-                    width: 85,
-                    textAlign: 'center',
-                  }}
-                  height={160}
-                  width={Dimensions.get('window').width - 64}
-                  noOfSections={4}
-                  stepHeight={35}
-                  maxValue={Math.max(...barChartData.datasets[0].data) * 1.2}
-                  onPress={(data: any, index: number) => {
-                    const label = barChartData.labels[index];
-                    const volumeData = weeklyVolumeData.find(item => item.label === label);
-                    if (volumeData) {
-                      setSelectedBar({ label, value: volumeData.value });
-                      setTimeout(() => setSelectedBar(null), 2000);
-                    }
-                  }}
-                />
+                <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center' }}>
+                  {barChartData.datasets[0].data.map((value, index) => (
+                    <TouchableOpacity 
+                      key={index} 
+                      style={{ width: 40, alignItems: 'center', marginHorizontal: 2 }}
+                      onPress={() => {
+                        const volumeData = weeklyVolumeData.find(item => item.label === barChartData.labels[index]);
+                        if (volumeData) {
+                          setSelectedBar({ label: barChartData.labels[index], value: volumeData.value });
+                          setTimeout(() => setSelectedBar(null), 2000);
+                        }
+                      }}
+                    >
+                      <View style={{ height: 120, justifyContent: 'flex-end' }}>
+                        <View style={{
+                          width: 22,
+                          height: (value / (Math.max(...barChartData.datasets[0].data) * 1.2)) * 120,
+                          backgroundColor: theme.colors.primary,
+                          borderRadius: 6,
+                        }} />
+                      </View>
+                      <Text style={{
+                        color: theme.colors.text,
+                        fontSize: 12,
+                        fontWeight: '500',
+                        textAlign: 'center',
+                        marginTop: 8,
+                      }}>
+                        {barChartData.labels[index]}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
                 
-                {selectedBar && barChartData && (
+              {selectedBar && barChartData && (
                   <View style={[styles.tooltipContainer, { 
                     position: 'absolute',
-                    top: 30,
-                    left: (Dimensions.get('window').width - 64) * (barChartData.labels.indexOf(selectedBar.label) + 0.5) / barChartData.labels.length - 75,
+                    top: 20,
+                    left: ((Dimensions.get('window').width - 64) / barChartData.labels.length) * (barChartData.labels.indexOf(selectedBar.label) + 0.5) - 40,
                   }]}>
                     <Text style={styles.tooltipDate}>
                       {selectedBar.label}
@@ -1369,8 +1360,6 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
                     <Text style={styles.tooltipValue}>
                       {selectedBar.value} kg
                     </Text>
-                  </View>
-                )}
                   </View>
                 )}
             </View>
