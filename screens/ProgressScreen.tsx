@@ -6,444 +6,195 @@ import { StatusBar } from 'expo-status-bar';
 import { supabase } from '../services/supabase';
 import { theme } from '../theme';
 import { AppHeader, RowItem, SectionLabel, StatBox, PrimaryButton, GhostButton } from '../components';
-import { LineChart, BarChart } from 'react-native-chart-kit';
+import { LineChart, BarChart } from 'react-native-gifted-charts';
 import RNPickerSelect from 'react-native-picker-select';
 import { getMostTrainedMuscle } from '../utils/muscleUtils';
 
 const formatWeight = (value: number) => `${value.toLocaleString()}`;
 
+const getCurrentDayLabel = () => {
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const today = new Date().getDay();
+  const adjustedToday = today === 0 ? 6 : today - 1; // Convert to Monday=0, Sunday=6
+  return days[adjustedToday];
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
-    paddingHorizontal: 16,
-    paddingTop: 10,
-  },
-  scrollViewContent: {
-    paddingHorizontal: theme.spacing.md,
-    paddingBottom: theme.spacing.xl,
   },
   scrollView: {
     flex: 1,
+  },
+  scrollViewContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 40,
   },
   headerContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: theme.spacing.xs,
-    marginBottom: theme.spacing.sm,
+    marginBottom: 24,
   },
   headerTitle: {
-    fontSize: 22,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '500',
     color: theme.colors.text,
   },
   headerDivider: {
     height: 1,
     backgroundColor: theme.colors.border,
-    marginTop: theme.spacing.sm,
-    marginBottom: theme.spacing.lg,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 16,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: theme.colors.text,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: theme.colors.subtext,
-    marginBottom: 8,
-  },
-  section: {
-    paddingHorizontal: 20,
     marginBottom: 24,
-    paddingTop: 12,
+    marginHorizontal: 16,
+  },
+  
+  // Section styles
+  section: {
+    marginBottom: 24,
+    paddingHorizontal: 16,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '600',
     color: theme.colors.text,
-    marginBottom: 10,
-    marginTop: 10,
-  },
-  card: {
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.radius.lg,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.md, // spacing between cards
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  cardText: {
-    fontSize: 16,
-    color: theme.colors.subtext,
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  cardSubtitle: {
-    fontSize: 14,
-    color: theme.colors.subtext,
-    textAlign: 'center',
-  },
-  measurementsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 24,
-  },
-  measurementCard: {
-    flex: 1,
-    minWidth: '45%',
-    backgroundColor: theme.colors.card,
-    padding: 16,
-    borderRadius: theme.radius.md,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
     marginBottom: 16,
   },
-  measurementLabel: {
+  
+  // Card styles matching Dashboard
+  card: {
+    backgroundColor: theme.colors.card,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    marginBottom: 16,
+  },
+  
+  // Weekly Volume Section
+  weeklyVolumeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  weeklyVolumeLabel: {
     fontSize: 14,
-    color: theme.colors.subtext,
-    marginBottom: 8,
-  },
-  measurementValue: {
-    fontSize: 18,
     fontWeight: '600',
-    color: theme.colors.primary,
+    color: theme.colors.subtext,
+    textTransform: 'uppercase',
   },
-  volumeNumber: {
+  weeklyVolumeValue: {
     fontSize: 32,
     fontWeight: 'bold',
     color: theme.colors.primary,
-    marginBottom: 4,
+    marginRight: 8,
   },
-  volumeLabel: {
+  weeklyVolumeUnit: {
     fontSize: 14,
     color: theme.colors.subtext,
   },
-  muscleGroupItem: {
+  
+  // Chart containers with fixed height
+  chartContainer: {
+    height: 220,
+    marginBottom: 20,
+  },
+  barChartContainer: {
+    height: 220,
+    marginBottom: 20,
+  },
+  
+  // Personal Records Section
+  personalRecordsButton: {
+    backgroundColor: theme.colors.card,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
+    marginBottom: 16,
   },
-  muscleGroupName: {
+  personalRecordsText: {
     fontSize: 16,
-    fontWeight: '500',
     color: theme.colors.text,
-    flex: 1,
   },
-  muscleGroupCount: {
-    fontSize: 14,
+  personalRecordsArrow: {
+    fontSize: 16,
     color: theme.colors.subtext,
-    marginLeft: 8,
   },
-  trendText: {
-    fontSize: 16,
-    color: theme.colors.text,
-    textAlign: 'center',
-  },
-  statsGrid: {
+  
+  // This Week Section
+  thisWeekContainer: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 24,
   },
-  statCard: {
+  thisWeekCard: {
     flex: 1,
     backgroundColor: theme.colors.card,
-    padding: theme.spacing.md,
-    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: 12,
+    padding: 16,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    marginBottom: theme.spacing.md,
   },
-  statNumber: {
+  thisWeekValue: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: theme.colors.primary,
+    marginBottom: 8,
+  },
+  thisWeekLabel: {
+    fontSize: 14,
+    color: theme.colors.subtext,
+    textAlign: 'center',
+  },
+  
+  // PR Display styles
+  prDisplayContainer: {
+    backgroundColor: theme.colors.card,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  prValue: {
     fontSize: 24,
     fontWeight: 'bold',
     color: theme.colors.primary,
-    marginBottom: theme.spacing.sm,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: theme.colors.subtext,
-    textAlign: 'center',
-  },
-  prLabel: {
-    fontSize: 14,
-    color: theme.colors.subtext,
     marginBottom: 8,
-  },
-  prNumber: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: theme.colors.accent,
-    textAlign: 'center',
-    marginBottom: 4,
   },
   prExerciseName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.text,
-    textAlign: 'center',
-    marginBottom: theme.spacing.sm,
-  },
-  prDate: {
-    fontSize: 12,
+    fontSize: 14,
     color: theme.colors.subtext,
     textAlign: 'center',
   },
-  barTooltip: {
-    position: 'absolute',
+  
+  // Insights styles
+  insightsContainer: {
     backgroundColor: theme.colors.card,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: theme.radius.sm,
-    padding: theme.spacing.sm,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-    zIndex: 1000,
+    borderRadius: 12,
+    padding: 16,
   },
-  barTooltipText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: theme.colors.text,
-    textAlign: 'center',
-  },
-  barTooltipValue: {
-    fontSize: 12,
-    color: theme.colors.subtext,
-    textAlign: 'center',
-  },
-  mostTrainedContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-    marginBottom: 4,
-  },
-  mostTrainedLabel: {
+  insightsText: {
     fontSize: 16,
-    fontWeight: '500',
-    color: theme.colors.subtext,
-  },
-  mostTrainedValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.primary,
-  },
-  // Chart styles
-  exerciseSelector: {
-    marginBottom: theme.spacing.lg,
-  },
-  selectorLabel: {
-    fontSize: 16,
-    fontWeight: '500',
     color: theme.colors.text,
-    marginBottom: theme.spacing.sm,
-  },
-  exerciseChip: {
-    backgroundColor: theme.colors.border,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.radius.xl,
-    marginRight: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  selectedExerciseChip: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
-  },
-  exerciseChipText: {
-    fontSize: 14,
-    color: theme.colors.text,
-    fontWeight: '500',
-  },
-  selectedExerciseChipText: {
-    color: '#ffffff',
-  },
-  chartContainer: {
-    alignItems: 'center',
-    marginVertical: theme.spacing.sm,
-  },
-  chartTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: theme.spacing.sm,
-    textAlign: 'center',
-  },
-  chart: {
-    marginVertical: 8,
-    borderRadius: 16,
-  },
-  chartLegend: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: theme.spacing.sm,
-    paddingTop: theme.spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-  },
-  legendText: {
-    fontSize: 14,
-    color: theme.colors.subtext,
-    fontWeight: '500',
-  },
-  chartSubtitle: {
-    fontSize: 12,
-    color: theme.colors.subtext,
-    textAlign: 'center',
-    marginTop: theme.spacing.xs,
-  },
-  noDataText: {
-    fontSize: 16,
-    color: theme.colors.subtext,
-    textAlign: 'center',
-    fontStyle: 'italic',
-    paddingVertical: 20,
-  },
-  noDataContainer: {
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  insufficientDataContainer: {
-    alignItems: 'center',
-    paddingVertical: 40,
-    paddingHorizontal: 20,
-  },
-  insufficientDataIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: theme.colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: theme.spacing.md,
-  },
-  insufficientDataIconText: {
-    fontSize: 24,
-  },
-  insufficientDataTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: theme.spacing.sm,
-  },
-  insufficientDataMessage: {
-    fontSize: 16,
-    color: theme.colors.subtext,
-    textAlign: 'center',
-    marginBottom: theme.spacing.md,
-  },
-  insufficientDataTips: {
-    alignItems: 'flex-start',
-  },
-  insufficientDataTip: {
-    fontSize: 14,
-    color: theme.colors.subtext,
-    marginBottom: theme.spacing.sm,
-  },
-  // Workout Overview styles
-  overviewCard: {
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.radius.md,
-    padding: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  overviewStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: theme.spacing.lg,
-  },
-  overviewStat: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  overviewStatNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: theme.colors.primary,
-    marginBottom: theme.spacing.sm,
-  },
-  overviewStatLabel: {
-    fontSize: 14,
-    color: theme.colors.subtext,
-    textAlign: 'center',
-  },
-  mostUsedContainer: {
-    alignItems: 'center',
-    paddingVertical: theme.spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-    marginBottom: theme.spacing.sm,
-  },
-  overviewSubTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: theme.spacing.md,
-  },
-  mostUsedExercise: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: theme.colors.card,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: theme.radius.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
     marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    lineHeight: 22,
   },
-  recentExerciseName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.text,
-    flex: 1,
-  },
-  recentExerciseMuscle: {
-    fontSize: 13,
+  insightsSubtext: {
+    fontSize: 14,
     color: theme.colors.subtext,
-    fontWeight: '500',
-    backgroundColor: theme.colors.border,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: theme.radius.md,
-    textTransform: 'capitalize',
+    lineHeight: 20,
   },
+  
   // Custom Dropdown styles
   customDropdownContainer: {
     position: 'relative',
@@ -456,7 +207,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.card,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: theme.radius.sm,
+    borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
@@ -478,8 +229,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.card,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    borderTopColor: theme.colors.border,
-    borderRadius: theme.radius.sm,
+    borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -511,74 +261,8 @@ const styles = StyleSheet.create({
     color: theme.colors.subtext,
     marginLeft: 8,
   },
-  // Progress Summary styles
-  progressSummaryContainer: {
-    backgroundColor: theme.colors.border,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: theme.radius.sm,
-    marginTop: 20,
-  },
-  progressSummaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  progressSummaryLabel: {
-    fontSize: 16,
-    color: theme.colors.subtext,
-    fontWeight: '500',
-  },
-  progressSummaryValue: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: theme.colors.primary,
-  },
-  // Exercise Picker styles
-  exerciseSelectorBlock: {
-    marginBottom: 24,
-  },
-  pickerContainer: {
-    marginTop: 12,
-  },
-  // New UI styles for improved layout
-  sectionContainer: {
-    marginBottom: 24,
-  },
-  sectionCard: {
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.radius.md,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  chartCard: {
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.radius.md,
-    padding: 24,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  chartSectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: 16,
-  },
+  
+  // Tooltip styles
   tooltipDate: {
     color: theme.colors.subtext,
     fontSize: 12,
@@ -595,7 +279,7 @@ const styles = StyleSheet.create({
   tooltipContainer: {
     position: 'absolute',
     backgroundColor: 'rgba(0,0,0,0.9)',
-    padding: theme.spacing.sm,
+    padding: 8,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: theme.colors.border,
@@ -605,19 +289,29 @@ const styles = StyleSheet.create({
   legendContainer: {
     position: 'relative',
   },
-  trendContainer: {
-    marginTop: theme.spacing.sm,
+  
+  // Weight progress chart styles
+  emptyStateText: {
+    textAlign: 'center',
+    color: theme.colors.subtext,
+    fontSize: 16,
+    marginTop: 60,
   },
-  insightsContainer: {
-    marginTop: theme.spacing.md,
-    paddingTop: theme.spacing.sm,
+  weightChangeContainer: {
+    alignItems: 'center',
+    marginTop: 16,
+    paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border,
   },
-  insightsText: {
-    fontSize: 14,
+  weightChangeText: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  noDataText: {
     color: theme.colors.subtext,
-    lineHeight: 20,
+    fontSize: 14,
+    fontStyle: 'italic',
   },
 });
 
@@ -651,6 +345,17 @@ export default function ProgressScreen() {
   const [fitnessInsights, setFitnessInsights] = useState('');
   const screenWidth = Dimensions.get('window').width;
 
+  // Helper functions moved to component level for accessibility
+  const getExerciseData = (entry: any) => {
+    if (!entry || !entry.exercises) return null;
+    return Array.isArray(entry.exercises) ? entry.exercises[0] : entry.exercises;
+  };
+
+  const getWorkoutData = (entry: any) => {
+    if (!entry || !entry.workouts) return null;
+    return Array.isArray(entry.workouts) ? entry.workouts[0] : entry.workouts;
+  };
+
   const openDropdown = () => {
     Animated.timing(dropdownAnim, {
       toValue: 1,
@@ -673,8 +378,20 @@ export default function ProgressScreen() {
     }, [])
   );
 
+  // Also refresh data when component comes into focus
+  useEffect(() => {
+    fetchProgressData();
+  }, []);
+
   const fetchProgressData = async () => {
     try {
+      setLoading(true);
+      // Reset state to ensure fresh data
+      setEntriesData([]);
+      setWeeklyVolumeData([]);
+      setWeightProgressionData([]);
+      setSelectedBar(null);
+      
       // Fetch ALL workout_entries joined with workouts
       const { data: entriesData, error: entriesError } = await supabase
         .from('workout_entries')
@@ -700,7 +417,33 @@ export default function ProgressScreen() {
         return;
       }
 
-      // Helper function to get start of week
+      // Standardized date parsing function - use everywhere
+      const parseWorkoutDate = (dateValue: any) => {
+        if (!dateValue) return null;
+        
+        // Create date object from stored value without modifying it
+        const date = new Date(dateValue);
+        
+        // Check if date is valid
+        if (isNaN(date.getTime())) return null;
+        
+        return date;
+      };
+
+      // Standardized date comparison function
+      const isSameDay = (date1: Date, date2: Date) => {
+        return date1.getFullYear() === date2.getFullYear() &&
+               date1.getMonth() === date2.getMonth() &&
+               date1.getDate() === date2.getDate();
+      };
+
+      // STEP 2: SAFE DATE HANDLING
+      const safeDate = (value: any) => {
+        const d = new Date(value);
+        return isNaN(d.getTime()) ? null : d;
+      };
+
+      // Helper function to get start of week (Monday-Saturday schedule)
       const getStartOfWeek = () => {
         const now = new Date();
         const day = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
@@ -710,19 +453,19 @@ export default function ProgressScreen() {
         return start;
       };
 
+      // Helper function to get end of week (Saturday for Mon-Sat schedule)
+      const getEndOfWeek = () => {
+        const start = getStartOfWeek();
+        const end = new Date(start);
+        end.setDate(start.getDate() + 5); // Monday + 5 days = Saturday
+        end.setHours(23, 59, 59, 999);
+        return end;
+      };
+
       console.log('Raw entries data:', entriesData);
       console.log('Total entries count:', entriesData?.length || 0);
       
-      // Helper to safely access nested data
-      const getExerciseData = (entry: any) => {
-        if (!entry || !entry.exercises) return null;
-        return Array.isArray(entry.exercises) ? entry.exercises[0] : entry.exercises;
-      };
-      const getWorkoutData = (entry: any) => {
-        if (!entry || !entry.workouts) return null;
-        return Array.isArray(entry.workouts) ? entry.workouts[0] : entry.workouts;
-      };
-      
+            
       // Debug: Show all entry dates to understand the data
       if (entriesData && entriesData.length > 0) {
         console.log('=== ALL WORKOUT ENTRY DATES ===');
@@ -772,11 +515,13 @@ export default function ProgressScreen() {
         fetchWeightProgression(mostRecentExerciseId);
       }
 
-      // WEEKLY VOLUME (FIX)
+      // WEEKLY VOLUME (FIX - Mon-Sat schedule)
       const weeklyVolume = entriesData
         ?.filter(e => {
           const workout = getWorkoutData(e);
-          return workout && new Date(workout.created_at) >= getStartOfWeek();
+          if (!workout || !workout.created_at) return false;
+          const entryDate = new Date(workout.created_at);
+          return entryDate >= getStartOfWeek() && entryDate <= getEndOfWeek();
         })
         ?.reduce((sum, e) => sum + (e.weight * e.reps), 0) || 0;
 
@@ -803,18 +548,22 @@ export default function ProgressScreen() {
         const workout = getWorkoutData(e);
         if (!workout || !workout.created_at) return false;
         const entryDate = new Date(workout.created_at);
-        return workout && entryDate >= getStartOfWeek();
+        return entryDate >= getStartOfWeek() && entryDate <= getEndOfWeek();
       }) || [];
 
       const previousWeekEntries = entriesData?.filter(e => {
         const workout = getWorkoutData(e);
         if (!workout || !workout.created_at) return false;
         const entryDate = new Date(workout.created_at);
-        return workout && entryDate >= getStartOfPreviousWeek() && entryDate < getStartOfWeek();
+        const startOfPreviousWeek = new Date(getStartOfWeek());
+        startOfPreviousWeek.setDate(startOfPreviousWeek.getDate() - 7);
+        const endOfPreviousWeek = new Date(startOfPreviousWeek);
+        endOfPreviousWeek.setDate(startOfPreviousWeek.getDate() + 5);
+        return entryDate >= startOfPreviousWeek && entryDate <= endOfPreviousWeek;
       }) || [];
 
-      console.log('Current week entries (Mon-Today):', weeklyEntries.length);
-      console.log('Previous week entries (Last Mon-Sun):', previousWeekEntries.length);
+      console.log('Current week entries (Mon-Sat):', weeklyEntries.length);
+      console.log('Previous week entries (Last Mon-Sat):', previousWeekEntries.length);
 
       // Calculate total weekly volume (each entry is one set)
       const totalWeeklyVolume = weeklyEntries.reduce((sum, entry) => {
@@ -1228,6 +977,45 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
     };
   }, [weeklyVolumeData]);
 
+  // Generate weekly bar chart data based on actual workout dates
+  const weeklyBarChartData = useMemo(() => {
+    // Only show Mon-Sat (6 days), no Sunday
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const today = new Date().getDay();
+    
+    // Initialize data for all 6 days with 0 values
+    const weeklyData = days.map(() => 0);
+    
+    // Group workouts by actual date
+    entriesData?.forEach(entry => {
+      const workout = getWorkoutData(entry);
+      if (!workout || !workout.created_at) return;
+      
+      const workoutDate = new Date(workout.created_at);
+      const dayIndex = workoutDate.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+      
+      // Convert to Monday=0, Tuesday=1, ..., Saturday=5
+      const adjustedIndex = dayIndex === 0 ? 5 : dayIndex - 1;
+      
+      // Only include Mon-Sat data (indices 0-5)
+      if (adjustedIndex >= 0 && adjustedIndex <= 5) {
+        weeklyData[adjustedIndex] += entry.weight * entry.reps;
+      }
+    });
+    
+    return {
+      labels: days,
+      datasets: [{
+        data: weeklyData,
+        color: (opacity = 1, dataIndex = null) => {
+          const actualIndex = dataIndex !== null ? dataIndex : 0;
+          const todayIndex = today === 0 ? 5 : today - 1; // Convert to Monday=0, Saturday=5
+          return actualIndex === todayIndex ? `rgba(74, 222, 128, ${opacity})` : `rgba(55, 65, 81, ${opacity})`;
+        },
+      }]
+    };
+  }, [entriesData]);
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" backgroundColor={theme.colors.background} />
@@ -1241,325 +1029,354 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
             Progress
           </Text>
         </View>
-        <View
-          style={styles.headerDivider}
-        />
+        <View style={styles.headerDivider} />
 
-        {/* Weekly Volume Section */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Weekly Volume</Text>
-          <View style={styles.sectionCard}>
-            <Text style={styles.volumeNumber}>
-              {loading ? 'Loading...' : formatWeight(weeklyVolume)}
-            </Text>
-            <Text style={styles.volumeLabel}>Total kg lifted</Text>
-          </View>
-        </View>
-
-        {/* Personal Record Section */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Personal Record</Text>
-          
-          {/* Exercise Dropdown */}
-          <View style={styles.exerciseSelectorBlock}>
-            <Text style={styles.selectorLabel}>Select Exercise:</Text>
-            <View style={styles.customDropdownContainer}>
-              <TouchableOpacity 
-                style={styles.dropdownInput}
-                onPress={() => {
-                  if (!showDropdown) {
-                    setShowDropdown(true);
-                    openDropdown();
-                  } else {
-                    closeDropdown();
-                    setTimeout(() => setShowDropdown(false), 120);
-                  }
+        {/* WEEKLY VOLUME Section */}
+        <View style={styles.section}>
+          <View style={styles.card}>
+            <View style={styles.weeklyVolumeContainer}>
+              <Text style={styles.weeklyVolumeLabel}>Weekly Volume</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={styles.weeklyVolumeValue}>
+                  {loading ? '0' : formatWeight(weeklyVolume)}
+                </Text>
+                <Text style={styles.weeklyVolumeUnit}>kg lifted</Text>
+              </View>
+            </View>
+            
+            {/* 7-Day Bar Chart */}
+            <View style={styles.barChartContainer}>
+              <BarChart
+                data={weeklyBarChartData.datasets[0].data.map((value, index) => {
+                  const isCurrentDay = weeklyBarChartData.labels[index] === getCurrentDayLabel();
+                  const displayValue = Math.max(value, 10); // Ensure minimum visible height
+                  return {
+                    value: displayValue,
+                    label: weeklyBarChartData.labels[index],
+                    frontColor: theme.colors.primary,
+                  };
+                })}
+                barWidth={12}
+                spacing={18}
+                initialSpacing={20}
+                frontColor={theme.colors.primary}
+                hideRules={true}
+                hideAxesAndRules={true}
+                xAxisThickness={0}
+                yAxisThickness={0}
+                roundedTop={true}
+                xAxisLabelTextStyle={{
+                  color: theme.colors.text,
+                  fontSize: 12,
+                  fontWeight: '500',
+                  width: 40,
+                  textAlign: 'center',
                 }}
-              >
-                <Text style={styles.dropdownText}>
-                  {selectedExercise 
-                    ? userExercises.find(ex => ex.id === selectedExercise)?.name || 'Select an exercise'
-                    : 'Select an exercise'
-                  }
-                </Text>
-                <Text style={styles.dropdownArrow}>
-                  {showDropdown ? '↑' : '↓'}
-                </Text>
-              </TouchableOpacity>
+                height={180}
+                width={Dimensions.get('window').width - 64}
+                noOfSections={4}
+                stepHeight={40}
+                maxValue={Math.max(...weeklyBarChartData.datasets[0].data) * 1.2}
+                onPress={(data: any, index: number) => {
+                  const value = weeklyBarChartData.datasets[0].data[index];
+                  const label = weeklyBarChartData.labels[index];
+                  setSelectedBar({ label, value });
+                  setTimeout(() => setSelectedBar(null), 2000);
+                }}
+              />
               
-              {showDropdown && (
-                <Animated.View style={[
-                  dropdownStyle,
-                  styles.dropdownList
-                ]}>
-                  <ScrollView style={styles.dropdownScroll} nestedScrollEnabled={false}>
-                    {userExercises.map((exercise) => (
-                      <TouchableOpacity
-                        key={exercise.id}
-                        style={styles.dropdownItem}
-                        onPress={() => {
-                          setSelectedExercise(exercise.id);
-                          setShowDropdown(false);
-                          fetchWeightProgression(exercise.id);
-                        }}
-                      >
-                        <Text style={styles.dropdownItemText}>{exercise.name}</Text>
-                        <Text style={styles.dropdownItemSubtext}>{exercise.muscle_group}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </Animated.View>
+              {selectedBar && (
+                <View style={[styles.tooltipContainer, { 
+                  position: 'absolute',
+                  top: 50,
+                  left: (Dimensions.get('window').width - 64) * (weeklyBarChartData.labels.indexOf(selectedBar.label) + 0.5) / weeklyBarChartData.labels.length - 75,
+                }]}>
+                  <Text style={styles.tooltipDate}>
+                    {selectedBar.label}
+                  </Text>
+                  <Text style={styles.tooltipValue}>
+                    {selectedBar.value} kg
+                  </Text>
+                </View>
               )}
             </View>
           </View>
+        </View>
+
+        {/* PERSONAL RECORDS Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Personal Records</Text>
+          
+          <TouchableOpacity 
+            style={styles.personalRecordsButton}
+            onPress={() => {
+              if (!showDropdown) {
+                setShowDropdown(true);
+                openDropdown();
+              } else {
+                closeDropdown();
+                setTimeout(() => setShowDropdown(false), 120);
+              }
+            }}
+          >
+            <Text style={styles.personalRecordsText}>
+              {selectedExercise 
+                ? userExercises.find(ex => ex.id === selectedExercise)?.name || 'Select an exercise'
+                : 'Select an exercise'
+              } ›
+            </Text>
+          </TouchableOpacity>
           
           {/* PR Display */}
           {selectedExercise && (
-            <View style={styles.card}>
+            <View style={styles.prDisplayContainer}>
+              <Text style={styles.prValue}>
+                {formatWeight(calculatePersonalRecord(selectedExercise))} kg
+              </Text>
               <Text style={styles.prExerciseName}>
                 {userExercises.find(ex => ex.id === selectedExercise)?.name || 'Select an exercise'}
               </Text>
-              <Text style={styles.prNumber}>
-                {formatWeight(calculatePersonalRecord(selectedExercise))}
-              </Text>
-              <Text style={styles.prDate}>
-                {new Date().toLocaleDateString()}
-              </Text>
             </View>
           )}
-        </View>
-
-        {/* Charts Section */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Weight Progress</Text>
           
-          {/* Weight Progression Chart */}
-          {selectedExercise && lineChartData ? (
-            <View>
-              <Pressable style={styles.chartCard} onPress={() => setShowTooltip(false)}>
-                <View style={styles.chartContainer}>
-                  <LineChart
-                  data={lineChartData}
-                  width={Dimensions.get('window').width - 32}
-                  height={180}
-                  chartConfig={{
-                    backgroundColor: theme.colors.card,
-                    backgroundGradientFrom: theme.colors.card,
-                    backgroundGradientTo: theme.colors.card,
-                    decimalPlaces: 0,
-                    color: (opacity = 1) => `rgba(79, 140, 255, ${opacity})`,
-                    labelColor: (opacity = 1) => `rgba(154, 164, 178, ${opacity})`,
-                    style: {
-                      borderRadius: 16
-                    },
-                    propsForDots: {
-                      r: '8',
-                      strokeWidth: '4',
-                      stroke: theme.colors.primary,
-                    }
-                  }}
-                  bezier
-                  style={styles.chart}
-                  onDataPointClick={(data) => {
-                    const originalData = weightProgressionData[data.index];
-                    if (originalData) {
-                      setSelectedDataPoint(originalData);
-                      setShowTooltip(true);
-
-                      // clear previous timer
-                      if (timeoutRef.current) {
-                        clearTimeout(timeoutRef.current);
-                      }
-
-                      // start new timer
-                      timeoutRef.current = setTimeout(() => {
-                        setShowTooltip(false);
-                      }, 2000);
-                    }
-                  }}
-                />
-                </View>
-              </Pressable>
-              {/* Tooltip */}
-              {showTooltip && selectedDataPoint && (
-                <View style={styles.tooltipContainer}>
-                  <Text style={styles.tooltipDate}>
-                    {selectedDataPoint.date}
-                  </Text>
-                  <Text style={styles.tooltipValue}>
-                    {selectedDataPoint.weight} kg
-                  </Text>
-                </View>
-              )}
-              
-              {/* Progress Summary Below Chart */}
-              {hasEnoughProgressionData && (
-                <View style={styles.progressSummaryContainer}>
-                  <View style={styles.progressSummaryRow}>
-                    <Text style={styles.progressSummaryLabel}>Latest:</Text>
-                    <Text style={styles.progressSummaryValue}>
-                      {formatWeight(weightProgressionData[weightProgressionData.length - 1].weight)} kg
-                    </Text>
-                  </View>
-                  <View style={styles.progressSummaryRow}>
-                    <Text style={styles.progressSummaryLabel}>Progress:</Text>
-                    <Text style={styles.progressSummaryValue}>
-                      +{formatWeight(weightProgressionData[weightProgressionData.length - 1].weight - weightProgressionData[0].weight)} kg
-                    </Text>
-                  </View>
-                </View>
-              )}
-            </View>
-          ) : (
-            <View style={styles.chartCard}>
-              <View style={styles.noDataContainer}>
-                <Text style={styles.noDataText}>
-                  {selectedExercise ? 'No progression data available' : 'Select an exercise to view progress'}
-                </Text>
-              </View>
-            </View>
+          {showDropdown && (
+            <Animated.View style={[
+              dropdownStyle,
+              styles.dropdownList,
+              { marginTop: 8 }
+            ]}>
+              <ScrollView style={styles.dropdownScroll} nestedScrollEnabled={false}>
+                {userExercises.map((exercise) => (
+                  <TouchableOpacity
+                    key={exercise.id}
+                    style={styles.dropdownItem}
+                    onPress={() => {
+                      setSelectedExercise(exercise.id);
+                      setShowDropdown(false);
+                      fetchWeightProgression(exercise.id);
+                    }}
+                  >
+                    <Text style={styles.dropdownItemText}>{exercise.name}</Text>
+                    <Text style={styles.dropdownItemSubtext}>{exercise.muscle_group}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </Animated.View>
           )}
+          
+                  </View>
+
+        {/* THIS WEEK Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>This Week</Text>
+          
+          <View style={styles.thisWeekContainer}>
+            <View style={styles.thisWeekCard}>
+              <Text style={styles.thisWeekValue}>
+                {loading ? '0' : totalWorkoutsThisWeek}
+              </Text>
+              <Text style={styles.thisWeekLabel}>Sessions</Text>
+            </View>
+            
+            <View style={styles.thisWeekCard}>
+              <Text style={styles.thisWeekValue}>
+                {loading ? '0' : averageRepsPerWorkout}
+              </Text>
+              <Text style={styles.thisWeekLabel}>Avg reps</Text>
+            </View>
+          </View>
         </View>
 
-        {/* Volume Progress Section */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Volume Progress</Text>
-          <View style={styles.chartCard}>
-            <Text style={styles.chartTitle}>Muscle Group Volume</Text>
-            {barChartData?.labels && barChartData.labels.length > 0 ? (
-              <View style={styles.chartContainer}>
-                <TouchableOpacity
-                  onPress={(event) => {
-                    console.log('Bar chart clicked');
-                    // Calculate which bar was pressed based on touch position
-                    const touchX = event.nativeEvent.locationX;
-                    const chartWidth = Dimensions.get('window').width - 32;
-                    const barWidth = chartWidth / barChartData!.labels.length;
-                    const barIndex = Math.floor(touchX / barWidth);
-                    
-                    console.log('Touch position:', touchX, 'Bar width:', barWidth, 'Bar index:', barIndex);
-                    
-                    if (barIndex >= 0 && barIndex < barChartData!.labels.length) {
-                      const label = barChartData!.labels[barIndex];
-                      const volumeData = weeklyVolumeData.find(item => item.label === label);
-                      console.log('Found volume data:', volumeData);
-                      if (volumeData) {
-                        // Use the same processed value that the bar chart displays for consistency
-                        setSelectedBar({ label, value: volumeData.value });
-                        console.log('Setting selectedBar:', { label, value: volumeData.value });
-                        // Hide tooltip after 2 seconds
-                        setTimeout(() => setSelectedBar(null), 2000);
-                      }
-                    }
-                  }}
-                  style={styles.legendContainer}
-                >
-                  <View style={styles.chartContainer}>
-                    <BarChart
-                      data={barChartData!}
-                      width={Dimensions.get('window').width - 32}
-                      height={180}
-                    yAxisLabel=""
-                    yAxisSuffix="kg"
-                    fromZero={true}
-                    chartConfig={{
-                      backgroundColor: theme.colors.card,
-                      backgroundGradientFrom: theme.colors.card,
-                      backgroundGradientTo: theme.colors.card,
-                      decimalPlaces: 0,
-                      color: (opacity = 1) => `rgba(34, 197, 94, ${opacity})`,
-                      labelColor: (opacity = 1) => `rgba(156, 163, 175, ${opacity})`,
-                      style: {
-                        borderRadius: 16
-                      },
-                      propsForBackgroundLines: {
-                        strokeDasharray: 'none'
-                      },
-                      propsForLabels: {
-                        fontSize: 10,
-                        fontWeight: '500'
-                      }
-                    }}
-                    style={styles.chart}
-                  />
-                  
-                  {/* Tooltip */}
-                  {selectedBar && (
-                    <>
-                      {console.log('Rendering tooltip for:', selectedBar)}
-                      <Tooltip
-                        x={(Dimensions.get('window').width - 32) * (barChartData!.labels.indexOf(selectedBar!.label) + 0.5) / barChartData!.labels.length}
-                        y={50} // Fixed position above the chart instead of using data value
-                        width={150}
-                        height={60}
-                        visible={!!selectedBar}
-                        data={selectedBar}
-                        onHide={() => {
-                          setTimeout(() => setSelectedBar(null), 2000);
-                        }}
-                      />
-                    </>
-                  )}
-                  </View>
-                </TouchableOpacity>
-                <Text style={styles.chartSubtitle}>Volume (kg) - Last 7 Days</Text>
-              </View>
-            ) : (
-              <View style={styles.noDataContainer}>
-                <Text style={styles.noDataText}>No volume data available</Text>
-              </View>
+        {/* PROGRESS INSIGHTS Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Progress Insights</Text>
+          
+          <View style={styles.insightsContainer}>
+            <Text style={styles.insightsText}>
+              {loading ? 'Loading...' : trend}
+            </Text>
+            {!loading && fitnessInsights && (
+              <Text style={styles.insightsSubtext}>
+                {fitnessInsights}
+              </Text>
             )}
           </View>
         </View>
 
-      {/* Stats Section */}
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Stats</Text>
-        
-        <View style={styles.statsGrid}>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>
-              {loading ? '...' : totalWorkoutsThisWeek}
-            </Text>
-            <Text style={styles.statLabel}>Workouts This Week</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>
-              {loading ? '...' : averageRepsPerWorkout}
-            </Text>
-            <Text style={styles.statLabel}>Avg Reps/Workout</Text>
-          </View>
-        </View>
+        {/* Weight Progress Chart */}
+        {selectedExercise && (
+          <View style={styles.section}>
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>Weight Progress</Text>
+              
+              {weightProgressionData.length === 0 ? (
+                <View style={styles.chartContainer}>
+                  <Text style={styles.emptyStateText}>
+                    No data yet. Start logging workouts.
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  <View style={styles.chartContainer}>
+                    <LineChart
+                      data={weightProgressionData.map((item, index) => ({
+                        value: item.weight,
+                        label: item.date,
+                      }))}
+                      width={Dimensions.get('window').width - 64}
+                      height={160}
+                      color={theme.colors.primary}
+                      thickness={2}
+                      curved={true}
+                      dataPointsRadius={8}
+                      dataPointsColor={theme.colors.primary}
+                      hideAxesAndRules={true}
+                      xAxisThickness={0}
+                      yAxisThickness={0}
+                      yAxisTextStyle={{
+                        color: theme.colors.text,
+                        fontSize: 11,
+                        fontWeight: '500',
+                      }}
+                      xAxisLabelTextStyle={{
+                        color: theme.colors.text,
+                        fontSize: 11,
+                        fontWeight: '500',
+                      }}
+                      noOfSections={4}
+                      stepHeight={35}
+                      maxValue={Math.max(...weightProgressionData.map(item => item.weight)) * 1.2}
+                      onPress={(data: any, index: number) => {
+                        const selectedData = weightProgressionData[index];
+                        setSelectedDataPoint(selectedData);
+                        setShowTooltip(true);
 
-        
-        
-        <View style={[styles.sectionCard, { marginTop: 16 }]}>
-          <Text style={styles.chartSectionTitle}>Most Trained (This Week)</Text>
-          <View style={styles.mostTrainedContainer}>
-            <Text style={styles.mostTrainedLabel}>Muscle Group</Text>
-            <Text style={styles.mostTrainedValue}>
-              {loading ? 'Loading...' : mostTrainedMuscleGroup}
-            </Text>
-          </View>
-        </View>
+                        if (timeoutRef.current) {
+                          clearTimeout(timeoutRef.current);
+                        }
 
-        <View style={[styles.sectionCard, styles.sectionCard]}>
-          <Text style={styles.chartSectionTitle}>Progress Insights</Text>
-          <View style={styles.trendContainer}>
-            <Text style={styles.trendText}>
-              {loading ? 'Loading...' : trend}
-            </Text>
-          </View>
-          {!loading && fitnessInsights && (
-            <View style={styles.insightsContainer}>
-              <Text style={styles.insightsText}>
-                {fitnessInsights}
-              </Text>
+                        timeoutRef.current = setTimeout(() => {
+                          setShowTooltip(false);
+                        }, 2000);
+                      }}
+                    />
+                  </View>
+                  
+                  {showTooltip && selectedDataPoint && (
+                    <View style={[styles.tooltipContainer, { 
+                      position: 'absolute',
+                      top: 30,
+                      left: (Dimensions.get('window').width - 64) * (weightProgressionData.findIndex(item => item.date === selectedDataPoint.date) + 0.5) / weightProgressionData.length - 75,
+                    }]}>
+                      <Text style={styles.tooltipDate}>
+                        {selectedDataPoint.date}
+                      </Text>
+                      <Text style={styles.tooltipValue}>
+                        {selectedDataPoint.weight} kg
+                      </Text>
+                    </View>
+                  )}
+                  
+                  {/* Weight Change Indicator */}
+                  <View style={styles.weightChangeContainer}>
+                    {weightProgressionData.length === 1 ? (
+                      <Text style={styles.noDataText}>
+                        First workout logged! Keep tracking progress.
+                      </Text>
+                    ) : (
+                      (() => {
+                        const latest = weightProgressionData[weightProgressionData.length - 1];
+                        const previous = weightProgressionData[weightProgressionData.length - 2];
+                        const weightChange = latest.weight - previous.weight;
+                        
+                        return (
+                          <Text style={[
+                            styles.weightChangeText,
+                            { 
+                              color: weightChange > 0 ? theme.colors.primary : 
+                                     weightChange < 0 ? '#f87171' : theme.colors.subtext 
+                            }
+                          ]}>
+                            {weightChange > 0 ? '+' : ''}{weightChange} kg
+                          </Text>
+                        );
+                      })()
+                    )}
+                  </View>
+                </>
+              )}
             </View>
-          )}
+          </View>
+        )}
+
+        {/* Muscle Volume Chart */}
+        <View style={styles.section}>
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Muscle Volume</Text>
+            <View style={styles.chartContainer}>
+              {!barChartData?.labels || barChartData.labels.length === 0 ? (
+                <Text style={styles.emptyStateText}>
+                  No data yet. Start logging workouts.
+                </Text>
+              ) : (
+                <View>
+                  <BarChart
+                  data={barChartData.datasets[0].data.map((value, index) => ({
+                    value,
+                    label: barChartData.labels[index],
+                    frontColor: theme.colors.primary,
+                  }))}
+                  barWidth={22}
+                  spacing={18}
+                  initialSpacing={35}
+                  frontColor={theme.colors.primary}
+                  hideRules={true}
+                  hideAxesAndRules={true}
+                  xAxisThickness={0}
+                  yAxisThickness={0}
+                  roundedTop={true}
+                  xAxisLabelTextStyle={{
+                    color: theme.colors.text,
+                    fontSize: 12,
+                    fontWeight: '500',
+                    width: 85,
+                    textAlign: 'center',
+                  }}
+                  height={160}
+                  width={Dimensions.get('window').width - 64}
+                  noOfSections={4}
+                  stepHeight={35}
+                  maxValue={Math.max(...barChartData.datasets[0].data) * 1.2}
+                  onPress={(data: any, index: number) => {
+                    const label = barChartData.labels[index];
+                    const volumeData = weeklyVolumeData.find(item => item.label === label);
+                    if (volumeData) {
+                      setSelectedBar({ label, value: volumeData.value });
+                      setTimeout(() => setSelectedBar(null), 2000);
+                    }
+                  }}
+                />
+                
+                {selectedBar && barChartData && (
+                  <View style={[styles.tooltipContainer, { 
+                    position: 'absolute',
+                    top: 30,
+                    left: (Dimensions.get('window').width - 64) * (barChartData.labels.indexOf(selectedBar.label) + 0.5) / barChartData.labels.length - 75,
+                  }]}>
+                    <Text style={styles.tooltipDate}>
+                      {selectedBar.label}
+                    </Text>
+                    <Text style={styles.tooltipValue}>
+                      {selectedBar.value} kg
+                    </Text>
+                  </View>
+                )}
+                  </View>
+                )}
+            </View>
+          </View>
         </View>
-      </View>
-    </ScrollView>
-  </SafeAreaView>
-);
+      </ScrollView>
+    </SafeAreaView>
+  );
 }

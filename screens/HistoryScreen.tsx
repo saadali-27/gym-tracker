@@ -139,16 +139,64 @@ const styles = StyleSheet.create({
   },
 });
 
+// Standardized date parsing function - use everywhere
+const parseWorkoutDate = (dateValue: any) => {
+  if (!dateValue) return null;
+  
+  // Create date object from stored value without modifying it
+  const date = new Date(dateValue);
+  
+  // Check if date is valid
+  if (isNaN(date.getTime())) return null;
+  
+  return date;
+};
+
+// Standardized date comparison function
+const isSameDay = (date1: Date, date2: Date) => {
+  return date1.getFullYear() === date2.getFullYear() &&
+         date1.getMonth() === date2.getMonth() &&
+         date1.getDate() === date2.getDate();
+};
+
+// Import working date logic
+const getCurrentDayLabel = () => {
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const today = new Date().getDay();
+  const adjustedToday = today === 0 ? 6 : today - 1; // Convert to Monday=0, Sunday=6
+  return days[adjustedToday];
+};
+
 export default function HistoryScreen() {
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [groupedWorkouts, setGroupedWorkouts] = useState<any>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Remove time - show only day, date, year
+  const formattedDate = currentDate.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    month: 'long', 
+    day: 'numeric',
+    year: 'numeric'
+  });
+
   useFocusEffect(
     React.useCallback(() => {
+      // Update current date when screen focuses
+      setCurrentDate(new Date());
       fetchWorkouts();
     }, [])
   );
+
+  // Force date update every minute to ensure correct date display
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentDate(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
 
   // STEP 1: FETCH DATA
   const fetchWorkouts = async () => {
@@ -193,7 +241,8 @@ export default function HistoryScreen() {
       })));
 
       workoutsData?.forEach(workout => {
-        const dateKey = new Date(workout.date).toDateString();
+        const workoutDate = parseWorkoutDate(workout.date);
+        const dateKey = workoutDate ? workoutDate.toDateString() : 'invalid';
 
         console.log('Processing workout:', {
           id: workout.id,
@@ -337,11 +386,7 @@ export default function HistoryScreen() {
               {/* STEP 4: UI DISPLAY - Date Header */}
               <View style={styles.dateHeader}>
                 <Text style={styles.dateHeaderText}>
-                  {safeDate((Object.values(routineGroups)[0] as any)?.workouts?.[0]?.date)?.toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                  }) || 'Unknown Date'}
+                  {formattedDate}
                 </Text>
               </View>
 
@@ -384,11 +429,7 @@ export default function HistoryScreen() {
                         color: theme.colors.subtext,
                         marginBottom: 8,
                       }}>
-                        {safeDate(routineGroup.workouts?.[0]?.date)?.toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric'
-                        }) || 'Unknown Date'}
+                        {formattedDate}
                       </Text>
                       
                       <GhostButton

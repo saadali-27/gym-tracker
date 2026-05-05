@@ -588,11 +588,16 @@ export default function LogWorkoutScreen() {
       const authUser = await getCurrentUser();
       if (!authUser) return;
 
+      // Save with proper timestamp storage and simple date string
+      const currentTime = new Date();
+      const timestamp = BigInt(currentTime.getTime()); // Store as BIGINT for database
+      const simpleDateString = `${currentTime.getMonth() + 1}/${currentTime.getDate()}/${currentTime.getFullYear()}`; // Simple MM/DD/YYYY format without time
       const { data: workout, error: workoutError } = await supabase
         .from('workouts')
         .insert({
           user_id: authUser.id,
-          date: now.toISOString(),
+          date: simpleDateString, // Store simple date string without time
+          timestamp: timestamp, // Store timestamp for app logic
           routine_id: selectedRoutine || null,
         })
         .select()

@@ -264,13 +264,49 @@ const styles = StyleSheet.create({
   },
 });
 
+// Standardized date parsing function - use everywhere
+const parseWorkoutDate = (dateValue: any) => {
+  if (!dateValue) return null;
+  
+  // Create date object from stored value without modifying it
+  const date = new Date(dateValue);
+  
+  // Check if date is valid
+  if (isNaN(date.getTime())) return null;
+  
+  return date;
+};
+
+// Standardized date comparison function
+const isSameDay = (date1: Date, date2: Date) => {
+  return date1.getFullYear() === date2.getFullYear() &&
+         date1.getMonth() === date2.getMonth() &&
+         date1.getDate() === date2.getDate();
+};
+
+// Import working date logic
+const getCurrentDayLabel = () => {
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const today = new Date().getDay();
+  const adjustedToday = today === 0 ? 6 : today - 1; // Convert to Monday=0, Sunday=6
+  return days[adjustedToday];
+};
+
 export default function RoutinesScreen() {
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Remove time - show only day, date, year
+  const formattedDate = currentDate.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    month: 'long', 
+    day: 'numeric',
+    year: 'numeric'
+  });
   const [newRoutineName, setNewRoutineName] = useState('');
   const [creatingRoutine, setCreatingRoutine] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
   
   // Exercise selection state
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -278,9 +314,21 @@ export default function RoutinesScreen() {
   const [selectedExercises, setSelectedExercises] = useState<{[key: string]: Exercise[]}>({});
   const [selectedRoutineId, setSelectedRoutineId] = useState<string>('');
   const [unsavedChanges, setUnsavedChanges] = useState<Set<string>>(new Set());
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // Force date update every minute to ensure correct date display
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentDate(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
 
   useFocusEffect(
     React.useCallback(() => {
+      // Update current date when screen focuses
+      setCurrentDate(new Date());
       fetchRoutines();
       fetchExercises();
     }, [])
@@ -546,7 +594,7 @@ export default function RoutinesScreen() {
           <View style={styles.routineInfo}>
             <Text style={styles.routineName}>{routine.name}</Text>
             <Text style={styles.routineDate}>
-              {new Date(routine.created_at).toLocaleDateString()}
+              {formattedDate}
             </Text>
           </View>
         </View>

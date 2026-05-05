@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
@@ -13,6 +13,7 @@ const formatWeight = (value: number) => `${value.toLocaleString()} kg`;
 
 export default function DashboardScreen() {
   const navigation = useNavigation();
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [totalWorkouts, setTotalWorkouts] = useState(0);
   const [weeklyWorkouts, setWeeklyWorkouts] = useState(0);
   const [recentWorkouts, setRecentWorkouts] = useState<any[]>([]);
@@ -23,29 +24,128 @@ export default function DashboardScreen() {
   const [workouts, setWorkouts] = useState<any[]>([]);
   const [mostTrained, setMostTrained] = useState("");
 
+  // Import the working date logic from ProgressScreen
+  const getCurrentDayLabel = () => {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const today = new Date().getDay();
+    const adjustedToday = today === 0 ? 6 : today - 1; // Convert to Monday=0, Sunday=6
+    return days[adjustedToday];
+  };
+
+  // Standardized date parsing function - use timestamp as primary source
+  const parseWorkoutDate = (dateValue: any) => {
+    if (!dateValue) return null;
+    
+    // If timestamp (number), use directly
+    if (typeof dateValue === 'number') {
+      return new Date(dateValue);
+    }
+    
+    // If ISO string, create date object
+    if (typeof dateValue === 'string') {
+      const date = new Date(dateValue);
+      if (isNaN(date.getTime())) return null;
+      return date;
+    }
+    
+    return null;
+  };
+
+  // Standardized date comparison function
+  const isSameDay = (date1: Date, date2: Date) => {
+    return date1.getFullYear() === date2.getFullYear() &&
+           date1.getMonth() === date2.getMonth() &&
+           date1.getDate() === date2.getDate();
+  };
+
+  
   // Helper function to get weekly workout data
   const getWeeklyData = () => {
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const today = new Date();
-    const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay; // Adjust to get Monday
-    const monday = new Date(today);
-    monday.setDate(today.getDate() + mondayOffset);
+    
+    // Debug: Show current week boundaries
+    const currentDayIndex = currentDate.getDay();
+    const mondayOffset = currentDayIndex === 0 ? -6 : 1 - currentDayIndex;
+    const startOfWeek = new Date(currentDate);
+    startOfWeek.setDate(currentDate.getDate() + mondayOffset);
+    startOfWeek.setHours(0, 0, 0, 0);
+    
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+    
+    console.log(`Current week: ${startOfWeek.toDateString()} to ${endOfWeek.toDateString()}`);
+    console.log(`Today: ${currentDate.toDateString()} (Day ${currentDayIndex})`);
+    console.log(`All workouts:`, workouts ? workouts.map(w => ({ id: w.id, date: w.date, parsed: parseWorkoutDate(w.date)?.toDateString() })) : 'No workouts data');
     
     const weeklyData = days.map((day, index) => {
-      const date = new Date(monday);
-      date.setDate(monday.getDate() + index);
+      // Create date for each day of the week using standardized parsing
+      const dayDate = new Date(today);
+      const currentDayIndex = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
       
-      // Count workouts for this day
+      // Calculate the date for this day (Monday = 0, Tuesday = 1, etc.)
+      const mondayIndex = currentDayIndex === 0 ? 6 : currentDayIndex - 1; // Convert to Monday=0
+      const daysFromMonday = index - mondayIndex;
+      dayDate.setDate(today.getDate() + daysFromMonday);
+      
+      // Count workouts for this day using timestamp field directly
       const dayWorkouts = workouts.filter((workout: any) => {
-        const workoutDate = new Date(workout.date);
-        return workoutDate.toDateString() === date.toDateString();
+        const workoutTimestamp = workout.timestamp;
+        if (!workoutTimestamp) return false;
+        
+        // Create date from timestamp directly
+        const workoutDate = new Date(Number(workoutTimestamp));
+        
+        // Use the same date logic as HistoryScreen - compare using toDateString
+        const workoutDayString = workoutDate.toDateString();
+        const targetDayString = dayDate.toDateString();
+        const sameDay = workoutDayString === targetDayString;
+        
+        // Only include workouts from current week (Monday-Sunday)
+        const startOfWeek = new Date(currentDate);
+        const currentDayIndex = currentDate.getDay();
+        const mondayOffset = currentDayIndex === 0 ? -6 : 1 - currentDayIndex;
+        startOfWeek.setDate(currentDate.getDate() + mondayOffset);
+        startOfWeek.setHours(0, 0, 0, 0);
+        
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        endOfWeek.setHours(23, 59, 59, 999);
+        
+        const inWeekRange = workoutDate >= startOfWeek && workoutDate <= endOfWeek;
+        
+        if (inWeekRange && sameDay) {
+          console.log(`Found workout for ${day}:`);
+          console.log(`  - Original date: ${workout.date}`);
+          console.log(`  - Parsed date: ${workoutDate.toDateString()}`);
+          console.log(`  - Local string: ${workoutDate.toLocaleString()}`);
+          console.log(`  - Target day: ${dayDate.toDateString()}`);
+          console.log(`  - Same day: ${sameDay}`);
+          console.log(`  - ID: ${workout.id}, Entries: ${workout.workout_entries ? workout.workout_entries.length : 0}`);
+        }
+        
+        // Only count workouts that have actual entries (sets/reps)
+        const hasEntries = workout.workout_entries && Array.isArray(workout.workout_entries) && workout.workout_entries.length > 0;
+        return inWeekRange && sameDay && hasEntries;
       });
+      
+      // Fix tick mark logic - use simple direct comparison
+      const currentDayOfWeek = currentDate.getDay(); // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+      const isToday = (currentDayOfWeek === 1 && index === 0) || // Monday
+                     (currentDayOfWeek === 2 && index === 1) || // Tuesday
+                     (currentDayOfWeek === 3 && index === 2) || // Wednesday
+                     (currentDayOfWeek === 4 && index === 3) || // Thursday
+                     (currentDayOfWeek === 5 && index === 4) || // Friday
+                     (currentDayOfWeek === 6 && index === 5) || // Saturday
+                     (currentDayOfWeek === 0 && index === 6);    // Sunday
+      
+      console.log(`Day ${day}: Index=${index}, Today=${currentDayOfWeek}, IsToday=${isToday}`);
       
       return {
         day,
         count: dayWorkouts.length,
-        isToday: index === (currentDay === 0 ? 6 : currentDay - 1)
+        isToday: isToday
       };
     });
     
@@ -175,6 +275,8 @@ export default function DashboardScreen() {
 
   useFocusEffect(
     React.useCallback(() => {
+      // Update current date when screen focuses
+      setCurrentDate(new Date());
       fetchDashboardData();
       
       // Smart Dashboard Logic - refresh on focus
@@ -183,10 +285,18 @@ export default function DashboardScreen() {
 
         if (!user) return;
 
-        // fetch workouts
+        // fetch workouts with entries
         const { data: workoutsData } = await supabase
           .from('workouts')
-          .select('*')
+          .select(`
+            *,
+            workout_entries (
+              id,
+              exercise_id,
+              reps,
+              weight
+            )
+          `)
           .eq('user_id', user.id);
 
         setWorkouts(workoutsData || []);
@@ -291,7 +401,8 @@ export default function DashboardScreen() {
           }}>
             Home
           </Text>
-        </View>
+          
+                  </View>
         
         {/* Subtle Separator */}
         <View style={{
@@ -317,7 +428,13 @@ export default function DashboardScreen() {
             marginTop: 4,
             textTransform: 'uppercase'
           }}>
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            {currentDate.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    month: 'long', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })}
           </Text>
         </View>
 
@@ -431,7 +548,7 @@ export default function DashboardScreen() {
                     width: 24,
                     height: 24,
                     borderRadius: 12,
-                    backgroundColor: day.count > 0 ? theme.colors.primary : theme.colors.border,
+                    backgroundColor: (day.count > 0 || day.isToday) ? theme.colors.primary : theme.colors.border,
                     marginBottom: 4,
                     justifyContent: 'center',
                     alignItems: 'center'
@@ -528,7 +645,12 @@ export default function DashboardScreen() {
                   fontSize: 13,
                   marginTop: 4
                 }}>
-                  {new Date(workout.date).toLocaleDateString()}
+                  {currentDate.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    month: 'long', 
+    day: 'numeric',
+    year: 'numeric'
+  })}
                 </Text>
               </View>
             ))
