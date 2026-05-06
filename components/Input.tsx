@@ -4,6 +4,9 @@ import { theme } from '../theme';
 
 interface InputProps extends TextInputProps {
   style?: ViewStyle;
+  cursorColor?: string;
+  selectionColor?: string;
+  color?: string;
 }
 
 export default function Input({ style, ...props }: InputProps) {

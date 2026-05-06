@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   },
   scrollViewContent: {
     paddingHorizontal: theme.spacing.md,
-    paddingTop: theme.spacing.sm,
+    paddingTop: 0,
     paddingBottom: 140,
   },
   section: {
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
   },
   dropdownItemTextSelected: {
     fontSize: 16,
-    color: '#000000', // Force black for visibility on selected background
+    color: theme.colors.text,
   },
 });
 
@@ -304,7 +304,6 @@ export default function LogWorkoutScreen() {
   const [selectedRoutine, setSelectedRoutine] = useState<string>('');
   const [showRoutineDropdown, setShowRoutineDropdown] = useState(false);
   const [routineLoaded, setRoutineLoaded] = useState(false);
-  const [showTemplateOptions, setShowTemplateOptions] = useState<string | null>(null);
   const [activeTimer, setActiveTimer] = useState<{exerciseId: string, timeLeft: number} | null>(null);
   const [isPaused, setIsPaused] = useState(false);
   const [dropdownAnimation] = useState(new Animated.Value(0));
@@ -658,7 +657,27 @@ export default function LogWorkoutScreen() {
             style={styles.scrollView}
             contentContainerStyle={styles.scrollViewContent}
           >
-            <AppHeader title="Log workout" />
+            {/* Custom Header like RoutinesScreen */}
+            <View style={{
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginTop: theme.spacing.xs,
+              marginBottom: theme.spacing.sm,
+            }}>
+              <Text style={{
+                fontSize: 22,
+                fontWeight: '600',
+                color: theme.colors.text,
+              }}>
+                Log workout
+              </Text>
+            </View>
+            <View style={{
+              height: 1,
+              backgroundColor: theme.colors.border,
+              marginTop: theme.spacing.sm,
+              marginBottom: theme.spacing.md,
+            }} />
 
             {/* Routine Selection */}
             <View style={styles.section}>
@@ -822,20 +841,20 @@ export default function LogWorkoutScreen() {
                     </View>
 
                     {/* Sets Section */}
-                    <View style={{ gap: theme.spacing.sm }}>
+                    <View style={{ gap: theme.spacing.xs }}>
                       {exercise.sets.map((set, index) => (
                         <View key={index} style={{
                           flexDirection: 'row',
                           alignItems: 'center',
-                          gap: theme.spacing.sm,
+                          gap: theme.spacing.xs,
                         }}>
                           {/* Set Number */}
                           <View style={{
                             backgroundColor: theme.colors.surface,
                             paddingHorizontal: theme.spacing.sm,
-                            paddingVertical: theme.spacing.xs,
-                            borderRadius: 6,
-                            minWidth: 50,
+                            paddingVertical: theme.spacing.sm,
+                            borderRadius: 20,
+                            minWidth: 40,
                             alignItems: 'center',
                             borderWidth: 1,
                             borderColor: theme.colors.border,
@@ -843,101 +862,166 @@ export default function LogWorkoutScreen() {
                             <Text style={{
                               fontSize: 12,
                               fontWeight: '600',
-                              color: '#ffffff',
+                              color: theme.colors.text,
                             }}>
-                              Set {index + 1}
+                              {index + 1}
                             </Text>
                           </View>
 
                           {/* Reps Input */}
-                          <View style={{
-                            flex: 1,
-                            backgroundColor: theme.colors.surface,
-                            borderRadius: 6,
-                            borderWidth: 1,
-                            borderColor: theme.colors.border,
-                            paddingHorizontal: theme.spacing.sm,
-                            paddingVertical: theme.spacing.xs,
-                            alignItems: 'center',
-                          }}>
+                          <TouchableOpacity
+                            style={{
+                              flex: 1,
+                              backgroundColor: theme.colors.surface,
+                              borderRadius: 12,
+                              borderWidth: 1,
+                              borderColor: theme.colors.border,
+                              paddingHorizontal: theme.spacing.sm,
+                              paddingVertical: theme.spacing.sm,
+                              justifyContent: 'center',
+                            }}
+                            onPress={() => {
+                              // Focus the input when container is pressed
+                            }}
+                          >
                             <Input
                               style={{
                                 backgroundColor: 'transparent',
                                 borderWidth: 0,
                                 padding: 0,
                                 margin: 0,
+                                width: '100%',
                               }}
                               textAlign="center"
-                              placeholder={set.reps ? `${set.reps} reps` : "10 reps"}
+                              placeholder="Reps"
+                              placeholderTextColor={theme.colors.subtext}
                               keyboardType="numeric"
                               value={set.reps}
                               onChangeText={(value) => updateSetValues(exercise.exercise_id, index, 'reps', value)}
+                              color={theme.colors.text}
+                              caretHidden={false}
                             />
-                          </View>
+                          </TouchableOpacity>
 
                           {/* Weight Input */}
-                          <View style={{
-                            flex: 1,
-                            backgroundColor: theme.colors.surface,
-                            borderRadius: 6,
-                            borderWidth: 1,
-                            borderColor: theme.colors.border,
-                            paddingHorizontal: theme.spacing.sm,
-                            paddingVertical: theme.spacing.xs,
-                            alignItems: 'center',
-                          }}>
+                          <TouchableOpacity
+                            style={{
+                              flex: 1,
+                              backgroundColor: theme.colors.surface,
+                              borderRadius: 12,
+                              borderWidth: 1,
+                              borderColor: theme.colors.border,
+                              paddingHorizontal: theme.spacing.sm,
+                              paddingVertical: theme.spacing.sm,
+                              justifyContent: 'center',
+                            }}
+                            onPress={() => {
+                              // Focus the input when container is pressed
+                            }}
+                          >
                             <Input
                               style={{
                                 backgroundColor: 'transparent',
                                 borderWidth: 0,
                                 padding: 0,
                                 margin: 0,
+                                width: '100%',
                               }}
                               textAlign="center"
-                              placeholder={set.weight ? `${set.weight} kg` : "60 kg"}
+                              placeholder="Weight"
+                              placeholderTextColor={theme.colors.subtext}
                               keyboardType="numeric"
                               value={set.weight}
                               onChangeText={(value) => updateSetValues(exercise.exercise_id, index, 'weight', value)}
+                              color={theme.colors.text}
+                              caretHidden={false}
                             />
-                          </View>
+                          </TouchableOpacity>
 
-                          {/* Remove Set Button */}
+                          {/* Action Button */}
                           <TouchableOpacity
                             style={{
                               width: 28,
                               height: 28,
                               borderRadius: 14,
-                              backgroundColor: theme.colors.danger,
+                              backgroundColor: set.reps && set.weight ? theme.colors.primary : theme.colors.surface,
+                              borderWidth: 1,
+                              borderColor: set.reps && set.weight ? theme.colors.primary : theme.colors.border,
                               justifyContent: 'center',
                               alignItems: 'center',
                             }}
-                            onPress={() => removeSetFromExercise(exercise.exercise_id, index)}
+                            onPress={() => {
+                              if (set.reps && set.weight) {
+                                // Save logic here - for now just keep the set
+                                console.log('Set saved:', { reps: set.reps, weight: set.weight });
+                              } else {
+                                removeSetFromExercise(exercise.exercise_id, index);
+                              }
+                            }}
                           >
                             <Text style={{
-                              fontSize: 16,
+                              fontSize: 14,
                               fontWeight: '600',
-                              color: 'white',
+                              color: set.reps && set.weight ? 'white' : theme.colors.subtext,
                             }}>
-                              ×
+                              {set.reps && set.weight ? '✓' : '×'}
                             </Text>
                           </TouchableOpacity>
                         </View>
                       ))}
 
-                      {/* Add Set, Template and Rest Timer Buttons */}
-                      <View style={{ flexDirection: 'row', gap: theme.spacing.sm, marginTop: theme.spacing.md, flexWrap: 'wrap' }}>
-                        <GhostButton
-                          title="Add set"
+                      {/* Action Buttons */}
+                      <View style={{ 
+                        flexDirection: 'row', 
+                        gap: theme.spacing.sm, 
+                        marginTop: theme.spacing.md,
+                        paddingHorizontal: theme.spacing.xs,
+                      }}>
+                        <TouchableOpacity
+                          style={{
+                            flex: 1,
+                            backgroundColor: theme.colors.surface,
+                            borderWidth: 1,
+                            borderColor: theme.colors.border,
+                            borderRadius: 12,
+                            paddingVertical: theme.spacing.sm,
+                            paddingHorizontal: theme.spacing.md,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
                           onPress={() => addSetToExercise(exercise.exercise_id)}
-                        />
-                        <GhostButton
-                          title="Templates"
-                          onPress={() => setShowTemplateOptions(exercise.exercise_id)}
-                        />
-                        <GhostButton
-                          title="Start rest"
+                        >
+                          <Text style={{
+                            fontSize: 14,
+                            fontWeight: '600',
+                            color: theme.colors.primary,
+                          }}>
+                            + Add Set
+                          </Text>
+                        </TouchableOpacity>
+                        
+                        <TouchableOpacity
+                          style={{
+                            flex: 1,
+                            backgroundColor: theme.colors.primary + '10',
+                            borderWidth: 1,
+                            borderColor: theme.colors.primary,
+                            borderRadius: 12,
+                            paddingVertical: theme.spacing.sm,
+                            paddingHorizontal: theme.spacing.md,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
                           onPress={() => startRestTimer(exercise.exercise_id)}
-                        />
+                        >
+                          <Text style={{
+                            fontSize: 14,
+                            fontWeight: '600',
+                            color: theme.colors.primary,
+                          }}>
+                            ⏱ Start Rest
+                          </Text>
+                        </TouchableOpacity>
                       </View>
                       </View>
                   </Card>
@@ -1027,69 +1111,6 @@ export default function LogWorkoutScreen() {
               </View>
             )}
 
-            {/* Template Selection Modal */}
-            {showTemplateOptions && (
-              <View style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: 'rgba(0,0,0,0.5)',
-                justifyContent: 'center',
-                alignItems: 'center',
-                padding: theme.spacing.lg,
-              }}>
-                <Card style={{ 
-                  backgroundColor: theme.colors.surface,
-                  borderWidth: 1,
-                  borderColor: theme.colors.border,
-                  borderRadius: 8,
-                  padding: theme.spacing.lg,
-                  width: '100%',
-                  maxWidth: 400,
-                }}>
-                  <Text style={{
-                    fontSize: 18,
-                    fontWeight: '600',
-                    color: theme.colors.text,
-                    marginBottom: theme.spacing.md,
-                  }}>
-                    Set Templates
-                  </Text>
-                  
-                  <Text style={{
-                    fontSize: 14,
-                    color: theme.colors.subtext,
-                    marginBottom: theme.spacing.lg,
-                  }}>
-                    Quick templates for common rep ranges
-                  </Text>
-
-                  <View style={{ gap: theme.spacing.sm }}>
-                    {[
-                      { name: 'Warm-up', sets: [{ reps: '10', weight: '50' }, { reps: '8', weight: '60' }] },
-                      { name: 'Strength', sets: [{ reps: '5', weight: '80' }, { reps: '5', weight: '85' }, { reps: '5', weight: '90' }] },
-                      { name: 'Hypertrophy', sets: [{ reps: '12', weight: '70' }, { reps: '10', weight: '75' }, { reps: '8', weight: '80' }] },
-                    ].map((template, index) => (
-                      <GhostButton
-                        key={index}
-                        title={`${template.name} (${template.sets?.length || 1} sets • ${template.sets?.[0]?.weight || '0'} kg)`}
-                        onPress={() => {
-                          // Apply template logic here
-                          setShowTemplateOptions(null);
-                        }}
-                      />
-                    ))}
-                  </View>
-
-                  <GhostButton
-                    title="Cancel"
-                    onPress={() => setShowTemplateOptions(null)}
-                  />
-                </Card>
-              </View>
-            )}
           </ScrollView>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>

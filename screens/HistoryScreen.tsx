@@ -8,7 +8,6 @@ import { theme } from '../theme';
 import { AppHeader, RowItem, SectionLabel, StatBox, PrimaryButton, GhostButton } from '../components';
 import Card from '../components/Card';
 
-// STEP 2: SAFE DATE HANDLING
 const safeDate = (value: any) => {
   const d = new Date(value);
   return isNaN(d.getTime()) ? null : d;
@@ -139,31 +138,23 @@ const styles = StyleSheet.create({
   },
 });
 
-// Standardized date parsing function - use everywhere
 const parseWorkoutDate = (dateValue: any) => {
   if (!dateValue) return null;
-  
-  // Create date object from stored value without modifying it
   const date = new Date(dateValue);
-  
-  // Check if date is valid
   if (isNaN(date.getTime())) return null;
-  
   return date;
 };
 
-// Standardized date comparison function
 const isSameDay = (date1: Date, date2: Date) => {
   return date1.getFullYear() === date2.getFullYear() &&
-         date1.getMonth() === date2.getMonth() &&
-         date1.getDate() === date2.getDate();
+    date1.getMonth() === date2.getMonth() &&
+    date1.getDate() === date2.getDate();
 };
 
-// Import working date logic
 const getCurrentDayLabel = () => {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const today = new Date().getDay();
-  const adjustedToday = today === 0 ? 6 : today - 1; // Convert to Monday=0, Sunday=6
+  const adjustedToday = today === 0 ? 6 : today - 1;
   return days[adjustedToday];
 };
 
@@ -173,37 +164,31 @@ export default function HistoryScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Remove time - show only day, date, year
-  const formattedDate = currentDate.toLocaleDateString('en-US', { 
-    weekday: 'long', 
-    month: 'long', 
+  const formattedDate = currentDate.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
     day: 'numeric',
-    year: 'numeric'
+    year: 'numeric',
   });
 
   useFocusEffect(
     React.useCallback(() => {
-      // Update current date when screen focuses
       setCurrentDate(new Date());
       fetchWorkouts();
     }, [])
   );
 
-  // Force date update every minute to ensure correct date display
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentDate(new Date());
-    }, 60000); // Update every minute
-
+    }, 60000);
     return () => clearInterval(interval);
   }, []);
 
-  // STEP 1: FETCH DATA
   const fetchWorkouts = async () => {
     try {
       setLoading(true);
-      
-      // Fetch workouts with entries using proper join
+
       const { data: workoutsData, error: workoutsError } = await supabase
         .from('workouts')
         .select(`
@@ -230,47 +215,28 @@ export default function HistoryScreen() {
         return;
       }
 
-      // STEP 3: CORRECT GROUPING - DATE → ROUTINE_ID → WORKOUTS
       const grouped: any = {};
 
-      console.log('DEBUG: Raw workouts data:', workoutsData?.map(w => ({
-        id: w.id,
-        routine_id: w.routine_id,
-        routine_name: (w.routines as any)?.name,
-        date: w.date
-      })));
-
-      workoutsData?.forEach(workout => {
+      workoutsData?.forEach((workout) => {
         const workoutDate = parseWorkoutDate(workout.date);
         const dateKey = workoutDate ? workoutDate.toDateString() : 'invalid';
 
-        console.log('Processing workout:', {
-          id: workout.id,
-          routine_id: workout.routine_id,
-          routine_name: (workout.routines as any)?.name,
-          dateKey
-        });
-
-        // Step 1: Group by date
         if (!grouped[dateKey]) {
           grouped[dateKey] = {};
         }
 
-        // Step 2: Group by routine_id (null = custom workout)
         const routineKey = workout.routine_id || 'custom';
 
         if (!grouped[dateKey][routineKey]) {
           grouped[dateKey][routineKey] = {
             routine_id: workout.routine_id,
             routine_name: (workout.routines as any)?.name || null,
-            workouts: []
+            workouts: [],
           };
         }
 
         grouped[dateKey][routineKey].workouts.push(workout);
       });
-
-      console.log('Final grouped structure:', grouped);
 
       setGroupedWorkouts(grouped);
     } catch (error) {
@@ -286,51 +252,39 @@ export default function HistoryScreen() {
     setRefreshing(false);
   };
 
-  // STEP 6: DELETE FIX
   const deleteWorkout = async (workoutId: string) => {
     Alert.alert(
       'Delete Workout',
       'Are you sure you want to delete this workout?',
       [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
+        { text: 'Cancel', style: 'cancel' },
         {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
             try {
-              // Delete workout entries first (foreign key constraint)
-              await supabase
-                .from('workout_entries')
-                .delete()
-                .eq('workout_id', workoutId);
-
-              // Delete the workout
-              await supabase
-                .from('workouts')
-                .delete()
-                .eq('id', workoutId);
-
-              // Refresh data
+              await supabase.from('workout_entries').delete().eq('workout_id', workoutId);
+              await supabase.from('workouts').delete().eq('id', workoutId);
               fetchWorkouts();
-              
               Alert.alert('Success', 'Workout deleted successfully');
             } catch (error) {
               console.error('Error deleting workout:', error);
               Alert.alert('Error', 'Failed to delete workout');
             }
-          }
-        }
+          },
+        },
       ]
     );
   };
 
+  const totalSessions = Object.keys(groupedWorkouts).reduce((total, dateKey) => {
+    return total + Object.keys(groupedWorkouts[dateKey]).length;
+  }, 0);
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <StatusBar style="light" backgroundColor={theme.colors.background} />
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={{
           paddingHorizontal: 16,
@@ -341,16 +295,16 @@ export default function HistoryScreen() {
             refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor="#4F8CFF"
-            colors={["#4F8CFF"]}
+            colors={['#4F8CFF']}
           />
         }
       >
         {loading ? (
           <View style={{ marginTop: theme.spacing.lg }}>
             <Card>
-              <Text style={{ 
-                fontSize: 16, 
-                color: theme.colors.text, 
+              <Text style={{
+                fontSize: 16,
+                color: theme.colors.text,
                 textAlign: 'center',
                 fontWeight: '500',
               }}>
@@ -361,18 +315,18 @@ export default function HistoryScreen() {
         ) : Object.keys(groupedWorkouts).length === 0 ? (
           <View style={{ marginTop: theme.spacing.lg }}>
             <Card style={{ padding: 24, borderRadius: 16 }}>
-              <Text style={{ 
-                fontSize: 18, 
-                color: theme.colors.text, 
+              <Text style={{
+                fontSize: 18,
+                color: theme.colors.text,
                 textAlign: 'center',
                 fontWeight: '700',
                 marginBottom: theme.spacing.sm,
               }}>
                 No workouts yet
               </Text>
-              <Text style={{ 
-                fontSize: 14, 
-                color: theme.colors.subtext, 
+              <Text style={{
+                fontSize: 14,
+                color: theme.colors.subtext,
                 textAlign: 'center',
                 lineHeight: 20,
               }}>
@@ -381,181 +335,191 @@ export default function HistoryScreen() {
             </Card>
           </View>
         ) : (
-          Object.entries(groupedWorkouts).map(([dateKey, routineGroups]: [string, any]) => (
-            <View key={dateKey} style={styles.section}>
-              {/* STEP 4: UI DISPLAY - Date Header */}
-              <View style={styles.dateHeader}>
-                <Text style={styles.dateHeaderText}>
-                  {formattedDate}
-                </Text>
-              </View>
-
-              {/* Each routine/custom workout as premium session card */}
-              {Object.entries(routineGroups).map(([routineKey, routineGroup]: [string, any], index: number) => (
-                <Card 
-                  key={routineKey} 
-                  style={{ 
-                    marginBottom: theme.spacing.lg,
-                    borderRadius: 16,
-                    padding: 20,
-                    backgroundColor: theme.colors.card,
-                    borderWidth: 1,
-                    borderColor: theme.colors.border,
-                  }}
-                >
-                  {/* Header - Left: Routine Name, Right: Date */}
-                  <View style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    marginBottom: theme.spacing.md,
-                  }}>
-                    {/* Left: Routine Name */}
-                    <View style={{ flex: 1 }}>
-                      <Text style={{
-                        fontSize: 20,
-                        fontWeight: 'bold',
-                        color: theme.colors.primary,
-                        marginBottom: 4,
-                      }}>
-                        {routineGroup.routine_id ? routineGroup.routine_name : 'Custom Workout'}
-                      </Text>
-                    </View>
-                    
-                    {/* Right: Date + Delete Button */}
-                    <View style={{ alignItems: 'flex-end' }}>
-                      <Text style={{
-                        fontSize: 12,
-                        color: theme.colors.subtext,
-                        marginBottom: 8,
-                      }}>
-                        {formattedDate}
-                      </Text>
-                      
-                      <GhostButton
-                        title="Delete"
-                        onPress={() => deleteWorkout(routineGroup.workouts[0]?.id)}
-                      />
-                    </View>
-                  </View>
-
-                  {/* Exercise List */}
-                  <View style={{ gap: theme.spacing.md }}>
+          <>
+            {Object.entries(groupedWorkouts).map(([dateKey, routineGroups]: [string, any]) => (
+              <View key={dateKey} style={styles.section}>
+                {/* Date Header */}
+                <View style={styles.dateHeader}>
+                  <Text style={styles.dateHeaderText}>
                     {(() => {
-                      // Group exercises by name within this routine group
-                      const exerciseGroups: any = {};
-                      routineGroup.workouts.forEach((workout: any) => {
-                        workout.workout_entries?.forEach((entry: any) => {
-                          const exerciseName = entry.exercises?.name || 'Unknown Exercise';
-                          if (!exerciseGroups[exerciseName]) {
-                            exerciseGroups[exerciseName] = [];
-                          }
-                          exerciseGroups[exerciseName].push(entry);
-                        });
-                      });
-
-                      // Workout Summary
-                      const totalExercises = Object.keys(exerciseGroups).length;
-                      const totalSets = routineGroup.workouts.reduce((total: number, workout: any) => 
-                        total + (workout.workout_entries?.length || 0), 0
-                      );
-                      const totalVolume = routineGroup.workouts.reduce((total: number, workout: any) => 
-                        total + workout.workout_entries?.reduce((sum: number, entry: any) => 
-                          sum + (entry.reps * entry.weight), 0
-                        ) || 0, 0
-                      );
-
-                      return (
-                        <>
-                          {/* Workout Summary */}
-                          <View style={{
-                            backgroundColor: theme.colors.primary + '05',
-                            borderRadius: 12,
-                            padding: 16,
-                            marginBottom: 16,
-                            borderWidth: 1,
-                            borderColor: theme.colors.primary + '20',
-                          }}>
-                            <Text style={{
-                              fontSize: 14,
-                              fontWeight: '600',
-                              color: theme.colors.primary,
-                              marginBottom: 8,
-                            }}>
-                              Workout Summary
-                            </Text>
-                            <View style={{
-                              flexDirection: 'row',
-                              justifyContent: 'space-between',
-                            }}>
-                              <Text style={{
-                                fontSize: 12,
-                                color: theme.colors.text,
-                              }}>
-                                {totalExercises} exercises
-                              </Text>
-                              <Text style={{
-                                fontSize: 12,
-                                color: theme.colors.text,
-                              }}>
-                                {totalSets} sets
-                              </Text>
-                              <Text style={{
-                                fontSize: 12,
-                                color: theme.colors.text,
-                              }}>
-                                {totalVolume.toLocaleString()}kg total
-                              </Text>
-                            </View>
-                          </View>
-
-                          {/* Exercise Entries */}
-                          {Object.entries(exerciseGroups).map(([exerciseName, entries]: [string, any], exerciseIndex: number) => (
-                            <View key={exerciseName}>
-                              {/* Exercise Name */}
-                              <Text style={{
-                                fontSize: 16,
-                                fontWeight: 'bold',
-                                color: '#ffffff',
-                                marginBottom: theme.spacing.sm,
-                              }}>
-                                {exerciseName}
-                              </Text>
-                              
-                              {/* Sets List */}
-                              <View style={{ 
-                                marginLeft: theme.spacing.sm,
-                                marginBottom: theme.spacing.sm,
-                              }}>
-                                {(entries as any[]).map((entry: any, setIndex: number) => (
-                                  <Text key={entry.id} style={{
-                                    fontSize: 14,
-                                    color: theme.colors.subtext,
-                                    marginBottom: 2,
-                                  }}>
-                                    • {entry.reps} reps × {entry.weight}kg
-                                  </Text>
-                                ))}
-                              </View>
-                              
-                              {/* Divider Line Between Exercises */}
-                              {exerciseIndex < Object.entries(exerciseGroups).length - 1 && (
-                                <View style={{
-                                  borderBottomWidth: 1,
-                                  borderColor: theme.colors.border,
-                                  marginVertical: theme.spacing.sm,
-                                }} />
-                              )}
-                            </View>
-                          ))}
-                        </>
-                      );
+                      const firstWorkout = Object.values(routineGroups as any)[0] as any;
+                      const date = parseWorkoutDate(firstWorkout?.workouts?.[0]?.date);
+                      return date
+                        ? date.toLocaleDateString('en-US', {
+                            weekday: 'long',
+                            month: 'long',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })
+                        : dateKey;
                     })()}
-                  </View>
-                </Card>
-              ))}
+                  </Text>
+                </View>
+
+                {/* Each routine/custom workout as session card */}
+                {Object.entries(routineGroups).map(([routineKey, routineGroup]: [string, any]) => {
+                  const exerciseGroups: any = {};
+                  routineGroup.workouts.forEach((workout: any) => {
+                    workout.workout_entries?.forEach((entry: any) => {
+                      const exerciseName = entry.exercises?.name || 'Unknown Exercise';
+                      if (!exerciseGroups[exerciseName]) {
+                        exerciseGroups[exerciseName] = [];
+                      }
+                      exerciseGroups[exerciseName].push(entry);
+                    });
+                  });
+
+                  const totalExercises = Object.keys(exerciseGroups).length;
+                  const totalSets = routineGroup.workouts.reduce(
+                    (total: number, workout: any) => total + (workout.workout_entries?.length || 0),
+                    0
+                  );
+                  const totalVolume = routineGroup.workouts.reduce(
+                    (total: number, workout: any) =>
+                      total +
+                      (workout.workout_entries?.reduce(
+                        (sum: number, entry: any) => sum + entry.reps * entry.weight,
+                        0
+                      ) || 0),
+                    0
+                  );
+
+                  return (
+                    <Card
+                      key={routineKey}
+                      style={{
+                        marginBottom: theme.spacing.lg,
+                        borderRadius: 16,
+                        padding: 20,
+                        backgroundColor: theme.colors.card,
+                        borderWidth: 1,
+                        borderColor: theme.colors.border,
+                      }}
+                    >
+                      {/* Header */}
+                      <View style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        marginBottom: theme.spacing.md,
+                      }}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{
+                            fontSize: 20,
+                            fontWeight: 'bold',
+                            color: theme.colors.primary,
+                            marginBottom: 4,
+                          }}>
+                            {routineGroup.routine_id ? routineGroup.routine_name : 'Custom Workout'}
+                          </Text>
+                        </View>
+
+                        <View style={{ alignItems: 'flex-end' }}>
+                          <Text style={{
+                            fontSize: 12,
+                            color: theme.colors.subtext,
+                            marginBottom: 8,
+                          }}>
+                            {formattedDate}
+                          </Text>
+                          <GhostButton
+                            title="Delete"
+                            onPress={() => deleteWorkout(routineGroup.workouts[0]?.id)}
+                          />
+                        </View>
+                      </View>
+
+                      {/* Workout Summary */}
+                      <View style={{
+                        backgroundColor: theme.colors.primary + '05',
+                        borderRadius: 12,
+                        padding: 16,
+                        marginBottom: 16,
+                        borderWidth: 1,
+                        borderColor: theme.colors.primary + '20',
+                      }}>
+                        <Text style={{
+                          fontSize: 14,
+                          fontWeight: '600',
+                          color: theme.colors.primary,
+                          marginBottom: 8,
+                        }}>
+                          Workout Summary
+                        </Text>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                          <Text style={{ fontSize: 12, color: theme.colors.text }}>{totalExercises} exercises</Text>
+                          <Text style={{ fontSize: 12, color: theme.colors.text }}>{totalSets} sets</Text>
+                          <Text style={{ fontSize: 12, color: theme.colors.text }}>{totalVolume.toLocaleString()}kg total</Text>
+                        </View>
+                      </View>
+
+                      {/* Exercise Entries */}
+                      <View style={{ gap: theme.spacing.md }}>
+                        {Object.entries(exerciseGroups).map(([exerciseName, entries]: [string, any], exerciseIndex: number) => (
+                          <View key={exerciseName}>
+                            <Text style={{
+                              fontSize: 16,
+                              fontWeight: 'bold',
+                              color: '#ffffff',
+                              marginBottom: theme.spacing.sm,
+                            }}>
+                              {exerciseName}
+                            </Text>
+
+                            <View style={{ marginLeft: theme.spacing.sm, marginBottom: theme.spacing.sm }}>
+                              {(entries as any[]).map((entry: any) => (
+                                <Text key={entry.id} style={{
+                                  fontSize: 14,
+                                  color: theme.colors.subtext,
+                                  marginBottom: 2,
+                                }}>
+                                  • {entry.reps} reps × {entry.weight}kg
+                                </Text>
+                              ))}
+                            </View>
+
+                            {exerciseIndex < Object.entries(exerciseGroups).length - 1 && (
+                              <View style={{
+                                borderBottomWidth: 1,
+                                borderColor: theme.colors.border,
+                                marginVertical: theme.spacing.sm,
+                              }} />
+                            )}
+                          </View>
+                        ))}
+                      </View>
+                    </Card>
+                  );
+                })}
+              </View>
+            ))}
+
+            {/* Total Sessions All Time */}
+            <View style={{
+              flexDirection: 'row',
+              gap: theme.spacing.md,
+              marginBottom: theme.spacing.lg,
+              paddingHorizontal: theme.spacing.lg,
+            }}>
+              <Card style={{ flex: 1, padding: 20, alignItems: 'center' }}>
+                <Text style={{
+                  fontSize: 32,
+                  fontWeight: 'bold',
+                  color: theme.colors.primary,
+                  marginBottom: 8,
+                }}>
+                  {totalSessions}
+                </Text>
+                <Text style={{
+                  fontSize: 14,
+                  color: theme.colors.subtext,
+                  textAlign: 'center',
+                }}>
+                  Total sessions all time
+                </Text>
+              </Card>
             </View>
-          ))
+          </>
         )}
       </ScrollView>
     </SafeAreaView>
