@@ -16,6 +16,7 @@ export default function DashboardScreen() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [totalWorkouts, setTotalWorkouts] = useState(0);
   const [weeklyWorkouts, setWeeklyWorkouts] = useState(0);
+  const [weeklyDaysCompleted, setWeeklyDaysCompleted] = useState(0);
   const [recentWorkouts, setRecentWorkouts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalVolume, setTotalVolume] = useState(0);
@@ -212,17 +213,31 @@ export default function DashboardScreen() {
         setTotalWorkouts(totalCount || 0);
       }
 
-      // Fetch weekly workouts count
+      // Fetch weekly workouts count and unique days
       const startOfWeek = getStartOfWeek();
-      const { count: weeklyCount, error: weeklyError } = await supabase
+      const { data: weeklyWorkoutsData, error: weeklyError } = await supabase
         .from('workouts')
-        .select('*', { count: 'exact', head: true })
+        .select('date')
         .gte('date', startOfWeek);
 
       if (weeklyError) {
         console.error('Error fetching weekly workouts:', weeklyError);
+        setWeeklyWorkouts(0);
+        setWeeklyDaysCompleted(0);
       } else {
-        setWeeklyWorkouts(weeklyCount || 0);
+        // Count total sessions
+        const totalSessions = weeklyWorkoutsData?.length || 0;
+        setWeeklyWorkouts(totalSessions);
+        
+        // Count unique days
+        const uniqueDays = new Set();
+        weeklyWorkoutsData?.forEach(workout => {
+          if (workout.date) {
+            const workoutDate = new Date(workout.date).toDateString();
+            uniqueDays.add(workoutDate);
+          }
+        });
+        setWeeklyDaysCompleted(uniqueDays.size);
       }
 
       // Fetch recent workouts (last 3 sessions)
@@ -519,8 +534,10 @@ export default function DashboardScreen() {
               marginBottom: 16
             }}>
               <Text style={{
-                color: theme.colors.text,
-                fontSize: 14
+                color: theme.colors.subtext,
+                fontSize: 12,
+                textTransform: 'uppercase',
+                fontWeight: '500'
               }}>
                 sessions
               </Text>
@@ -580,7 +597,7 @@ export default function DashboardScreen() {
               marginTop: 12,
               textAlign: 'center'
             }}>
-              {weeklyWorkouts} out of 7 days completed
+              {weeklyDaysCompleted} out of 7 days completed
             </Text>
           </View>
         </View>

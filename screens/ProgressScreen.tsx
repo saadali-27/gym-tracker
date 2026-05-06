@@ -234,7 +234,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     zIndex: 1000,
-    transform: [{ scaleY: dropdownScale }],
   },
   dropdownScroll: {
     maxHeight: 180,
@@ -1156,7 +1155,7 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
             <Animated.View style={[
               dropdownStyle,
               styles.dropdownList,
-              { marginTop: 8 }
+              { marginTop: 8, transform: [{ scaleY: dropdownScale }] }
             ]}>
               <ScrollView style={styles.dropdownScroll} nestedScrollEnabled={false}>
                 {userExercises.map((exercise) => (
