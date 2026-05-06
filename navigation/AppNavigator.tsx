@@ -14,10 +14,10 @@ export default function AppNavigator() {
     <NavigationContainer theme={{
       dark: true,
       colors: {
-        background: theme.colors.background,
+        background: 'transparent',
         card: theme.colors.card,
         text: theme.colors.text,
-        border: theme.colors.border,
+        border: 'transparent',
         notification: theme.colors.primary,
         primary: theme.colors.primary,
       },
@@ -40,13 +40,13 @@ export default function AppNavigator() {
         },
       }
     }}>
-      <Tab.Navigator
-        screenOptions={{
+      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <Tab.Navigator
+          screenOptions={{
           headerShown: false,
           tabBarStyle: {
             backgroundColor: theme.colors.background,
-            borderTopColor: theme.colors.border,
-            borderTopWidth: 1,
+            borderRadius: 26,
             paddingBottom: 8,
             paddingTop: 12,
             height: 70,
@@ -55,6 +55,11 @@ export default function AppNavigator() {
             bottom: 0,
             left: 0,
             right: 0,
+            elevation: 8,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 8,
           },
           tabBarActiveTintColor: theme.colors.primary,
           tabBarInactiveTintColor: theme.colors.subtext,
@@ -114,7 +119,8 @@ export default function AppNavigator() {
             ),
           }}
         />
-      </Tab.Navigator>
+        </Tab.Navigator>
+      </View>
     </NavigationContainer>
   );
 }

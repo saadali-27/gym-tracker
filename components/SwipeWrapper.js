@@ -1,6 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { useRoute } from '@react-navigation/native';
+import { theme } from '../theme';
 
 import DashboardScreen from '../screens/DashboardScreen';
 import LogWorkoutScreen from '../screens/LogWorkoutScreen';
@@ -30,7 +31,7 @@ export default function SwipeWrapper() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#0A0F1E', paddingBottom: 100 }}>
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       {getCurrentScreen()}
     </View>
   );
