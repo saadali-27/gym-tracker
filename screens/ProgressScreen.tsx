@@ -5,7 +5,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { supabase } from '../services/supabase';
 import { theme } from '../theme';
-import { AppHeader, RowItem, SectionLabel, StatBox, PrimaryButton, GhostButton } from '../components';
+import { AppHeader, RowItem, SectionLabel, StatBox, PrimaryButton, GhostButton, StandardHeader } from '../components';
 import { LineChart, BarChart } from 'react-native-gifted-charts';
 import RNPickerSelect from 'react-native-picker-select';
 import { getMostTrainedMuscle } from '../utils/muscleUtils';
@@ -1040,12 +1040,7 @@ const Tooltip = ({ x, y, width, height, visible, data, onHide }: any) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollViewContent}
       >
-        <View style={styles.headerContainer}>
-          <Text style={styles.headerTitle}>
-            Progress
-          </Text>
-        </View>
-        <View style={styles.headerDivider} />
+        <StandardHeader title="Progress" />
 
         {/* WEEKLY VOLUME Section */}
         <View style={styles.section}>

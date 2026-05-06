@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { supabase } from '../services/supabase';
 import { theme } from '../theme';
-import { AppHeader, RowItem, SectionLabel, StatBox, PrimaryButton, GhostButton } from '../components';
+import { AppHeader, RowItem, SectionLabel, StatBox, PrimaryButton, GhostButton, StandardHeader } from '../components';
 import Card from '../components/Card';
 
 const safeDate = (value: any) => {
@@ -299,6 +299,7 @@ export default function HistoryScreen() {
           />
         }
       >
+        <StandardHeader title="History" />
         {loading ? (
           <View style={{ marginTop: theme.spacing.lg }}>
             <Card>

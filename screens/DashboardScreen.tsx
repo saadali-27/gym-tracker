@@ -7,6 +7,7 @@ import { supabase, signUpUser, signInUser, getCurrentUser } from '../services/su
 import { theme } from '../theme';
 import Card from '../components/Card';
 import Button from '../components/Button';
+import { StandardHeader } from '../components';
 import { getMostTrainedMuscle } from '../utils/muscleUtils';
 
 const formatWeight = (value: number) => `${value.toLocaleString()} kg`;
@@ -403,29 +404,7 @@ export default function DashboardScreen() {
         }}
       >
 
-        {/* Home Header */}
-        <View style={{ 
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: 24
-        }}>
-          <Text style={{
-            color: theme.colors.text,
-            fontSize: 16,
-            fontWeight: '500'
-          }}>
-            Home
-          </Text>
-          
-                  </View>
-        
-        {/* Subtle Separator */}
-        <View style={{
-          height: 1,
-          backgroundColor: theme.colors.border,
-          marginBottom: 24,
-          marginHorizontal: 16
-        }} />
+        <StandardHeader title="Home" />
 
         {/* Welcome Header */}
         <View style={{ marginBottom: 20 }}>

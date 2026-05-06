@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase, getCurrentUser } from '../services/supabase';
 import { theme } from '../theme';
-import { AppHeader, RowItem, SectionLabel, StatBox, PrimaryButton, GhostButton } from '../components';
+import { AppHeader, RowItem, SectionLabel, StatBox, PrimaryButton, GhostButton, StandardHeader } from '../components';
 import Input from '../components/Input';
 
 interface Routine {
@@ -667,10 +667,7 @@ export default function RoutinesScreen() {
 
   const renderListHeader = () => (
     <>
-      <View style={styles.headerContainer}>
-        <Text style={styles.headerTitle}>Routines</Text>
-      </View>
-      <View style={styles.headerDivider} />
+      <StandardHeader title="Routines" />
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>

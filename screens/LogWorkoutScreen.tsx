@@ -6,7 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase, getCurrentUser } from '../services/supabase';
 import { theme } from '../theme';
-import { AppHeader, RowItem, SectionLabel, StatBox, PrimaryButton, GhostButton } from '../components';
+import { AppHeader, RowItem, SectionLabel, StatBox, PrimaryButton, GhostButton, StandardHeader } from '../components';
 import Input from '../components/Input';
 import Card from '../components/Card';
 
@@ -742,27 +742,7 @@ export default function LogWorkoutScreen() {
             style={styles.scrollView}
             contentContainerStyle={styles.scrollViewContent}
           >
-            {/* Custom Header like RoutinesScreen */}
-            <View style={{
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginTop: theme.spacing.xs,
-              marginBottom: theme.spacing.sm,
-            }}>
-              <Text style={{
-                fontSize: 22,
-                fontWeight: '600',
-                color: theme.colors.text,
-              }}>
-                Log workout
-              </Text>
-            </View>
-            <View style={{
-              height: 1,
-              backgroundColor: theme.colors.border,
-              marginTop: theme.spacing.sm,
-              marginBottom: theme.spacing.md,
-            }} />
+            <StandardHeader title="Log Workout" />
 
             {/* Routine Selection - Premium Custom Dropdown */}
             <View style={styles.section}>
