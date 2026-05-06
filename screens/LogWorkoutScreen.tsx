@@ -54,17 +54,118 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: theme.spacing.lg,
   },
-  dropdownContainer: {
+  // Premium Custom Dropdown Styles
+  selectorContainer: {
+    marginBottom: theme.spacing.md,
+  },
+  selectorTrigger: {
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: 12,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    height: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  selectorTriggerText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: theme.colors.text,
+    flex: 1,
+  },
+  selectorTriggerPlaceholder: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: theme.colors.subtext,
+    flex: 1,
+  },
+  selectorChevron: {
+    fontSize: 16,
+    color: theme.colors.subtext,
+    transform: [{ rotate: '0deg' }],
+  },
+  selectorChevronOpen: {
+    transform: [{ rotate: '180deg' }],
+  },
+  selectorTriggerPressed: {
+    backgroundColor: theme.colors.surface + '80',
+  },
+  selectorRightElement: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  clearButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: theme.colors.danger + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  clearButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: theme.colors.danger,
+  },
+  dropdownOverlay: {
     position: 'absolute',
-    top: 120,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 999,
+  },
+  dropdownMenu: {
+    position: 'absolute',
     left: theme.spacing.md,
     right: theme.spacing.md,
     backgroundColor: theme.colors.surface,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: 8,
-    maxHeight: 200,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
     zIndex: 1000,
+    maxHeight: 240,
+    overflow: 'hidden',
+  },
+  dropdownOption: {
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  dropdownOptionText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: theme.colors.text,
+  },
+  dropdownOptionSelected: {
+    backgroundColor: theme.colors.primary + '15',
+  },
+  dropdownOptionSelectedText: {
+    color: theme.colors.primary,
+    fontWeight: '600',
+  },
+  dropdownOptionChevron: {
+    fontSize: 16,
+    color: theme.colors.primary,
+  },
+  dropdownDivider: {
+    height: 1,
+    backgroundColor: theme.colors.border + '30',
   },
   routineLoadedBanner: {
     backgroundColor: theme.colors.primary + '08',
@@ -263,32 +364,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#ffffff', // Force white for visibility
   },
-  dropdownItem: {
-    padding: theme.spacing.md,
-  },
-  dropdownItemText: {
-    color: '#ffffff', // Force white for visibility
-    textAlign: 'center',
-  },
-  dropdownItemWithBorder: {
-    padding: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  dropdownItemTextSubtle: {
-    color: '#ffffff', // Force white for visibility
-  },
-  dropdownItemSelected: {
-    padding: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-    backgroundColor: theme.colors.primary + '20',
-  },
-  dropdownItemTextSelected: {
-    fontSize: 16,
-    color: theme.colors.text,
-  },
-});
+  });
 
 export default function LogWorkoutScreen() {
   const [exercises, setExercises] = useState<any[]>([]);
@@ -306,29 +382,39 @@ export default function LogWorkoutScreen() {
   const [routineLoaded, setRoutineLoaded] = useState(false);
   const [activeTimer, setActiveTimer] = useState<{exerciseId: string, timeLeft: number} | null>(null);
   const [isPaused, setIsPaused] = useState(false);
-  const [dropdownAnimation] = useState(new Animated.Value(0));
-  const [dropdownStyle] = useState({
-    opacity: dropdownAnimation,
-    transform: [{ translateY: dropdownAnimation.interpolate({
-      inputRange: [0, 1],
-      outputRange: [-10, 0]
-    })}]
-  });
-
+  // Premium dropdown animations
+  const [dropdownScale] = useState(new Animated.Value(0.95));
+  const [dropdownOpacity] = useState(new Animated.Value(0));
+  
   const openDropdown = () => {
-    Animated.timing(dropdownAnimation, {
-      toValue: 1,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
+    Animated.parallel([
+      Animated.spring(dropdownScale, {
+        toValue: 1,
+        tension: 100,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+      Animated.timing(dropdownOpacity, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start();
   };
-
+  
   const closeDropdown = () => {
-    Animated.timing(dropdownAnimation, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
+    Animated.parallel([
+      Animated.timing(dropdownScale, {
+        toValue: 0.95,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(dropdownOpacity, {
+        toValue: 0,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
   };
 
   useEffect(() => {
@@ -445,9 +531,8 @@ export default function LogWorkoutScreen() {
 
   const handleRoutineSelect = async (routineId: string) => {
     setSelectedRoutine(routineId);
-    setShowRoutineDropdown(false);
     closeDropdown();
-    setTimeout(() => setShowRoutineDropdown(false), 120);
+    setTimeout(() => setShowRoutineDropdown(false), 150);
 
     if (routineId) {
       try {
@@ -679,71 +764,149 @@ export default function LogWorkoutScreen() {
               marginBottom: theme.spacing.md,
             }} />
 
-            {/* Routine Selection */}
+            {/* Routine Selection - Premium Custom Dropdown */}
             <View style={styles.section}>
               <SectionLabel label="Routine (optional)" />
-              <RowItem
-                title={selectedRoutine 
-                  ? routines.find(r => r.id === selectedRoutine)?.name || 'Select routine'
-                  : 'Select routine'
-                }
-                onPress={() => {
-                  if (!showRoutineDropdown) {
-                    setShowRoutineDropdown(true);
-                    openDropdown();
-                  } else {
-                    closeDropdown();
-                    setTimeout(() => setShowRoutineDropdown(false), 120);
-                  }
-                }}
-                rightElement={routineLoaded ? (
-                  <GhostButton
-                    title="Clear"
-                    onPress={clearRoutine}
-                  />
-                ) : (
-                  <Text style={{ color: '#ffffff' }}>{'>'}</Text>
-                )}
-                showDivider={false}
-              />
-            </View>
-            {showRoutineDropdown && (
-              <Animated.View style={[
-                dropdownStyle,
-                styles.dropdownContainer
-              ]}>
-                <ScrollView>
-                  {routines.length === 0 ? (
-                    <TouchableOpacity
-                      style={styles.dropdownItem}
-                      onPress={() => setShowRoutineDropdown(false)}
-                    >
-                      <Text style={styles.dropdownItemText}>
-                        No routines found
-                      </Text>
-                    </TouchableOpacity>
-                  ) : (
-                    <>
+              
+              {/* Custom Selector Trigger */}
+              <View style={styles.selectorContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.selectorTrigger,
+                    showRoutineDropdown && styles.selectorTriggerPressed
+                  ]}
+                  onPress={() => {
+                    if (!showRoutineDropdown) {
+                      setShowRoutineDropdown(true);
+                      openDropdown();
+                    } else {
+                      closeDropdown();
+                      setTimeout(() => setShowRoutineDropdown(false), 150);
+                    }
+                  }}
+                >
+                  <Text style={[
+                    selectedRoutine 
+                      ? styles.selectorTriggerText 
+                      : styles.selectorTriggerPlaceholder
+                  ]}>
+                    {selectedRoutine 
+                      ? routines.find(r => r.id === selectedRoutine)?.name || 'Select routine'
+                      : 'Select routine'
+                    }
+                  </Text>
+                  
+                  <View style={styles.selectorRightElement}>
+                    {routineLoaded ? (
                       <TouchableOpacity
-                        style={styles.dropdownItemWithBorder}
-                        onPress={() => handleRoutineSelect('')}
+                        style={styles.clearButton}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          clearRoutine();
+                        }}
                       >
-                        <Text style={styles.dropdownItemTextSubtle}>Clear Selection</Text>
+                        <Text style={styles.clearButtonText}>✕</Text>
                       </TouchableOpacity>
-                      {routines.map((routine) => (
-                        <TouchableOpacity
-                          key={routine.id}
-                          style={selectedRoutine === routine.id ? styles.dropdownItemSelected : styles.dropdownItemWithBorder}
-                          onPress={() => handleRoutineSelect(routine.id)}
-                        >
-                          <Text style={styles.dropdownItemTextSelected}>{routine.name}</Text>
-                        </TouchableOpacity>
-                      ))}
-                    </>
-                  )}
-                </ScrollView>
-              </Animated.View>
-            )}
+                    ) : (
+                      <Animated.Text style={[
+                        styles.selectorChevron,
+                        showRoutineDropdown && styles.selectorChevronOpen
+                      ]}>
+                        ▼
+                      </Animated.Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              </View>
+
+              {/* Premium Dropdown Menu */}
+              {showRoutineDropdown && (
+                <>
+                  {/* Overlay to close dropdown when clicking outside */}
+                  <TouchableOpacity 
+                    style={styles.dropdownOverlay}
+                    onPress={() => {
+                    closeDropdown();
+                    setTimeout(() => setShowRoutineDropdown(false), 150);
+                  }}
+                    activeOpacity={1}
+                  />
+                  
+                  {/* Dropdown Menu */}
+                  <Animated.View 
+                    style={[
+                      styles.dropdownMenu,
+                      {
+                        top: 80, // Position below the selector trigger
+                        opacity: dropdownOpacity,
+                        transform: [
+                          {
+                            scale: dropdownScale
+                          },
+                          {
+                            translateY: dropdownOpacity.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [-10, 0],
+                            })
+                          }
+                        ]
+                      }
+                    ]}
+                  >
+                    <ScrollView 
+                      showsVerticalScrollIndicator={false}
+                      contentContainerStyle={{ paddingBottom: 0 }}
+                    >
+                      {routines.length === 0 ? (
+                        <View style={styles.dropdownOption}>
+                          <Text style={styles.dropdownOptionText}>
+                            No routines found
+                          </Text>
+                        </View>
+                      ) : (
+                        <>
+                          {/* Clear Selection Option */}
+                          <TouchableOpacity
+                            style={styles.dropdownOption}
+                            onPress={() => handleRoutineSelect('')}
+                          >
+                            <Text style={styles.dropdownOptionText}>
+                              Clear Selection
+                            </Text>
+                          </TouchableOpacity>
+                          
+                          {/* Divider */}
+                          <View style={styles.dropdownDivider} />
+                          
+                          {/* Routine Options */}
+                          {routines.map((routine, index) => (
+                            <TouchableOpacity
+                              key={routine.id}
+                              style={[
+                                styles.dropdownOption,
+                                selectedRoutine === routine.id && styles.dropdownOptionSelected
+                              ]}
+                              onPress={() => handleRoutineSelect(routine.id)}
+                            >
+                              <Text style={[
+                                styles.dropdownOptionText,
+                                selectedRoutine === routine.id && styles.dropdownOptionSelectedText
+                              ]}>
+                                {routine.name}
+                              </Text>
+                              
+                              {selectedRoutine === routine.id && (
+                                <Text style={styles.dropdownOptionChevron}>✓</Text>
+                              )}
+                            </TouchableOpacity>
+                          ))}
+                        </>
+                      )}
+                    </ScrollView>
+                  </Animated.View>
+                </>
+              )}
+            </View>
 
             {routineLoaded && (
               <View style={styles.routineLoadedBanner}>

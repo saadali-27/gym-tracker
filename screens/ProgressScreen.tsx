@@ -224,17 +224,17 @@ const styles = StyleSheet.create({
     top: '100%',
     left: 0,
     right: 0,
-    backgroundColor: theme.colors.card,
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: 12,
+    borderRadius: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 5,
-    maxHeight: 200,
+    elevation: 3,
     zIndex: 1000,
+    transform: [{ scaleY: dropdownScale }],
   },
   dropdownScroll: {
     maxHeight: 180,
@@ -334,7 +334,8 @@ export default function ProgressScreen() {
   const [selectedDataPoint, setSelectedDataPoint] = useState<any>(null);
   const [showTooltip, setShowTooltip] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const dropdownAnim = useRef(new Animated.Value(0)).current;
+  const [dropdownScale] = useState(new Animated.Value(0.95));
+  const [dropdownOpacity] = useState(new Animated.Value(0));
   const [stats, setStats] = useState({ totalVolume: 0, totalReps: 0, totalSets: 0 });
   const [muscleGroupVolume, setMuscleGroupVolume] = useState<{[key: string]: number}>({});
   const [chartData, setChartData] = useState<any[]>([]);
@@ -355,19 +356,34 @@ export default function ProgressScreen() {
   };
 
   const openDropdown = () => {
-    Animated.timing(dropdownAnim, {
-      toValue: 1,
-      duration: 150,
-      useNativeDriver: true,
-    }).start();
+    Animated.parallel([
+      Animated.spring(dropdownScale, {
+        toValue: 1,
+        tension: 100,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+      Animated.timing(dropdownOpacity, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start();
   };
 
   const closeDropdown = () => {
-    Animated.timing(dropdownAnim, {
-      toValue: 0,
-      duration: 120,
-      useNativeDriver: true,
-    }).start();
+    Animated.parallel([
+      Animated.timing(dropdownScale, {
+        toValue: 0.95,
+        duration: 120,
+        useNativeDriver: true,
+      }),
+      Animated.timing(dropdownOpacity, {
+        toValue: 0,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
   };
 
   useFocusEffect(
@@ -762,14 +778,17 @@ export default function ProgressScreen() {
   };
 
   const dropdownStyle = {
-    opacity: dropdownAnim,
+    opacity: dropdownOpacity,
     transform: [
       {
-        translateY: dropdownAnim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [-5, 0],
-        }),
+        scale: dropdownScale,
       },
+      {
+        translateY: dropdownOpacity.interpolate({
+          inputRange: [0, 1],
+          outputRange: [-10, 0],
+        }),
+      }
     ],
   };
 
